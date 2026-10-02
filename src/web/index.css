@@ -62,30 +62,41 @@
   --color-night-h2: #F8F6F0;
   --color-night-h3: #F4F1EA;
 
-  /* Accent (Primary actions, revision triggers, highlight marks) */
-  --color-accent: #D97706;
-  --color-accent-hover: #B45309;
-  --color-accent-active: #92400E;
-  --color-accent-subtle: #FFFBEB;
-  --color-accent-subtle-dark: #32190A;
-  --color-accent-border: #FDE68A;
-  --color-accent-border-dark: #78350F;
-  --color-accent-text: #92400E;
-  --color-accent-text-dark: #FDE68A;
-  --color-accent-pin: #F59E0B;
-  --color-accent-bright: #FBBF24;
+  /* Accent (Primary actions, revision triggers, highlight marks - Base #FF4F00) */
+  --color-accent: #FF4F00;
+  --color-accent-hover: #E54600;
+  --color-accent-active: #CC3E00;
+  --color-accent-subtle: #FFF2EB;
+  --color-accent-subtle-dark: #2C1407;
+  --color-accent-border: #FFD2BD;
+  --color-accent-border-dark: #6E2602;
+  --color-accent-text: #B83500;
+  --color-accent-text-dark: #FFB594;
+  --color-accent-pin: #FF5A0D;
+  --color-accent-bright: #FFA37A;
 
-  /* Success (Approval, satisfied states, resolved indicators) */
-  --color-success: #059669;
-  --color-success-hover: #047857;
-  --color-success-subtle: #ECFDF5;
-  --color-success-subtle-dark: #063426;
-  --color-success-border: #A7F3D0;
-  --color-success-border-dark: #065F46;
-  --color-success-text: #065F46;
+  /* Accent Shadows (warm physical elevation for primary actions) */
+  --shadow-accent-xs: 0 1px 3px 0 rgba(255, 79, 0, 0.2);
+  --shadow-accent-sm: 0 2px 6px -1px rgba(255, 79, 0, 0.25);
+  --shadow-accent: 0 4px 14px -1px rgba(255, 79, 0, 0.35);
+  --shadow-accent-lg: 0 10px 24px -2px rgba(255, 79, 0, 0.4);
+
+  /* Success (Approval, satisfied states, resolved indicators - Base #02875A) */
+  --color-success: #02875A;
+  --color-success-hover: #02734D;
+  --color-success-active: #015E3F;
+  --color-success-subtle: #EBF7F2;
+  --color-success-subtle-dark: #052B1E;
+  --color-success-border: #AEE6D2;
+  --color-success-border-dark: #0B5E43;
+  --color-success-text: #015C3C;
   --color-success-text-dark: #6EE7B7;
-  --color-success-icon: #059669;
-  --color-success-icon-dark: #34D399;
+  --color-success-icon: #02875A;
+  --color-success-icon-dark: #2ED896;
+
+  /* Success Shadows */
+  --shadow-success-xs: 0 1px 3px 0 rgba(2, 135, 90, 0.2);
+  --shadow-success: 0 4px 14px -1px rgba(2, 135, 90, 0.35);
 
   /* Danger / Destructive (Comment deletion, destructive triggers) */
   --color-danger: #DC2626;

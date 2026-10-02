@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  Feather,
   Columns2,
   History,
   Sun,
@@ -43,9 +42,11 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Left: Brand & File Info */}
         <div className="flex items-center gap-4 min-w-0">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-accent dark:bg-accent-pin text-white flex items-center justify-center shadow-xs">
-              <Feather className="w-4 h-4" />
-            </div>
+            <img
+              src="/pujangga.png"
+              alt="Pujangga logo"
+              className="w-8 h-8 rounded-lg object-contain shadow-xs"
+            />
             <span className="font-semibold text-lg tracking-tight font-serif text-ink dark:text-night-text-heading">
               Pujangga
             </span>

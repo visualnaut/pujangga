@@ -5,6 +5,7 @@ import path from 'node:path';
 
 export default defineConfig({
   root: 'src/web',
+  publicDir: path.resolve(import.meta.dirname, 'public'),
   plugins: [
     react(),
     tailwindcss(),

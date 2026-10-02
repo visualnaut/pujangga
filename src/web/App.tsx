@@ -12,7 +12,7 @@ import { CommentHistoryDrawer } from './components/CommentHistoryDrawer.js';
 import { CommentPopover, CommentPopoverData } from './components/CommentPopover.js';
 import { ConfirmFinalizeModal } from './components/ConfirmFinalizeModal.js';
 import { SessionDetails, InlineComment, ReviewStatus } from '../shared/types.js';
-import { MessageSquarePlus, CheckCircle2, Feather, Loader2 } from 'lucide-react';
+import { MessageSquarePlus, CheckCircle2, Loader2 } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [details, setDetails] = useState<SessionDetails | null>(null);
@@ -366,9 +366,11 @@ export const App: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center p-6 bg-paper dark:bg-night">
         <div className="max-w-md w-full bg-paper-card dark:bg-night-popover border border-paper-border dark:border-night-border-strong rounded-2xl p-6 text-center shadow-lg">
-          <div className="w-12 h-12 rounded-full bg-accent-subtle dark:bg-accent-subtle-dark text-accent dark:text-accent-pin mx-auto flex items-center justify-center mb-4">
-            <Feather className="w-6 h-6" />
-          </div>
+          <img
+            src="/pujangga.png"
+            alt="Pujangga logo"
+            className="w-14 h-14 rounded-2xl object-contain mx-auto mb-4 shadow-sm"
+          />
           <h2 className="text-lg font-bold font-serif mb-2 text-ink dark:text-night-text-heading">No Active Review Session</h2>
           <p className="text-sm text-ink-muted dark:text-night-text-muted mb-6">
             {error || 'Start a review by executing `pujangga <filepath>` from your terminal or agent harness.'}
