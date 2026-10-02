@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer base {
   :root {
     --font-serif: 'Newsreader', Georgia, serif;
@@ -17,41 +19,65 @@
   font-family: var(--font-serif);
   font-size: 1.25rem;
   line-height: 1.85;
-  color: inherit;
+  color: #2C2825;
   max-width: 100%;
+}
+
+.dark .editorial-prose,
+:where(.dark, .dark *) .editorial-prose {
+  color: #EDEAE4 !important;
 }
 
 .editorial-prose p {
   margin-bottom: 1.5rem;
+  color: inherit;
 }
 
 .editorial-prose h1 {
   font-family: var(--font-serif);
-  font-size: 2.5rem;
+  font-size: 2.25rem;
   font-weight: 700;
   line-height: 1.25;
   margin-top: 2rem;
   margin-bottom: 1.25rem;
   letter-spacing: -0.02em;
+  color: #1A1715;
+}
+
+.dark .editorial-prose h1,
+:where(.dark, .dark *) .editorial-prose h1 {
+  color: #FDFCFA !important;
 }
 
 .editorial-prose h2 {
   font-family: var(--font-serif);
-  font-size: 1.875rem;
+  font-size: 1.75rem;
   font-weight: 600;
   line-height: 1.3;
   margin-top: 2rem;
   margin-bottom: 1rem;
   letter-spacing: -0.015em;
+  color: #1A1715;
+}
+
+.dark .editorial-prose h2,
+:where(.dark, .dark *) .editorial-prose h2 {
+  color: #F8F6F0 !important;
 }
 
 .editorial-prose h3 {
   font-family: var(--font-serif);
-  font-size: 1.5rem;
+  font-size: 1.375rem;
   font-weight: 600;
   line-height: 1.4;
   margin-top: 1.75rem;
   margin-bottom: 0.75rem;
+  color: #1A1715;
+}
+
+.dark .editorial-prose h3,
+:where(.dark, .dark *) .editorial-prose h3 {
+  color: #F4F1EA !important;
 }
 
 .editorial-prose blockquote {
@@ -61,36 +87,68 @@
   margin: 1.75rem 0;
   color: #635E59;
 }
-.dark .editorial-prose blockquote {
-  border-left-color: #45403B;
-  color: #A8A29D;
+
+.dark .editorial-prose blockquote,
+:where(.dark, .dark *) .editorial-prose blockquote {
+  border-left-color: #F59E0B !important;
+  color: #D6D0C5 !important;
+  background-color: rgba(245, 158, 11, 0.05);
+  padding: 0.75rem 1.25rem;
+  border-radius: 0 0.5rem 0.5rem 0;
 }
 
 .editorial-prose ul {
   list-style-type: disc;
   padding-left: 1.75rem;
   margin-bottom: 1.5rem;
+  color: inherit;
 }
 
 .editorial-prose ol {
   list-style-type: decimal;
   padding-left: 1.75rem;
   margin-bottom: 1.5rem;
+  color: inherit;
 }
 
 .editorial-prose li {
   margin-bottom: 0.5rem;
+  color: inherit;
 }
 
 .editorial-prose code {
   font-family: var(--font-mono);
-  font-size: 0.9em;
-  background-color: rgba(0, 0, 0, 0.05);
-  padding: 0.2rem 0.4rem;
-  border-radius: 0.25rem;
+  font-size: 0.88em;
+  background-color: rgba(0, 0, 0, 0.06);
+  color: #B45309;
+  padding: 0.2rem 0.45rem;
+  border-radius: 0.35rem;
 }
-.dark .editorial-prose code {
-  background-color: rgba(255, 255, 255, 0.1);
+
+.dark .editorial-prose code,
+:where(.dark, .dark *) .editorial-prose code {
+  background-color: #22201D !important;
+  color: #FBBF24 !important;
+  border: 1px solid #3D3730;
+}
+
+.editorial-prose pre {
+  background-color: #F5F1E9;
+  color: #2C2825;
+  padding: 1rem 1.25rem;
+  border-radius: 0.75rem;
+  margin: 1.5rem 0;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  border: 1px solid #E6E0D4;
+}
+
+.dark .editorial-prose pre,
+:where(.dark, .dark *) .editorial-prose pre {
+  background-color: #171614 !important;
+  color: #EDEAE4 !important;
+  border-color: #38332E !important;
 }
 
 .editorial-prose hr {
@@ -98,8 +156,10 @@
   border-top: 1px solid #E6E0D4;
   margin: 2.5rem 0;
 }
-.dark .editorial-prose hr {
-  border-top-color: #2E2B27;
+
+.dark .editorial-prose hr,
+:where(.dark, .dark *) .editorial-prose hr {
+  border-top-color: #332F2B !important;
 }
 
 /* Comment highlight and pin styles */
@@ -118,9 +178,11 @@
   background-color: rgba(245, 158, 11, 0.38);
 }
 
-.dark .pujangga-comment-highlight {
-  background-color: rgba(245, 158, 11, 0.25);
-  border-bottom-color: #FBBF24;
+.dark .pujangga-comment-highlight,
+:where(.dark, .dark *) .pujangga-comment-highlight {
+  background-color: rgba(245, 158, 11, 0.3) !important;
+  border-bottom-color: #FBBF24 !important;
+  color: #FFF !important;
 }
 
 .pujangga-comment-pin {
@@ -148,9 +210,11 @@
   padding: 0 2px;
   border-radius: 2px;
 }
-.dark .diff-added {
-  background-color: rgba(34, 197, 94, 0.25);
-  color: #4ADE80;
+
+.dark .diff-added,
+:where(.dark, .dark *) .diff-added {
+  background-color: rgba(34, 197, 94, 0.25) !important;
+  color: #4ADE80 !important;
 }
 
 .diff-removed {
@@ -160,9 +224,11 @@
   padding: 0 2px;
   border-radius: 2px;
 }
-.dark .diff-removed {
-  background-color: rgba(239, 68, 68, 0.25);
-  color: #F87171;
+
+.dark .diff-removed,
+:where(.dark, .dark *) .diff-removed {
+  background-color: rgba(239, 68, 68, 0.25) !important;
+  color: #F87171 !important;
 }
 
 /* Tiptap editor reset */

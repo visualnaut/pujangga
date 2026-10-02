@@ -40,6 +40,12 @@ export class PujanggaServer {
     this.staticDir = options.staticDir || path.resolve(__dirname, '../../dist/web');
 
     this.server = http.createServer(this.handleHttpRequest.bind(this));
+    // Disable request and idle timeouts so review wait connections can remain open indefinitely
+    this.server.requestTimeout = 0;
+    this.server.headersTimeout = 0;
+    this.server.timeout = 0;
+    this.server.keepAliveTimeout = 0;
+
     this.wss = new WebSocketServer({ noServer: true });
 
     this.setupWebSocket();
@@ -220,6 +226,38 @@ export class PujanggaServer {
           this.sendJson(res, 404, { error: 'Session not found' });
           return;
         }
+
+        // Check if current revision is already submitted
+        const revisions = this.db.getRevisions(sessionId);
+        const latestRevision = revisions[revisions.length - 1];
+        if (latestRevision && latestRevision.submittedAt && latestRevision.status) {
+          const inlineComments = this.db.getComments(sessionId).filter((c) => c.roundNumber === latestRevision.roundNumber);
+          const report = generateAgentReport({
+            status: latestRevision.status,
+            roundNumber: latestRevision.roundNumber,
+            filePath: session.filePath,
+            originalMarkdown: latestRevision.contentMarkdown,
+            userEditedMarkdown: latestRevision.userEditedMarkdown,
+            overallComment: latestRevision.overallComment,
+            inlineComments,
+          });
+
+          const waitResponse: WaitReviewResponse = {
+            status: latestRevision.status,
+            roundNumber: latestRevision.roundNumber,
+            filePath: session.filePath,
+            overallComment: latestRevision.overallComment,
+            inlineComments,
+            hasDirectEdits: latestRevision.userEditedMarkdown !== undefined && latestRevision.userEditedMarkdown !== latestRevision.contentMarkdown,
+            reportMarkdown: report,
+          };
+
+          this.sendJson(res, 200, waitResponse);
+          return;
+        }
+
+        req.setTimeout(0);
+        res.setTimeout(0);
 
         // Add to pending waiters
         if (!this.pendingWaiters.has(sessionId)) {

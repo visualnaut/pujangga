@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Send, CheckCircle2, Loader2, Sparkles } from 'lucide-react';
 import { SessionStatus } from '../../shared/types.js';
 
@@ -7,8 +7,10 @@ interface ActionBarProps {
   roundNumber: number;
   inlineCommentsCount: number;
   hasDirectEdits: boolean;
-  onSubmitRevision: (overallComment: string) => void;
-  onApprove: (finalNote: string) => void;
+  overallComment: string;
+  onOverallCommentChange: (val: string) => void;
+  onSubmitRevision: () => void;
+  onApprove: () => void;
   isSubmitting: boolean;
 }
 
@@ -17,80 +19,70 @@ export const ActionBar: React.FC<ActionBarProps> = ({
   roundNumber,
   inlineCommentsCount,
   hasDirectEdits,
+  overallComment,
+  onOverallCommentChange,
   onSubmitRevision,
   onApprove,
   isSubmitting,
 }) => {
-  const [overallComment, setOverallComment] = useState('');
   const isRevising = status === 'revising';
   const isSatisfied = status === 'satisfied';
 
-  const handleRequestRevision = () => {
-    onSubmitRevision(overallComment);
-    setOverallComment('');
-  };
-
-  const handleApprove = () => {
-    onApprove(overallComment);
-  };
-
   return (
-    <footer className="sticky bottom-0 z-40 w-full backdrop-blur-md bg-[#FAF8F5]/95 dark:bg-[#121110]/95 border-t border-[#E6E0D4] dark:border-[#2C2825] p-4 transition-colors">
-      <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center gap-4">
+    <footer className="fixed bottom-0 left-0 right-0 z-40 lg:hidden backdrop-blur-md bg-[#FAF8F5]/95 dark:bg-[#121110]/95 border-t border-[#E6E0D4] dark:border-[#2C2825] p-3 sm:p-4 transition-colors shadow-lg">
+      <div className="max-w-4xl mx-auto flex flex-col gap-2.5">
         {/* Overall Directive Input */}
-        <div className="relative flex-1 w-full">
+        <div className="relative w-full">
           <input
             type="text"
             value={overallComment}
-            onChange={(e) => setOverallComment(e.target.value)}
+            onChange={(e) => onOverallCommentChange(e.target.value)}
             disabled={isRevising || isSatisfied || isSubmitting}
             placeholder={
               isSatisfied
                 ? 'Review concluded. Writing marked as Satisfied.'
                 : isRevising
-                ? 'Waiting for agent to submit Round ' + (roundNumber + 1) + '...'
-                : 'Overall directive for the agent (e.g. Tone down hyperbole in section 2)...'
+                ? `Waiting for agent to revise Round ${roundNumber + 1}...`
+                : 'Overall directive for agent...'
             }
-            className="w-full text-sm bg-white dark:bg-[#1A1816] border border-[#E6E0D4] dark:border-[#38332E] rounded-xl px-4 py-2.5 text-[#2C2825] dark:text-[#E8E6E3] placeholder-[#A0988F] focus:outline-none focus:ring-2 focus:ring-amber-500/50 shadow-xs disabled:opacity-60 transition-all"
+            className="w-full text-sm bg-white dark:bg-[#1A1816] border border-[#E6E0D4] dark:border-[#38332E] rounded-xl px-4 py-2 text-[#2C2825] dark:text-[#E8E6E3] placeholder-[#A0988F] focus:outline-none focus:ring-2 focus:ring-amber-500/50 shadow-xs disabled:opacity-60 transition-all"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-                handleRequestRevision();
+                onSubmitRevision();
               }
             }}
           />
           {inlineCommentsCount > 0 && !isRevising && !isSatisfied && (
-            <span className="absolute right-3 top-2.5 text-[11px] font-medium text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-950/50 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-800">
-              {inlineCommentsCount} note{inlineCommentsCount > 1 ? 's' : ''} attached
+            <span className="absolute right-3 top-2 text-[10px] font-medium text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-950/50 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-800">
+              {inlineCommentsCount} note{inlineCommentsCount > 1 ? 's' : ''}
             </span>
           )}
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-3 w-full md:w-auto justify-end">
-          {/* Request Revision Button */}
+        <div className="flex items-center gap-2.5">
           <button
-            onClick={handleRequestRevision}
+            onClick={onSubmitRevision}
             disabled={isRevising || isSatisfied || isSubmitting}
-            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white text-sm font-semibold rounded-xl shadow-xs transition-all cursor-pointer"
+            className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white text-xs font-semibold rounded-xl shadow-xs transition-all cursor-pointer"
           >
             {isSubmitting ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
             ) : (
-              <Send className="w-4 h-4" />
+              <Send className="w-3.5 h-3.5" />
             )}
             <span>Request Revision</span>
           </button>
 
-          {/* Satisfied / Finalize Button */}
           <button
-            onClick={handleApprove}
+            onClick={onApprove}
             disabled={isRevising || isSatisfied || isSubmitting}
-            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-semibold rounded-xl shadow-xs transition-all cursor-pointer"
+            className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-semibold rounded-xl shadow-xs transition-all cursor-pointer"
           >
             {isSatisfied ? (
-              <CheckCircle2 className="w-4 h-4" />
+              <CheckCircle2 className="w-3.5 h-3.5" />
             ) : (
-              <Sparkles className="w-4 h-4" />
+              <Sparkles className="w-3.5 h-3.5" />
             )}
             <span>Satisfied ✨</span>
           </button>

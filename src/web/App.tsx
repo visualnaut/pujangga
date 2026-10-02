@@ -6,11 +6,12 @@ import Placeholder from '@tiptap/extension-placeholder';
 import { CommentMark } from './extensions/CommentMark.js';
 import { Navbar } from './components/Navbar.js';
 import { ActionBar } from './components/ActionBar.js';
+import { DesktopSidebar } from './components/DesktopSidebar.js';
 import { DiffViewer } from './components/DiffViewer.js';
 import { ResolvedCommentsDrawer } from './components/ResolvedCommentsDrawer.js';
 import { CommentPopover, CommentPopoverData } from './components/CommentPopover.js';
 import { SessionDetails, InlineComment, ReviewStatus } from '../shared/types.js';
-import { MessageSquarePlus, CheckCircle2, Feather, Sparkles, Loader2 } from 'lucide-react';
+import { MessageSquarePlus, CheckCircle2, Feather, Loader2 } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [details, setDetails] = useState<SessionDetails | null>(null);
@@ -18,9 +19,12 @@ export const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [showDiff, setShowDiff] = useState(false);
   const [isResolvedDrawerOpen, setIsResolvedDrawerOpen] = useState(false);
+  const [overallComment, setOverallComment] = useState('');
   const [isDark, setIsDark] = useState(() => {
-    return localStorage.getItem('pujangga_theme') === 'dark' ||
-      (!('pujangga_theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    return (
+      localStorage.getItem('pujangga_theme') === 'dark' ||
+      (!('pujangga_theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)
+    );
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -93,7 +97,12 @@ export const App: React.FC = () => {
       ws.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data);
-          if (msg.type === 'SESSION_INIT' || msg.type === 'ROUND_UPDATED' || msg.type === 'REVISING_WAIT' || msg.type === 'SESSION_SATISFIED') {
+          if (
+            msg.type === 'SESSION_INIT' ||
+            msg.type === 'ROUND_UPDATED' ||
+            msg.type === 'REVISING_WAIT' ||
+            msg.type === 'SESSION_SATISFIED'
+          ) {
             const updatedDetails: SessionDetails = msg.payload;
             setDetails(updatedDetails);
             setLocalComments(updatedDetails.comments || []);
@@ -260,22 +269,19 @@ export const App: React.FC = () => {
   const handleDeleteComment = (commentId: string) => {
     setLocalComments((prev) => prev.filter((c) => c.id !== commentId));
     if (editor) {
-      // Unset comment mark
       editor.commands.unsetComment();
     }
     setPopoverData(null);
   };
 
   // Submit review round
-  const submitReview = async (status: ReviewStatus, overallComment: string) => {
+  const submitReview = async (status: ReviewStatus) => {
     if (!editor || !details) return;
 
     setIsSubmitting(true);
     try {
-      // Get current markdown from editor
       const markdown = (editor.storage as any).markdown?.getMarkdown?.() || editor.getText();
 
-      // Gather open comments for this round
       const openComments = localComments
         .filter((c) => c.status === 'open' && c.roundNumber === details.currentRevision.roundNumber)
         .map((c) => ({
@@ -300,6 +306,7 @@ export const App: React.FC = () => {
         throw new Error('Failed to submit review');
       }
 
+      setOverallComment('');
       await fetchSession();
     } catch (err: any) {
       alert(`Submission error: ${err.message}`);
@@ -328,10 +335,10 @@ export const App: React.FC = () => {
           </div>
           <h2 className="text-lg font-bold font-serif mb-2 text-[#2C2825] dark:text-[#E8E6E3]">No Active Review Session</h2>
           <p className="text-sm text-[#706B65] dark:text-[#A8A29D] mb-6">
-            {error || 'Start a review by executing `pujangga review <filepath>` from your terminal or agent harness.'}
+            {error || 'Start a review by executing `pujangga <filepath>` from your terminal or agent harness.'}
           </p>
           <div className="text-xs bg-[#FAF8F5] dark:bg-[#141312] p-3 rounded-lg font-mono text-[#8C827A] border border-[#EFEAE1] dark:border-[#2C2825]">
-            $ npx pujangga review essay.md
+            $ npx -y pujangga draft.md
           </div>
         </div>
       </div>
@@ -347,7 +354,7 @@ export const App: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#FAF8F5] text-[#2C2825] dark:bg-[#121110] dark:text-[#E8E6E3] transition-colors">
+    <div className="min-h-screen flex flex-col bg-[#FAF8F5] text-[#2C2825] dark:bg-[#121110] dark:text-[#EDEAE4] transition-colors pb-24 lg:pb-12">
       {/* Top Navbar */}
       <Navbar
         title={details.session.title}
@@ -363,13 +370,14 @@ export const App: React.FC = () => {
         onToggleTheme={() => setIsDark((v) => !v)}
       />
 
-      {/* Main Review Surface Canvas */}
-      <main className="flex-1 max-w-3xl w-full mx-auto px-6 py-10 relative">
-        {/* Waiting State Notice */}
-        {details.session.status === 'revising' && (
-          <div className="mb-8 p-4 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 flex items-center justify-between gap-4 animate-pulse">
-            <div className="flex items-center gap-3">
-              <Loader2 className="w-5 h-5 text-amber-600 dark:text-amber-400 animate-spin" />
+      {/* Main Container: Flex Row on Desktop (Canvas + Right Sidebar), Stack on Mobile */}
+      <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 py-8 flex flex-col lg:flex-row gap-8 items-start">
+        {/* Left/Center Editorial Reading & Writing Canvas */}
+        <main className="flex-1 min-w-0 w-full relative">
+          {/* Waiting State Notice on Mobile/Tablet */}
+          {details.session.status === 'revising' && (
+            <div className="lg:hidden mb-6 p-4 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 flex items-center gap-3 animate-pulse">
+              <Loader2 className="w-5 h-5 text-amber-600 dark:text-amber-400 animate-spin shrink-0" />
               <div>
                 <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
                   Agent is revising Round {currentRound}...
@@ -379,54 +387,69 @@ export const App: React.FC = () => {
                 </p>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Satisfied Celebration Notice */}
-        {details.session.status === 'satisfied' && (
-          <div className="mb-8 p-5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-300 flex items-center justify-center shrink-0">
-              <CheckCircle2 className="w-6 h-6" />
+          {/* Satisfied Celebration Notice on Mobile/Tablet */}
+          {details.session.status === 'satisfied' && (
+            <div className="lg:hidden mb-6 p-5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 flex items-center gap-4">
+              <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-300 flex items-center justify-center shrink-0">
+                <CheckCircle2 className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-emerald-900 dark:text-emerald-100 font-serif">
+                  Review Concluded & Approved!
+                </h3>
+                <p className="text-xs text-emerald-700 dark:text-emerald-300/80">
+                  The target file on disk contains your approved text.
+                </p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-base font-bold text-emerald-900 dark:text-emerald-100 font-serif">
-                Review Concluded & Approved!
-              </h3>
-              <p className="text-xs text-emerald-700 dark:text-emerald-300/80">
-                The target file on disk contains your approved text. The agent review loop is complete.
-              </p>
+          )}
+
+          {/* Selection Tooltip for Adding Notes */}
+          {selectionTooltip && details.session.status === 'active' && (
+            <div
+              className="fixed z-50 transform -translate-x-1/2 -translate-y-full mb-2 bg-[#2C2825] dark:bg-[#FAF8F5] text-white dark:text-[#121110] px-3 py-1.5 rounded-lg shadow-xl flex items-center gap-1.5 text-xs font-semibold cursor-pointer hover:scale-105 transition-all select-none animate-in fade-in zoom-in-95 border border-black/10 dark:border-white/10"
+              style={{
+                top: selectionTooltip.position.top - 8,
+                left: selectionTooltip.position.left,
+              }}
+              onClick={handleAddCommentFromSelection}
+            >
+              <MessageSquarePlus className="w-3.5 h-3.5 text-amber-400 dark:text-amber-600" />
+              <span>Add Note</span>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Selection Tooltip for Adding Notes */}
-        {selectionTooltip && details.session.status === 'active' && (
-          <div
-            className="fixed z-50 transform -translate-x-1/2 -translate-y-full mb-2 bg-[#2C2825] dark:bg-[#E8E6E3] text-white dark:text-[#121110] px-3 py-1.5 rounded-lg shadow-lg flex items-center gap-1.5 text-xs font-medium cursor-pointer hover:scale-105 transition-all select-none animate-in fade-in zoom-in-95"
-            style={{
-              top: selectionTooltip.position.top - 8,
-              left: selectionTooltip.position.left,
-            }}
-            onClick={handleAddCommentFromSelection}
-          >
-            <MessageSquarePlus className="w-3.5 h-3.5 text-amber-400 dark:text-amber-600" />
-            <span>Add Note</span>
-          </div>
-        )}
+          {/* Diff View or In-Place Editor */}
+          {showDiff && details.previousRevision ? (
+            <DiffViewer
+              previousMarkdown={details.previousRevision.contentMarkdown}
+              currentMarkdown={details.currentRevision.contentMarkdown}
+              roundNumber={currentRound}
+            />
+          ) : (
+            <div className="bg-white dark:bg-[#1A1816] rounded-2xl border border-[#E6E0D4] dark:border-[#38332E] p-6 sm:p-10 md:p-14 shadow-xs transition-colors">
+              <EditorContent editor={editor} />
+            </div>
+          )}
+        </main>
 
-        {/* Diff View or In-Place Editor */}
-        {showDiff && details.previousRevision ? (
-          <DiffViewer
-            previousMarkdown={details.previousRevision.contentMarkdown}
-            currentMarkdown={details.currentRevision.contentMarkdown}
-            roundNumber={currentRound}
-          />
-        ) : (
-          <div className="bg-white dark:bg-[#1A1816] rounded-2xl border border-[#E6E0D4] dark:border-[#38332E] p-8 md:p-12 shadow-xs transition-colors">
-            <EditorContent editor={editor} />
-          </div>
-        )}
-      </main>
+        {/* Right Sidebar on Desktop Viewport */}
+        <DesktopSidebar
+          status={details.session.status}
+          roundNumber={currentRound}
+          inlineCommentsCount={activeRoundComments.length}
+          hasDirectEdits={true}
+          overallComment={overallComment}
+          onOverallCommentChange={setOverallComment}
+          onSubmitRevision={() => submitReview('NEEDS_REVISION')}
+          onApprove={() => submitReview('SATISFIED')}
+          isSubmitting={isSubmitting}
+          resolvedCommentsCount={resolvedComments.length}
+          onOpenResolvedDrawer={() => setIsResolvedDrawerOpen(true)}
+        />
+      </div>
 
       {/* Floating Comment Popover */}
       <CommentPopover
@@ -444,14 +467,16 @@ export const App: React.FC = () => {
         currentRound={currentRound}
       />
 
-      {/* Bottom Sticky Action Bar */}
+      {/* Bottom Sticky Action Bar: Only visible on smaller screens */}
       <ActionBar
         status={details.session.status}
         roundNumber={currentRound}
         inlineCommentsCount={activeRoundComments.length}
         hasDirectEdits={true}
-        onSubmitRevision={(note) => submitReview('NEEDS_REVISION', note)}
-        onApprove={(note) => submitReview('SATISFIED', note)}
+        overallComment={overallComment}
+        onOverallCommentChange={setOverallComment}
+        onSubmitRevision={() => submitReview('NEEDS_REVISION')}
+        onApprove={() => submitReview('SATISFIED')}
         isSubmitting={isSubmitting}
       />
     </div>

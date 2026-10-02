@@ -14,23 +14,17 @@
     "dev:daemon": "tsx src/daemon/daemon-entry.ts",
     "pujangga": "node ./bin/pujangga"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "devEngines": {
-    "packageManager": {
-      "name": "pnpm",
-      "version": "12.8.1",
-      "onFail": "download"
-    }
-  },
-  "packageManager": "pnpm@12.8.1",
+  "keywords": ["agent", "skill", "review", "editorial", "writing", "markdown", "human-in-the-loop"],
+  "author": "visualnaut",
+  "license": "MIT",
+  "files": [
+    "bin",
+    "dist",
+    "skills",
+    "SKILL.md",
+    "README.md"
+  ],
   "type": "module",
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild"
-    ]
-  },
   "dependencies": {
     "@tiptap/core": "^3.31.4",
     "@tiptap/extension-placeholder": "^3.31.4",

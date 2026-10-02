@@ -69,14 +69,19 @@ export async function ensureDaemonRunning(): Promise<number> {
     return current.port;
   }
 
-  // Find daemon entry script
-  // In development, tsx runs daemon-entry.ts. In production, node runs dist/daemon/daemon-entry.js
-  const tsEntry = path.resolve(__dirname, 'daemon-entry.ts');
-  const jsEntry = path.resolve(__dirname, 'daemon-entry.js');
+  // Find daemon entry script across possible locations (src or dist)
+  const candidateScripts = [
+    path.resolve(__dirname, '../daemon/daemon-entry.js'),
+    path.resolve(__dirname, 'daemon-entry.js'),
+    path.resolve(__dirname, '../daemon/daemon-entry.ts'),
+    path.resolve(__dirname, 'daemon-entry.ts'),
+  ];
+  const entryScript = candidateScripts.find((p) => fs.existsSync(p));
+  if (!entryScript) {
+    throw new Error('Could not locate Pujangga daemon entry script.');
+  }
 
-  const runner = fs.existsSync(tsEntry) ? 'tsx' : 'node';
-  const entryScript = fs.existsSync(tsEntry) ? tsEntry : jsEntry;
-
+  const runner = entryScript.endsWith('.ts') ? 'tsx' : 'node';
   const child = spawn(runner, [entryScript], {
     detached: true,
     stdio: 'ignore',
