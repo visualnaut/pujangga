@@ -4,6 +4,9 @@ import { Lock, Unlock, X } from 'lucide-react';
 export interface LockPopoverData {
   lockId: string;
   text: string;
+  sectionHeading?: string;
+  contextBefore?: string;
+  contextAfter?: string;
   position: { top: number; left: number };
 }
 
@@ -73,6 +76,12 @@ export const LockPopover: React.FC<LockPopoverProps> = ({
           <X className="w-4 h-4" />
         </button>
       </div>
+
+      {data.sectionHeading && (
+        <div className="mb-2 text-xs font-mono px-2 py-1 rounded bg-paper-subtle dark:bg-night-subtle text-ink-muted dark:text-night-text-muted border border-paper-border-subtle dark:border-night-border-subtle truncate">
+          <span className="font-semibold text-ink-muted dark:text-night-text">Section:</span> {data.sectionHeading}
+        </div>
+      )}
 
       <div className="mb-2.5 text-sm text-ink-muted dark:text-night-text-muted italic bg-paper-muted dark:bg-night-subtle p-2.5 rounded-lg line-clamp-3 border-l-3 border-success dark:border-success-icon-dark border-t border-r border-b border-paper-border-subtle dark:border-night-border-subtle">
         "{data.text}"

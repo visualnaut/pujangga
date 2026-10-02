@@ -81,9 +81,24 @@ var DatabaseService = class {
         text TEXT NOT NULL,
         round_number INTEGER NOT NULL,
         created_at INTEGER NOT NULL,
+        section_heading TEXT,
+        context_before TEXT,
+        context_after TEXT,
         FOREIGN KEY (session_id) REFERENCES sessions(id)
       );
     `);
+    try {
+      this.db.exec(`ALTER TABLE locked_texts ADD COLUMN section_heading TEXT;`);
+    } catch {
+    }
+    try {
+      this.db.exec(`ALTER TABLE locked_texts ADD COLUMN context_before TEXT;`);
+    } catch {
+    }
+    try {
+      this.db.exec(`ALTER TABLE locked_texts ADD COLUMN context_after TEXT;`);
+    } catch {
+    }
   }
   generateSessionId(filePath) {
     const normalized = path.resolve(filePath);
@@ -229,22 +244,40 @@ var DatabaseService = class {
       sessionId: l.session_id,
       text: l.text,
       roundNumber: l.round_number,
-      createdAt: l.created_at
+      createdAt: l.created_at,
+      sectionHeading: l.section_heading || void 0,
+      contextBefore: l.context_before || void 0,
+      contextAfter: l.context_after || void 0
     }));
   }
   addLockedText(sessionId, lock) {
     const id = lock.id || crypto.randomUUID();
     const now = Date.now();
     this.db.prepare(`
-      INSERT OR REPLACE INTO locked_texts (id, session_id, text, round_number, created_at)
-      VALUES (?, ?, ?, ?, ?)
-    `).run(id, sessionId, lock.text, lock.roundNumber, now);
+      INSERT OR REPLACE INTO locked_texts (
+        id, session_id, text, round_number, created_at,
+        section_heading, context_before, context_after
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      id,
+      sessionId,
+      lock.text,
+      lock.roundNumber,
+      now,
+      lock.sectionHeading || null,
+      lock.contextBefore || null,
+      lock.contextAfter || null
+    );
     return {
       id,
       sessionId,
       text: lock.text,
       roundNumber: lock.roundNumber,
-      createdAt: now
+      createdAt: now,
+      sectionHeading: lock.sectionHeading,
+      contextBefore: lock.contextBefore,
+      contextAfter: lock.contextAfter
     };
   }
   removeLockedText(lockId) {
@@ -317,7 +350,10 @@ var DatabaseService = class {
           this.addLockedText(sessionId, {
             id: lt.id,
             text: lt.text,
-            roundNumber
+            roundNumber,
+            sectionHeading: lt.sectionHeading,
+            contextBefore: lt.contextBefore,
+            contextAfter: lt.contextAfter
           });
         }
       }
@@ -436,12 +472,24 @@ ${overallComment}
   if (lockedTexts && lockedTexts.length > 0) {
     lines.push(`## \u{1F512} Locked Text Segments (CRITICAL: DO NOT MODIFY)`);
     lines.push(
-      `The reviewer has locked the following text segment(s). They MUST remain VERBATIM in your revision \u2014 do not rephrase, edit, or delete:`
+      `The reviewer has locked the following text segment(s). They MUST remain VERBATIM in their designated locations \u2014 do not rephrase, edit, or delete:`
     );
     lockedTexts.forEach((lt, idx) => {
-      lines.push(`${idx + 1}. "${lt.text.trim()}"`);
+      const text = lt.text.trim();
+      lines.push(`${idx + 1}. **Target Text**: "${text}"`);
+      if (lt.sectionHeading) {
+        lines.push(`   - **Location**: Under \`${lt.sectionHeading.trim()}\``);
+      }
+      if (lt.contextBefore || lt.contextAfter) {
+        const before = lt.contextBefore ? `...${lt.contextBefore.trim()} ` : "...";
+        const after = lt.contextAfter ? ` ${lt.contextAfter.trim()}...` : "...";
+        lines.push(`   - **Surrounding Context**: "${before}[${text}]${after}"`);
+      }
+      if (lt.sectionHeading) {
+        lines.push(`   - **Scope**: Local to this occurrence in \`${lt.sectionHeading.trim()}\` only. Identical text in other sections may be modified freely.`);
+      }
+      lines.push(``);
     });
-    lines.push(``);
   }
   if (diff2.hasChanges) {
     lines.push(`## \u{1F4DD} Direct Edits Made by Reviewer`);
@@ -668,8 +716,8 @@ var PujanggaServer = class {
             roundNumber: latestRevision.roundNumber,
             filePath: session.filePath,
             originalMarkdown: latestRevision.contentMarkdown,
-            userEditedMarkdown: latestRevision.userEditedMarkdown,
-            overallComment: latestRevision.overallComment,
+            userEditedMarkdown: latestRevision.userEditedMarkdown || "",
+            overallComment: latestRevision.overallComment || "",
             inlineComments,
             lockedTexts
           });
@@ -677,7 +725,7 @@ var PujanggaServer = class {
             status: latestRevision.status,
             roundNumber: latestRevision.roundNumber,
             filePath: session.filePath,
-            overallComment: latestRevision.overallComment,
+            overallComment: latestRevision.overallComment || "",
             inlineComments,
             lockedTexts,
             hasDirectEdits: latestRevision.userEditedMarkdown !== void 0 && latestRevision.userEditedMarkdown !== latestRevision.contentMarkdown,
@@ -722,7 +770,10 @@ var PujanggaServer = class {
         const lock = this.db.addLockedText(sessionId, {
           id: body.id,
           text: body.text,
-          roundNumber
+          roundNumber,
+          sectionHeading: body.sectionHeading,
+          contextBefore: body.contextBefore,
+          contextAfter: body.contextAfter
         });
         const updatedDetails = this.db.getSessionDetails(sessionId, this.port);
         this.broadcastToSession(sessionId, {

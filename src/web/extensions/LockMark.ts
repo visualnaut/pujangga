@@ -18,6 +18,7 @@ declare module '@tiptap/core' {
 
 export const LockMark = Mark.create<LockMarkOptions>({
   name: 'lock',
+  inclusive: false,
 
   addOptions() {
     return {
@@ -141,6 +142,21 @@ export const LockMark = Mark.create<LockMarkOptions>({
           }
 
           return true;
+        },
+      }),
+      new Plugin({
+        key: new PluginKey('textLockStoredMarkGuard'),
+        appendTransaction(transactions, oldState, newState) {
+          const lockMarkType = newState.schema.marks.lock;
+          if (
+            lockMarkType &&
+            newState.storedMarks &&
+            newState.storedMarks.some((m) => m.type === lockMarkType)
+          ) {
+            const filtered = newState.storedMarks.filter((m) => m.type !== lockMarkType);
+            return newState.tr.setStoredMarks(filtered);
+          }
+          return null;
         },
       }),
     ];

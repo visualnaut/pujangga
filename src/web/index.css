@@ -318,6 +318,8 @@
   padding: 1px 3px;
   transition: all 0.15s ease;
   position: relative;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .pujangga-locked-highlight:hover,

@@ -145,15 +145,22 @@ export const LockedTextDrawer: React.FC<LockedTextDrawerProps> = ({
                 key={item.id}
                 className="bg-paper dark:bg-night-pane border border-paper-border dark:border-night-border-strong rounded-xl p-4 shadow-2xs space-y-3"
               >
-                {/* Header row with Round badge and Unlock button */}
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-md bg-paper-subtle dark:bg-night-subtle text-ink-muted dark:text-night-text-muted border border-paper-border dark:border-night-border">
-                    Locked in Round {item.roundNumber}
-                  </span>
+                {/* Header row with Round badge, Section badge, and Unlock button */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-xs font-semibold px-2.5 py-0.5 rounded-md bg-paper-subtle dark:bg-night-subtle text-ink-muted dark:text-night-text-muted border border-paper-border dark:border-night-border">
+                      Round {item.roundNumber}
+                    </span>
+                    {item.sectionHeading && (
+                      <span className="text-xs font-mono px-2 py-0.5 rounded-md bg-paper-subtle dark:bg-night-subtle text-ink-subtle dark:text-night-text-muted border border-paper-border-subtle dark:border-night-border-subtle truncate max-w-[200px]">
+                        {item.sectionHeading}
+                      </span>
+                    )}
+                  </div>
                   <button
                     type="button"
                     onClick={() => onUnlock(item.id)}
-                    className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg bg-paper-subtle hover:bg-paper-hover dark:bg-night-subtle dark:hover:bg-night-hover text-success hover:text-success-hover dark:text-success-icon-dark dark:hover:text-success-text-dark border border-success/30 dark:border-success-border-dark transition-colors cursor-pointer"
+                    className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg bg-paper-subtle hover:bg-paper-hover dark:bg-night-subtle dark:hover:bg-night-hover text-success hover:text-success-hover dark:text-success-icon-dark dark:hover:text-success-text-dark border border-success/30 dark:border-success-border-dark transition-colors cursor-pointer shrink-0"
                     title="Unlock this segment"
                   >
                     <Unlock className="w-3.5 h-3.5" />
@@ -165,6 +172,15 @@ export const LockedTextDrawer: React.FC<LockedTextDrawerProps> = ({
                 <blockquote className="text-sm font-serif italic text-ink dark:text-night-text bg-paper-subtle dark:bg-night-subtle p-3 rounded-lg border-l-3 border-success dark:border-success-icon-dark leading-relaxed">
                   "{item.text}"
                 </blockquote>
+
+                {/* Context snippet if available */}
+                {(item.contextBefore || item.contextAfter) && (
+                  <div className="text-xs text-ink-muted dark:text-night-text-muted bg-paper-subtle/60 dark:bg-night-subtle/60 p-2 rounded-lg border border-paper-border-subtle dark:border-night-border-subtle leading-relaxed">
+                    <span className="text-ink-faint">...{item.contextBefore || ''}</span>
+                    <span className="font-bold text-success dark:text-success-icon-dark mx-1 underline decoration-dashed">[{item.text}]</span>
+                    <span className="text-ink-faint">{item.contextAfter || ''}...</span>
+                  </div>
+                )}
               </div>
             ))
           )}

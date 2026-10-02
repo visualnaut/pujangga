@@ -18,6 +18,7 @@ declare module '@tiptap/core' {
 
 export const CommentMark = Mark.create<CommentMarkOptions>({
   name: 'comment',
+  inclusive: false,
 
   addOptions() {
     return {
@@ -141,6 +142,21 @@ export const CommentMark = Mark.create<CommentMarkOptions>({
           }
 
           return true;
+        },
+      }),
+      new Plugin({
+        key: new PluginKey('commentStoredMarkGuard'),
+        appendTransaction(transactions, oldState, newState) {
+          const commentMarkType = newState.schema.marks.comment;
+          if (
+            commentMarkType &&
+            newState.storedMarks &&
+            newState.storedMarks.some((m) => m.type === commentMarkType)
+          ) {
+            const filtered = newState.storedMarks.filter((m) => m.type !== commentMarkType);
+            return newState.tr.setStoredMarks(filtered);
+          }
+          return null;
         },
       }),
     ];

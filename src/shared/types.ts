@@ -46,6 +46,9 @@ export interface LockedText {
   text: string;
   roundNumber: number;
   createdAt: number;
+  sectionHeading?: string;
+  contextBefore?: string;
+  contextAfter?: string;
 }
 
 export interface SessionDetails {
@@ -88,6 +91,9 @@ export interface SubmitReviewRequest {
   lockedTexts?: Array<{
     id: string;
     text: string;
+    sectionHeading?: string;
+    contextBefore?: string;
+    contextAfter?: string;
   }>;
 }
 
@@ -104,6 +110,9 @@ export interface WaitReviewResponse {
   lockedTexts?: Array<{
     id: string;
     text: string;
+    sectionHeading?: string;
+    contextBefore?: string;
+    contextAfter?: string;
   }>;
   hasDirectEdits: boolean;
   diffSummary?: string;

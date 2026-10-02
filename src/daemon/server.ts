@@ -241,8 +241,8 @@ export class PujanggaServer {
             roundNumber: latestRevision.roundNumber,
             filePath: session.filePath,
             originalMarkdown: latestRevision.contentMarkdown,
-            userEditedMarkdown: latestRevision.userEditedMarkdown,
-            overallComment: latestRevision.overallComment,
+            userEditedMarkdown: latestRevision.userEditedMarkdown || '',
+            overallComment: latestRevision.overallComment || '',
             inlineComments,
             lockedTexts,
           });
@@ -251,7 +251,7 @@ export class PujanggaServer {
             status: latestRevision.status,
             roundNumber: latestRevision.roundNumber,
             filePath: session.filePath,
-            overallComment: latestRevision.overallComment,
+            overallComment: latestRevision.overallComment || '',
             inlineComments,
             lockedTexts,
             hasDirectEdits: latestRevision.userEditedMarkdown !== undefined && latestRevision.userEditedMarkdown !== latestRevision.contentMarkdown,
@@ -309,6 +309,9 @@ export class PujanggaServer {
           id: body.id,
           text: body.text,
           roundNumber,
+          sectionHeading: body.sectionHeading,
+          contextBefore: body.contextBefore,
+          contextAfter: body.contextAfter,
         });
 
         const updatedDetails = this.db.getSessionDetails(sessionId, this.port);

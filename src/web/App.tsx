@@ -16,6 +16,7 @@ import { LockPopover, LockPopoverData } from './components/LockPopover.js';
 import { ConfirmFinalizeModal } from './components/ConfirmFinalizeModal.js';
 import { FloatingAlertBanner } from './components/FloatingAlertBanner.js';
 import { SessionDetails, InlineComment, LockedText, ReviewStatus } from '../shared/types.js';
+import UnderlineExtension from '@tiptap/extension-underline';
 import {
   MessageSquarePlus,
   CheckCircle2,
@@ -23,7 +24,7 @@ import {
   Lock,
   Bold,
   Italic,
-  Underline,
+  Underline as UnderlineIcon,
 } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -186,6 +187,7 @@ export const App: React.FC = () => {
       }),
       CommentMark,
       LockMark,
+      UnderlineExtension,
       Placeholder.configure({
         placeholder: 'Writing draft appears here...',
       }),
@@ -199,6 +201,13 @@ export const App: React.FC = () => {
     onSelectionUpdate: ({ editor }) => {
       const { from, to } = editor.state.selection;
       if (from === to) {
+        setSelectionTooltip(null);
+        return;
+      }
+
+      // Check if selection contains or overlaps with any locked text
+      const lockMarkType = editor.state.schema.marks.lock;
+      if (lockMarkType && editor.state.doc.rangeHasMark(from, to, lockMarkType)) {
         setSelectionTooltip(null);
         return;
       }
@@ -222,7 +231,7 @@ export const App: React.FC = () => {
     },
   });
 
-  // Helper to re-apply lock marks across the document for known locked texts
+  // Helper to re-apply lock marks across the document for known locked texts with contextual anchoring
   const applyLocksToEditor = useCallback(
     (currentEditor: any, lockedList: LockedText[]) => {
       if (!currentEditor || !lockedList || lockedList.length === 0) return;
@@ -250,57 +259,92 @@ export const App: React.FC = () => {
         });
         if (alreadyMarked) continue;
 
-        // Try simple text node search
-        tr.doc.descendants((node: any, pos: number) => {
-          if (alreadyMarked) return;
-          if (node.isText && node.text) {
-            const idx = node.text.indexOf(targetText);
-            if (idx !== -1) {
-              const from = pos + idx;
-              const to = from + targetText.length;
-              tr.addMark(from, to, lockMarkType.create({ lockId: lock.id }));
-              changed = true;
-              alreadyMarked = true;
-            }
-          }
-        });
+        // Collect all candidates across the document
+        interface Candidate {
+          from: number;
+          to: number;
+          score: number;
+        }
+        const candidates: Candidate[] = [];
 
-        // If not found in a single text node, check block level textContent
-        if (!alreadyMarked) {
-          tr.doc.descendants((blockNode: any, blockPos: number) => {
-            if (alreadyMarked || !blockNode.isBlock || blockNode.content.size === 0) return;
-            const fullBlockText = blockNode.textContent;
-            const matchIndex = fullBlockText.indexOf(targetText);
-            if (matchIndex !== -1) {
+        let currentSection = '';
+        tr.doc.descendants((node: any, pos: number) => {
+          if (node.type.name === 'heading') {
+            const level = node.attrs.level || 1;
+            const hashes = '#'.repeat(level);
+            currentSection = `${hashes} ${node.textContent.trim()}`;
+            return;
+          }
+
+          if (node.isBlock && node.textContent.includes(targetText)) {
+            const blockText = node.textContent;
+            let searchIndex = 0;
+
+            while (searchIndex < blockText.length) {
+              const matchIdx = blockText.indexOf(targetText, searchIndex);
+              if (matchIdx === -1) break;
+
               let currentOffset = 0;
               let fromPos: number | null = null;
               let toPos: number | null = null;
 
-              blockNode.descendants((child: any, childPos: number) => {
+              node.descendants((child: any, childPos: number) => {
                 if (!child.isText || !child.text) return;
                 const childStart = currentOffset;
                 const childEnd = currentOffset + child.text.length;
 
-                if (fromPos === null && matchIndex >= childStart && matchIndex < childEnd) {
-                  fromPos = blockPos + 1 + childPos + (matchIndex - childStart);
+                if (fromPos === null && matchIdx >= childStart && matchIdx < childEnd) {
+                  fromPos = pos + 1 + childPos + (matchIdx - childStart);
                 }
                 if (
                   toPos === null &&
-                  matchIndex + targetText.length <= childEnd &&
-                  matchIndex + targetText.length > childStart
+                  matchIdx + targetText.length <= childEnd &&
+                  matchIdx + targetText.length > childStart
                 ) {
-                  toPos = blockPos + 1 + childPos + (matchIndex + targetText.length - childStart);
+                  toPos = pos + 1 + childPos + (matchIdx + targetText.length - childStart);
                 }
                 currentOffset += child.text.length;
               });
 
               if (fromPos !== null && toPos !== null) {
-                tr.addMark(fromPos, toPos, lockMarkType.create({ lockId: lock.id }));
-                changed = true;
-                alreadyMarked = true;
+                let score = 1;
+                if (lock.sectionHeading && currentSection) {
+                  if (currentSection === lock.sectionHeading) {
+                    score += 20;
+                  } else if (currentSection.toLowerCase().includes(lock.sectionHeading.toLowerCase())) {
+                    score += 10;
+                  }
+                }
+                if (lock.contextBefore) {
+                  const preceding = blockText.slice(Math.max(0, matchIdx - 60), matchIdx);
+                  if (preceding.includes(lock.contextBefore) || lock.contextBefore.includes(preceding)) {
+                    score += 15;
+                  }
+                }
+                if (lock.contextAfter) {
+                  const succeeding = blockText.slice(
+                    matchIdx + targetText.length,
+                    matchIdx + targetText.length + 60
+                  );
+                  if (succeeding.includes(lock.contextAfter) || lock.contextAfter.includes(succeeding)) {
+                    score += 15;
+                  }
+                }
+
+                candidates.push({ from: fromPos, to: toPos, score });
               }
+
+              searchIndex = matchIdx + targetText.length;
             }
-          });
+          }
+        });
+
+        // Apply lock mark to candidate with highest contextual score
+        if (candidates.length > 0) {
+          candidates.sort((a, b) => b.score - a.score);
+          const best = candidates[0];
+          tr.addMark(best.from, best.to, lockMarkType.create({ lockId: lock.id }));
+          changed = true;
         }
       }
 
@@ -349,6 +393,9 @@ export const App: React.FC = () => {
           setLockPopoverData({
             lockId,
             text: lock?.text || lockHighlight.innerText.replace(/🔒/g, '').trim(),
+            sectionHeading: lock?.sectionHeading,
+            contextBefore: lock?.contextBefore,
+            contextAfter: lock?.contextAfter,
             position: { top: rect.top, left: rect.left },
           });
           return;
@@ -382,6 +429,14 @@ export const App: React.FC = () => {
     if (!editor || !selectionTooltip) return;
 
     const { from, to } = editor.state.selection;
+
+    // Disallow adding notes to locked text
+    const lockMarkType = editor.state.schema.marks.lock;
+    if (lockMarkType && editor.state.doc.rangeHasMark(from, to, lockMarkType)) {
+      setSelectionTooltip(null);
+      return;
+    }
+
     const commentId = crypto.randomUUID();
     const anchorText = selectionTooltip.text;
 
@@ -399,12 +454,41 @@ export const App: React.FC = () => {
     setSelectionTooltip(null);
   };
 
-  // Lock Text from selection tooltip
+  // Lock Text from selection tooltip with Contextual Anchoring
   const handleLockTextFromSelection = async () => {
     if (!editor || !selectionTooltip || !details) return;
 
+    const { from, to } = editor.state.selection;
+
+    // Disallow re-locking if already locked
+    const lockMarkType = editor.state.schema.marks.lock;
+    if (lockMarkType && editor.state.doc.rangeHasMark(from, to, lockMarkType)) {
+      setSelectionTooltip(null);
+      return;
+    }
+
     const text = selectionTooltip.text;
     const lockId = crypto.randomUUID();
+
+    // Contextual Anchoring: Find nearest preceding markdown heading in the document
+    let sectionHeading: string | undefined = undefined;
+    editor.state.doc.nodesBetween(0, from, (node) => {
+      if (node.type.name === 'heading') {
+        const level = node.attrs.level || 1;
+        const hashes = '#'.repeat(level);
+        sectionHeading = `${hashes} ${node.textContent.trim()}`;
+      }
+    });
+
+    // Contextual Anchoring: Extract contextBefore and contextAfter in the current block
+    const $from = editor.state.doc.resolve(from);
+    const blockStart = $from.start();
+    const beforeFull = editor.state.doc.textBetween(blockStart, from, ' ');
+    const contextBefore = beforeFull.slice(-60).trim() || undefined;
+
+    const blockEnd = $from.end();
+    const afterFull = editor.state.doc.textBetween(to, blockEnd, ' ');
+    const contextAfter = afterFull.slice(0, 60).trim() || undefined;
 
     // Apply lock mark in Tiptap
     editor.chain().focus().setLock(lockId).run();
@@ -415,6 +499,9 @@ export const App: React.FC = () => {
       text,
       roundNumber: details.currentRevision?.roundNumber || 1,
       createdAt: Date.now(),
+      sectionHeading,
+      contextBefore,
+      contextAfter,
     };
 
     setLocalLockedTexts((prev) => [...prev, newLock]);
@@ -424,7 +511,13 @@ export const App: React.FC = () => {
       await fetch(`/api/sessions/${details.session.id}/locked-texts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: lockId, text }),
+        body: JSON.stringify({
+          id: lockId,
+          text,
+          sectionHeading,
+          contextBefore,
+          contextAfter,
+        }),
       });
     } catch (err) {
       console.error('Failed to persist locked text:', err);
@@ -580,7 +673,13 @@ export const App: React.FC = () => {
           overallComment,
           status,
           inlineComments: openComments,
-          lockedTexts: localLockedTexts.map((l) => ({ id: l.id, text: l.text })),
+          lockedTexts: localLockedTexts.map((l) => ({
+            id: l.id,
+            text: l.text,
+            sectionHeading: l.sectionHeading,
+            contextBefore: l.contextBefore,
+            contextAfter: l.contextAfter,
+          })),
         }),
       });
 
@@ -688,7 +787,7 @@ export const App: React.FC = () => {
         {/* Left/Center Editorial Reading & Writing Canvas */}
         <main
           className={`flex-1 min-w-0 w-full relative transition-all duration-300 ease-in-out ${
-            isZenMode ? 'max-w-3xl mx-auto' : ''
+            isZenMode ? 'max-w-4xl mx-auto' : ''
           }`}
         >
           {/* Waiting State Notice on Mobile/Tablet */}
@@ -760,7 +859,7 @@ export const App: React.FC = () => {
                   editor.isActive('underline') ? 'bg-white/20 dark:bg-black/20 text-accent-bright dark:text-accent' : ''
                 }`}
               >
-                <Underline className="w-3.5 h-3.5" />
+                <UnderlineIcon className="w-3.5 h-3.5" />
               </button>
 
               <div className="w-[1px] h-4 bg-white/20 dark:bg-black/20 mx-1" />

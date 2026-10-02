@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   Maximize2,
   Minimize2,
+  Lock,
 } from 'lucide-react';
 import { SessionStatus } from '../../shared/types.js';
 

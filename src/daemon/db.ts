@@ -28,7 +28,7 @@ export function getDatabasePath(): string {
 }
 
 export class DatabaseService {
-  private db: DatabaseSync;
+  private db: any;
 
   constructor(dbPath?: string) {
     const resolvedPath = dbPath || getDatabasePath();
@@ -83,9 +83,23 @@ export class DatabaseService {
         text TEXT NOT NULL,
         round_number INTEGER NOT NULL,
         created_at INTEGER NOT NULL,
+        section_heading TEXT,
+        context_before TEXT,
+        context_after TEXT,
         FOREIGN KEY (session_id) REFERENCES sessions(id)
       );
     `);
+
+    // Safely migrate existing databases if columns do not exist
+    try {
+      this.db.exec(`ALTER TABLE locked_texts ADD COLUMN section_heading TEXT;`);
+    } catch {}
+    try {
+      this.db.exec(`ALTER TABLE locked_texts ADD COLUMN context_before TEXT;`);
+    } catch {}
+    try {
+      this.db.exec(`ALTER TABLE locked_texts ADD COLUMN context_after TEXT;`);
+    } catch {}
   }
 
   public generateSessionId(filePath: string): string {
@@ -262,22 +276,50 @@ export class DatabaseService {
       text: l.text,
       roundNumber: l.round_number,
       createdAt: l.created_at,
+      sectionHeading: l.section_heading || undefined,
+      contextBefore: l.context_before || undefined,
+      contextAfter: l.context_after || undefined,
     }));
   }
 
-  public addLockedText(sessionId: string, lock: { id?: string; text: string; roundNumber: number }): LockedText {
+  public addLockedText(
+    sessionId: string,
+    lock: {
+      id?: string;
+      text: string;
+      roundNumber: number;
+      sectionHeading?: string;
+      contextBefore?: string;
+      contextAfter?: string;
+    }
+  ): LockedText {
     const id = lock.id || crypto.randomUUID();
     const now = Date.now();
     this.db.prepare(`
-      INSERT OR REPLACE INTO locked_texts (id, session_id, text, round_number, created_at)
-      VALUES (?, ?, ?, ?, ?)
-    `).run(id, sessionId, lock.text, lock.roundNumber, now);
+      INSERT OR REPLACE INTO locked_texts (
+        id, session_id, text, round_number, created_at,
+        section_heading, context_before, context_after
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      id,
+      sessionId,
+      lock.text,
+      lock.roundNumber,
+      now,
+      lock.sectionHeading || null,
+      lock.contextBefore || null,
+      lock.contextAfter || null
+    );
     return {
       id,
       sessionId,
       text: lock.text,
       roundNumber: lock.roundNumber,
       createdAt: now,
+      sectionHeading: lock.sectionHeading,
+      contextBefore: lock.contextBefore,
+      contextAfter: lock.contextAfter,
     };
   }
 
@@ -379,6 +421,9 @@ export class DatabaseService {
             id: lt.id,
             text: lt.text,
             roundNumber,
+            sectionHeading: lt.sectionHeading,
+            contextBefore: lt.contextBefore,
+            contextAfter: lt.contextAfter,
           });
         }
       }

@@ -16,6 +16,9 @@ export interface GenerateReportOptions {
   lockedTexts?: Array<{
     id?: string;
     text: string;
+    sectionHeading?: string;
+    contextBefore?: string;
+    contextAfter?: string;
   }>;
 }
 
@@ -69,12 +72,24 @@ export function generateAgentReport(options: GenerateReportOptions): string {
   if (lockedTexts && lockedTexts.length > 0) {
     lines.push(`## 🔒 Locked Text Segments (CRITICAL: DO NOT MODIFY)`);
     lines.push(
-      `The reviewer has locked the following text segment(s). They MUST remain VERBATIM in your revision — do not rephrase, edit, or delete:`
+      `The reviewer has locked the following text segment(s). They MUST remain VERBATIM in their designated locations — do not rephrase, edit, or delete:`
     );
     lockedTexts.forEach((lt, idx) => {
-      lines.push(`${idx + 1}. "${lt.text.trim()}"`);
+      const text = lt.text.trim();
+      lines.push(`${idx + 1}. **Target Text**: "${text}"`);
+      if (lt.sectionHeading) {
+        lines.push(`   - **Location**: Under \`${lt.sectionHeading.trim()}\``);
+      }
+      if (lt.contextBefore || lt.contextAfter) {
+        const before = lt.contextBefore ? `...${lt.contextBefore.trim()} ` : '...';
+        const after = lt.contextAfter ? ` ${lt.contextAfter.trim()}...` : '...';
+        lines.push(`   - **Surrounding Context**: "${before}[${text}]${after}"`);
+      }
+      if (lt.sectionHeading) {
+        lines.push(`   - **Scope**: Local to this occurrence in \`${lt.sectionHeading.trim()}\` only. Identical text in other sections may be modified freely.`);
+      }
+      lines.push(``);
     });
-    lines.push(``);
   }
 
   if (diff.hasChanges) {
