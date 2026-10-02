@@ -1,7 +1,7 @@
 import React, { useRef, useMemo, useState, useEffect } from 'react';
 import { EditorContent } from '@tiptap/react';
 import { Revision, SessionStatus } from '../../shared/types.js';
-import { Columns2, Link2, Unlink2, X, Send, Sparkles, CheckCircle2, Loader2, Edit3, Eye } from 'lucide-react';
+import { Columns2, Link2, Unlink2, X, Send, Loader2, Edit3, Eye } from 'lucide-react';
 import { marked } from 'marked';
 
 interface DiffViewerProps {
@@ -15,7 +15,6 @@ interface DiffViewerProps {
   overallComment: string;
   onOverallCommentChange: (val: string) => void;
   onSubmitRevision: () => void;
-  onApprove: () => void;
   isSubmitting: boolean;
 }
 
@@ -30,13 +29,15 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
   overallComment,
   onOverallCommentChange,
   onSubmitRevision,
-  onApprove,
   isSubmitting,
 }) => {
   const leftPaneRef = useRef<HTMLDivElement>(null);
   const rightPaneRef = useRef<HTMLDivElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const [isSyncScroll, setIsSyncScroll] = useState(true);
+  const [isRevisionPopoverOpen, setIsRevisionPopoverOpen] = useState(false);
   const isSyncingLeft = useRef(false);
   const isSyncingRight = useRef(false);
 
@@ -59,10 +60,40 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
     return marked.parse(comparisonRevision?.contentMarkdown || '') as string;
   }, [comparisonRevision]);
 
-  // Listen for Escape key to exit diff
+  // Auto-focus directive textarea when opened
+  useEffect(() => {
+    if (isRevisionPopoverOpen) {
+      setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 50);
+    }
+  }, [isRevisionPopoverOpen]);
+
+  // Handle outside click to close directive popover
+  useEffect(() => {
+    if (!isRevisionPopoverOpen) return;
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
+        setIsRevisionPopoverOpen(false);
+      }
+    };
+    const timer = setTimeout(() => {
+      document.addEventListener('mousedown', handleOutsideClick);
+    }, 50);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('mousedown', handleOutsideClick);
+    };
+  }, [isRevisionPopoverOpen]);
+
+  // Listen for Escape key to close popover or exit diff
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        if (isRevisionPopoverOpen) {
+          setIsRevisionPopoverOpen(false);
+          return;
+        }
         // If an inline comment popover isn't active, close diff
         const popover = document.querySelector('.pujangga-popover');
         if (!popover) {
@@ -72,7 +103,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
+  }, [onClose, isRevisionPopoverOpen]);
 
   // Synced scroll listeners
   const handleLeftScroll = () => {
@@ -177,32 +208,97 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
             <span>{isSyncScroll ? 'ON' : 'OFF'}</span>
           </button>
 
-          {/* Quick Submit Buttons */}
-          <button
-            onClick={onSubmitRevision}
-            disabled={isRevising || isSatisfied || isSubmitting}
-            className="hidden lg:flex items-center gap-1.5 px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white text-xs font-semibold rounded-lg shadow-2xs transition-colors cursor-pointer"
-          >
-            {isSubmitting ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            ) : (
-              <Send className="w-3.5 h-3.5" />
-            )}
-            <span>Request Revision</span>
-          </button>
+          {/* Request Revision Button & Directive Popover */}
+          <div className="relative" ref={popoverRef}>
+            <button
+              type="button"
+              onClick={() => setIsRevisionPopoverOpen((prev) => !prev)}
+              disabled={isRevising || isSatisfied || isSubmitting}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg shadow-2xs transition-colors cursor-pointer disabled:opacity-50 ${
+                isRevisionPopoverOpen
+                  ? 'bg-amber-700 text-white ring-2 ring-amber-500/50'
+                  : 'bg-amber-600 hover:bg-amber-700 text-white'
+              }`}
+            >
+              {isSubmitting ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Send className="w-3.5 h-3.5" />
+              )}
+              <span>Request Revision</span>
+            </button>
 
-          <button
-            onClick={onApprove}
-            disabled={isRevising || isSatisfied || isSubmitting}
-            className="hidden lg:flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-semibold rounded-lg shadow-2xs transition-colors cursor-pointer"
-          >
-            {isSatisfied ? (
-              <CheckCircle2 className="w-3.5 h-3.5" />
-            ) : (
-              <Sparkles className="w-3.5 h-3.5" />
+            {/* Overall Directive Popover */}
+            {isRevisionPopoverOpen && (
+              <div className="fixed sm:absolute right-4 sm:right-0 top-18 sm:top-full mt-2 w-[calc(100vw-2rem)] sm:w-104 bg-white dark:bg-[#1E1C1A] border border-[#E6E0D4] dark:border-[#38332E] rounded-2xl shadow-2xl p-4 z-60 animate-in fade-in zoom-in-95 duration-150 space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-[#F0EBE1] dark:border-[#2C2825]">
+                  <div className="flex items-center gap-2 text-xs font-bold text-[#2C2825] dark:text-[#EDEAE4]">
+                    <Send className="w-3.5 h-3.5 text-amber-600 dark:text-amber-500" />
+                    <span>Revision Directive (Round {currentRound})</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsRevisionPopoverOpen(false)}
+                    className="p-1 rounded-lg text-[#8C827A] hover:text-[#2C2825] dark:hover:text-[#EDEAE4] hover:bg-[#F2EDE4] dark:hover:bg-[#2A2724] transition-colors"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#706B65] dark:text-[#A8A29D] uppercase tracking-wider mb-1.5">
+                    Overall Instructions for AI Agent
+                  </label>
+                  <textarea
+                    ref={textareaRef}
+                    rows={4}
+                    value={overallComment}
+                    onChange={(e) => onOverallCommentChange(e.target.value)}
+                    placeholder="Provide overall guidance for the revision (e.g. improve opening hook, verify latency benchmarks, tighten prose)..."
+                    className="w-full text-xs bg-[#FAF8F5] dark:bg-[#161514] border border-[#E6E0D4] dark:border-[#38332E] text-[#2C2825] dark:text-[#EDEAE4] placeholder-[#A0988F] rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-amber-500/50 resize-y"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                        e.preventDefault();
+                        onSubmitRevision();
+                        setIsRevisionPopoverOpen(false);
+                      }
+                    }}
+                  />
+                  <p className="text-[10px] text-[#A0988F] mt-1">
+                    Tip: Press <kbd className="font-mono bg-[#EFEAE1] dark:bg-[#2C2825] px-1 py-0.5 rounded text-[9px]">⌘+Enter</kbd> to submit.
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setIsRevisionPopoverOpen(false)}
+                    disabled={isSubmitting}
+                    className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-[#DCD5C8] dark:border-[#38332E] text-[#635E59] dark:text-[#A8A29D] hover:bg-[#F5F2EB] dark:hover:bg-[#252220] transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSubmitRevision();
+                      setIsRevisionPopoverOpen(false);
+                    }}
+                    disabled={isSubmitting || isRevising}
+                    className="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-amber-600 hover:bg-amber-700 text-white shadow-xs flex items-center gap-1.5 transition-colors disabled:opacity-50 cursor-pointer"
+                  >
+                    {isSubmitting ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Send className="w-3.5 h-3.5" />
+                    )}
+                    <span>Submit Revision</span>
+                  </button>
+                </div>
+              </div>
             )}
-            <span>Satisfied ✨</span>
-          </button>
+          </div>
 
           {/* Close Diff Button */}
           <button

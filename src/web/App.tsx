@@ -465,7 +465,6 @@ export const App: React.FC = () => {
               overallComment={overallComment}
               onOverallCommentChange={setOverallComment}
               onSubmitRevision={() => submitReview('NEEDS_REVISION')}
-              onApprove={handleRequestApprove}
               isSubmitting={isSubmitting}
             />
           ) : (

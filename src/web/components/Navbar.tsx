@@ -63,19 +63,14 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
 
-        {/* Center: Live Status Indicator (Only shown during active transition) */}
+        {/* Center: Status Indicator */}
         <div className="hidden md:flex items-center gap-2 text-xs">
-          {status === 'revising' ? (
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100/70 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 animate-pulse font-medium">
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              <span>Agent is revising...</span>
-            </div>
-          ) : status === 'satisfied' ? (
+          {status === 'satisfied' && (
             <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100/70 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 font-medium">
               <CheckCircle2 className="w-3.5 h-3.5" />
               <span>Review Approved</span>
             </div>
-          ) : null}
+          )}
         </div>
 
         {/* Right: Controls & Toggles */}
