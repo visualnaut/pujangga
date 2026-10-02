@@ -56,7 +56,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
           <button
             onClick={onSubmitRevision}
             disabled={isRevising || isSatisfied || isSubmitting}
-            className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 bg-accent hover:bg-accent-hover disabled:opacity-50 text-white text-xs font-semibold rounded-xl shadow-xs transition-all cursor-pointer"
+            className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 bg-accent hover:bg-accent-hover disabled:opacity-50 text-white text-sm font-semibold rounded-xl shadow-xs transition-all cursor-pointer"
           >
             {isSubmitting ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -69,7 +69,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
           <button
             onClick={onApprove}
             disabled={isRevising || isSatisfied || isSubmitting}
-            className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 bg-success hover:bg-success-hover disabled:opacity-50 text-white text-xs font-semibold rounded-xl shadow-xs transition-all cursor-pointer"
+            className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 bg-success hover:bg-success-hover disabled:opacity-50 text-white text-sm font-semibold rounded-xl shadow-xs transition-all cursor-pointer"
           >
             {isSatisfied ? (
               <CheckCircle2 className="w-3.5 h-3.5" />

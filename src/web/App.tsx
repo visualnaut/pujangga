@@ -373,7 +373,7 @@ export const App: React.FC = () => {
           <p className="text-sm text-ink-muted dark:text-night-text-muted mb-6">
             {error || 'Start a review by executing `pujangga <filepath>` from your terminal or agent harness.'}
           </p>
-          <div className="text-xs bg-paper dark:bg-night-surface p-3 rounded-lg font-mono text-ink-subtle border border-paper-border-subtle dark:border-night-border">
+          <div className="text-sm bg-paper dark:bg-night-surface p-3 rounded-lg font-mono text-ink-subtle border border-paper-border-subtle dark:border-night-border">
             $ npx -y pujangga draft.md
           </div>
         </div>
@@ -413,7 +413,7 @@ export const App: React.FC = () => {
                 <p className="text-sm font-semibold text-accent-text dark:text-accent-text-dark">
                   Agent is revising Round {currentRound}...
                 </p>
-                <p className="text-xs text-accent dark:text-accent-pin">
+                <p className="text-sm text-accent dark:text-accent-pin">
                   Keep this tab open. It will automatically update once the agent completes the revision.
                 </p>
               </div>
@@ -430,7 +430,7 @@ export const App: React.FC = () => {
                 <h3 className="text-base font-bold text-success-text dark:text-success-text-dark font-serif">
                   Review Concluded & Approved!
                 </h3>
-                <p className="text-xs text-success-icon dark:text-success-icon-dark">
+                <p className="text-sm text-success-icon dark:text-success-icon-dark">
                   The target file on disk contains your approved text.
                 </p>
               </div>
@@ -440,7 +440,7 @@ export const App: React.FC = () => {
           {/* Selection Tooltip for Adding Notes (available both in standard canvas and floating diff view) */}
           {selectionTooltip && details.session.status === 'active' && (
             <div
-              className="fixed z-60 transform -translate-x-1/2 -translate-y-full mb-2 bg-ink dark:bg-paper text-white dark:text-night px-3 py-1.5 rounded-lg shadow-xl flex items-center gap-1.5 text-xs font-semibold cursor-pointer hover:scale-105 transition-all select-none animate-in fade-in zoom-in-95 border border-black/10 dark:border-white/10"
+              className="fixed z-60 transform -translate-x-1/2 -translate-y-full mb-2 bg-ink dark:bg-paper text-white dark:text-night px-3 py-1.5 rounded-lg shadow-xl flex items-center gap-1.5 text-sm font-semibold cursor-pointer hover:scale-105 transition-all select-none animate-in fade-in zoom-in-95 border border-black/10 dark:border-white/10"
               style={{
                 top: selectionTooltip.position.top - 8,
                 left: selectionTooltip.position.left,

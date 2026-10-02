@@ -82,7 +82,7 @@ export const CommentPopover: React.FC<CommentPopoverProps> = ({
       }}
     >
       <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-paper-border-light dark:border-night-border">
-        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-accent dark:text-accent-pin">
+        <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-accent dark:text-accent-pin">
           <MessageSquare className="w-3.5 h-3.5" />
           <span>{data.isNew ? 'New Inline Note' : 'Inline Note'}</span>
         </div>
@@ -95,7 +95,7 @@ export const CommentPopover: React.FC<CommentPopoverProps> = ({
         </button>
       </div>
 
-      <div className="mb-2.5 text-xs text-ink-muted dark:text-night-text-muted italic bg-paper-muted dark:bg-night-subtle p-2.5 rounded-lg line-clamp-2 border border-paper-border-subtle dark:border-night-border-subtle">
+      <div className="mb-2.5 text-sm text-ink-muted dark:text-night-text-muted italic bg-paper-muted dark:bg-night-subtle p-2.5 rounded-lg line-clamp-2 border border-paper-border-subtle dark:border-night-border-subtle">
         "{data.anchorText}"
       </div>
 
@@ -112,7 +112,7 @@ export const CommentPopover: React.FC<CommentPopoverProps> = ({
       <div className="flex items-center justify-between mt-3 pt-2 border-t border-paper-border-light dark:border-night-border">
         <button
           onClick={() => onDelete(data.commentId)}
-          className="flex items-center gap-1.5 text-xs text-danger hover:text-danger-hover dark:text-danger-text-dark p-1.5 rounded-lg hover:bg-danger-subtle dark:hover:bg-danger-subtle-dark transition-colors cursor-pointer font-medium"
+          className="flex items-center gap-1.5 text-sm text-danger hover:text-danger-hover dark:text-danger-text-dark p-1.5 rounded-lg hover:bg-danger-subtle dark:hover:bg-danger-subtle-dark transition-colors cursor-pointer font-medium"
         >
           <Trash2 className="w-3.5 h-3.5" />
           <span>Remove Note</span>
@@ -121,7 +121,7 @@ export const CommentPopover: React.FC<CommentPopoverProps> = ({
         <button
           onClick={handleSave}
           disabled={!text.trim()}
-          className="flex items-center gap-1.5 px-3.5 py-1.5 bg-accent hover:bg-accent-hover disabled:opacity-50 text-white text-xs font-semibold rounded-xl shadow-xs transition-all cursor-pointer"
+          className="flex items-center gap-1.5 px-3.5 py-1.5 bg-accent hover:bg-accent-hover disabled:opacity-50 text-white text-sm font-semibold rounded-xl shadow-xs transition-all cursor-pointer"
         >
           <Check className="w-3.5 h-3.5" />
           <span>Save Note</span>

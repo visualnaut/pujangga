@@ -36,7 +36,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
           <h3 className="text-sm font-bold uppercase tracking-wider text-ink-muted dark:text-night-text-muted">
             Editorial Directives
           </h3>
-          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-paper-subtle dark:bg-night-subtle text-ink-muted dark:text-night-text-muted">
+          <span className="text-sm px-2.5 py-0.5 rounded-full font-medium bg-paper-subtle dark:bg-night-subtle text-ink-muted dark:text-night-text-muted">
             Round {roundNumber}
           </span>
         </div>
@@ -45,7 +45,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
         {isRevising ? (
           <div className="mb-4 p-3.5 rounded-xl bg-accent-subtle dark:bg-accent-subtle-dark border border-accent-border dark:border-accent-border-dark flex items-start gap-3">
             <Loader2 className="w-4 h-4 text-accent dark:text-accent-pin animate-spin mt-0.5 shrink-0" />
-            <div className="text-xs text-accent-text dark:text-accent-text-dark">
+            <div className="text-sm text-accent-text dark:text-accent-text-dark">
               <span className="font-semibold block mb-0.5">Agent is Revising...</span>
               Keep this tab open. It will automatically re-render when Round {roundNumber + 1} arrives.
             </div>
@@ -53,7 +53,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
         ) : isSatisfied ? (
           <div className="mb-4 p-3.5 rounded-xl bg-success-subtle dark:bg-success-subtle-dark border border-success-border dark:border-success-border-dark flex items-start gap-3">
             <CheckCircle2 className="w-4 h-4 text-success-icon dark:text-success-icon-dark mt-0.5 shrink-0" />
-            <div className="text-xs text-success-text dark:text-success-text-dark">
+            <div className="text-sm text-success-text dark:text-success-text-dark">
               <span className="font-semibold block mb-0.5">Writing Approved!</span>
               The target file on disk contains your approved text. The review loop has completed.
             </div>
@@ -62,7 +62,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
 
         {/* Overall Directive Textarea */}
         <div className="mb-4">
-          <label className="block text-xs font-medium text-ink-muted dark:text-night-text-muted mb-1.5">
+          <label className="block text-sm font-medium text-ink-muted dark:text-night-text-muted mb-1.5">
             Overall Directive for Agent
           </label>
           <textarea
@@ -117,8 +117,8 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
         </div>
 
         <div className="mt-3 pt-3 border-t border-paper-border-light dark:border-night-border text-center">
-          <span className="text-[11px] text-ink-faint">
-            Shortcut: <kbd className="px-1.5 py-0.5 rounded bg-paper dark:bg-night-input border border-paper-border dark:border-night-border-strong">⌘ + ↵</kbd> to submit
+          <span className="text-sm text-ink-faint">
+            Shortcut: <kbd className="px-1.5 py-0.5 rounded bg-paper dark:bg-night-input border border-paper-border dark:border-night-border-strong text-sm">⌘ + ↵</kbd> to submit
           </span>
         </div>
       </div>
@@ -127,7 +127,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
       {totalCommentsCount > 0 && (
         <button
           onClick={onOpenCommentHistory}
-          className="flex items-center justify-between p-3.5 bg-paper-card dark:bg-night-card rounded-xl border border-paper-border dark:border-night-border-strong hover:border-accent-pin/50 text-xs font-semibold text-ink-muted dark:text-night-text-muted shadow-xs transition-colors cursor-pointer"
+          className="flex items-center justify-between p-3.5 bg-paper-card dark:bg-night-card rounded-xl border border-paper-border dark:border-night-border-strong hover:border-accent-pin/50 text-sm font-semibold text-ink-muted dark:text-night-text-muted shadow-xs transition-colors cursor-pointer"
         >
           <div className="flex items-center gap-2">
             <History className="w-4 h-4 text-accent dark:text-accent-pin" />

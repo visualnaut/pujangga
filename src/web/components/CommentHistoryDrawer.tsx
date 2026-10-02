@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { InlineComment, Revision } from '../../shared/types.js';
 import { History, X, Clock, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
 
@@ -74,14 +74,64 @@ export const CommentHistoryDrawer: React.FC<CommentHistoryDrawerProps> = ({
   revisions,
   currentRound,
 }) => {
-  if (!isOpen) return null;
+  const [shouldRender, setShouldRender] = useState(isOpen);
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setShouldRender(true);
+      const frame = requestAnimationFrame(() => {
+        setIsAnimating(true);
+      });
+      return () => cancelAnimationFrame(frame);
+    } else {
+      setIsAnimating(false);
+      const timer = setTimeout(() => {
+        setShouldRender(false);
+      }, 250);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
+
+  const handleClose = () => {
+    setIsAnimating(false);
+    setTimeout(() => {
+      onClose();
+    }, 250);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleClose();
+      }
+    };
+
+    if (shouldRender) {
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [shouldRender]);
+
+  if (!shouldRender) return null;
 
   // Sort comments by round and timestamp descending (most recent first)
   const sortedComments = [...comments].sort((a, b) => b.createdAt - a.createdAt);
 
   return (
-    <div className="fixed inset-0 z-70 overflow-hidden bg-black/40 backdrop-blur-xs flex justify-end transition-opacity animate-in fade-in duration-200">
-      <div className="w-full max-w-xl bg-paper-card dark:bg-night-card h-full shadow-2xl flex flex-col border-l border-paper-border dark:border-night-border-strong">
+    <div
+      className={`fixed inset-0 z-70 overflow-hidden bg-black/40 backdrop-blur-xs flex justify-end transition-opacity duration-250 ease-out ${
+        isAnimating ? 'opacity-100' : 'opacity-0 pointer-events-none'
+      }`}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) handleClose();
+      }}
+    >
+      <div
+        className={`w-full max-w-xl bg-paper-card dark:bg-night-card h-full shadow-2xl flex flex-col border-l border-paper-border dark:border-night-border-strong transform transition-transform duration-250 ease-out ${
+          isAnimating ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
         {/* Header */}
         <div className="p-5 border-b border-paper-border-light dark:border-night-border flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -92,14 +142,14 @@ export const CommentHistoryDrawer: React.FC<CommentHistoryDrawerProps> = ({
               <h3 className="font-bold text-base text-ink dark:text-night-text">
                 Comment History
               </h3>
-              <p className="text-xs text-ink-subtle dark:text-night-text-muted">
+              <p className="text-sm text-ink-subtle dark:text-night-text-muted">
                 Track what you commented and how the agent revised each section.
               </p>
             </div>
           </div>
           <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-ink-subtle hover:text-ink dark:hover:text-night-text hover:bg-paper-hover dark:hover:bg-night-hover transition-colors"
+            onClick={handleClose}
+            className="p-1.5 rounded-lg text-ink-subtle hover:text-ink dark:hover:text-night-text hover:bg-paper-hover dark:hover:bg-night-hover transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -113,7 +163,7 @@ export const CommentHistoryDrawer: React.FC<CommentHistoryDrawerProps> = ({
               <p className="text-sm font-medium text-ink-muted dark:text-night-text-muted">
                 No comments have been recorded yet.
               </p>
-              <p className="text-xs text-ink-faint mt-1">
+              <p className="text-sm text-ink-faint mt-1">
                 Highlight text in the editor to attach inline review notes.
               </p>
             </div>
@@ -128,30 +178,30 @@ export const CommentHistoryDrawer: React.FC<CommentHistoryDrawerProps> = ({
                 >
                   {/* Round & Status Header */}
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-accent-text dark:text-accent-text-dark bg-accent-subtle dark:bg-accent-subtle-dark px-2 py-0.5 rounded-md border border-accent-border dark:border-accent-border-dark">
+                    <span className="text-sm font-bold uppercase tracking-wider text-accent-text dark:text-accent-text-dark bg-accent-subtle dark:bg-accent-subtle-dark px-2.5 py-0.5 rounded-md border border-accent-border dark:border-accent-border-dark">
                       Round {comment.roundNumber} Note
                     </span>
-                    <span className="text-[11px] text-ink-faint">
+                    <span className="text-sm text-ink-faint">
                       {new Date(comment.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
 
                   {/* 1. Commented Text */}
                   <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-ink-subtle dark:text-night-text-muted block mb-1">
+                    <span className="text-sm font-semibold uppercase tracking-wider text-ink-subtle dark:text-night-text-muted block mb-1">
                       Commented Text
                     </span>
-                    <div className="text-xs font-serif italic text-ink-secondary dark:text-night-text-quote bg-paper-card dark:bg-night-darker p-2.5 rounded-xl border border-paper-border dark:border-night-border">
+                    <div className="text-sm font-serif italic text-ink-secondary dark:text-night-text-quote bg-paper-card dark:bg-night-darker p-2.5 rounded-xl border border-paper-border dark:border-night-border">
                       "{comment.anchorText}"
                     </div>
                   </div>
 
                   {/* 2. Reviewer Comment */}
                   <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-ink-subtle dark:text-night-text-muted block mb-1">
+                    <span className="text-sm font-semibold uppercase tracking-wider text-ink-subtle dark:text-night-text-muted block mb-1">
                       Your Critique / Directive
                     </span>
-                    <div className="text-xs text-ink dark:text-night-text bg-paper-card dark:bg-night-darker p-2.5 rounded-xl border border-paper-border dark:border-night-border font-medium leading-relaxed">
+                    <div className="text-sm text-ink dark:text-night-text bg-paper-card dark:bg-night-darker p-2.5 rounded-xl border border-paper-border dark:border-night-border font-medium leading-relaxed">
                       {comment.commentText}
                     </div>
                   </div>
@@ -160,19 +210,19 @@ export const CommentHistoryDrawer: React.FC<CommentHistoryDrawerProps> = ({
                   <div>
                     <div className="flex items-center gap-1.5 mb-1">
                       {agentChange.status === 'revised' ? (
-                        <CheckCircle2 className="w-3.5 h-3.5 text-success-icon dark:text-success-icon-dark" />
+                        <CheckCircle2 className="w-4 h-4 text-success-icon dark:text-success-icon-dark" />
                       ) : agentChange.status === 'unchanged' ? (
-                        <AlertCircle className="w-3.5 h-3.5 text-accent dark:text-accent-pin" />
+                        <AlertCircle className="w-4 h-4 text-accent dark:text-accent-pin" />
                       ) : (
-                        <Clock className="w-3.5 h-3.5 text-ink-subtle" />
+                        <Clock className="w-4 h-4 text-ink-subtle" />
                       )}
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-ink-subtle dark:text-night-text-muted">
+                      <span className="text-sm font-semibold uppercase tracking-wider text-ink-subtle dark:text-night-text-muted">
                         Agent Change (Round {agentChange.nextRoundNumber})
                       </span>
                     </div>
 
                     <div
-                      className={`text-xs p-2.5 rounded-xl border leading-relaxed ${
+                      className={`text-sm p-2.5 rounded-xl border leading-relaxed ${
                         agentChange.status === 'revised'
                           ? 'bg-success-subtle dark:bg-success-subtle-dark text-success-text dark:text-success-text-dark border-success-border dark:border-success-border-dark'
                           : agentChange.status === 'unchanged'
@@ -190,11 +240,11 @@ export const CommentHistoryDrawer: React.FC<CommentHistoryDrawerProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-paper-border-light dark:border-night-border bg-paper dark:bg-night-surface flex items-center justify-between text-xs text-ink-subtle">
+        <div className="p-4 border-t border-paper-border-light dark:border-night-border bg-paper dark:bg-night-surface flex items-center justify-between text-sm text-ink-subtle">
           <span>{comments.length} total note{comments.length !== 1 ? 's' : ''} across all rounds</span>
           <button
-            onClick={onClose}
-            className="px-4 py-2 bg-ink dark:bg-night-text text-white dark:text-night font-semibold rounded-xl text-xs hover:opacity-90 transition-opacity cursor-pointer"
+            onClick={handleClose}
+            className="px-4 py-2 bg-ink dark:bg-night-text text-white dark:text-night font-semibold rounded-xl text-sm hover:opacity-90 transition-opacity cursor-pointer"
           >
             Close
           </button>
