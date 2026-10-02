@@ -75,7 +75,7 @@ export const CommentPopover: React.FC<CommentPopoverProps> = ({
   return (
     <div
       ref={popoverRef}
-      className="fixed z-50 w-84 bg-white dark:bg-[#1E1C1A] border border-[#E6E0D4] dark:border-[#38332E] rounded-2xl shadow-2xl p-4 transition-all animate-in fade-in zoom-in-95 duration-150"
+      className="pujangga-popover fixed z-70 w-84 bg-white dark:bg-[#1E1C1A] border border-[#E6E0D4] dark:border-[#38332E] rounded-2xl shadow-2xl p-4 transition-all animate-in fade-in zoom-in-95 duration-150"
       style={{
         top: Math.max(16, Math.min(window.innerHeight - 280, data.position.top + 28)),
         left: Math.max(16, Math.min(window.innerWidth - 360, data.position.left)),

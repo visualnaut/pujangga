@@ -1,54 +1,82 @@
-import React, { useRef, useMemo } from 'react';
-import { Revision } from '../../shared/types.js';
-import { Columns2, ArrowRight, X, Sparkles } from 'lucide-react';
+import React, { useRef, useMemo, useState, useEffect } from 'react';
+import { EditorContent } from '@tiptap/react';
+import { Revision, SessionStatus } from '../../shared/types.js';
+import { Columns2, Link2, Unlink2, X, Send, Sparkles, CheckCircle2, Loader2, Edit3, Eye } from 'lucide-react';
 import { marked } from 'marked';
 
 interface DiffViewerProps {
   revisions: Revision[];
-  selectedLeftRound: number;
-  selectedRightRound: number;
-  onSelectLeftRound: (round: number) => void;
-  onSelectRightRound: (round: number) => void;
+  currentRound: number;
+  comparisonRound: number;
+  onChangeComparisonRound: (round: number) => void;
   onClose: () => void;
+  editor: any;
+  status: SessionStatus;
+  overallComment: string;
+  onOverallCommentChange: (val: string) => void;
+  onSubmitRevision: () => void;
+  onApprove: () => void;
+  isSubmitting: boolean;
 }
 
 export const DiffViewer: React.FC<DiffViewerProps> = ({
   revisions,
-  selectedLeftRound,
-  selectedRightRound,
-  onSelectLeftRound,
-  onSelectRightRound,
+  currentRound,
+  comparisonRound,
+  onChangeComparisonRound,
   onClose,
+  editor,
+  status,
+  overallComment,
+  onOverallCommentChange,
+  onSubmitRevision,
+  onApprove,
+  isSubmitting,
 }) => {
   const leftPaneRef = useRef<HTMLDivElement>(null);
   const rightPaneRef = useRef<HTMLDivElement>(null);
 
+  const [isSyncScroll, setIsSyncScroll] = useState(true);
   const isSyncingLeft = useRef(false);
   const isSyncingRight = useRef(false);
 
-  // Retrieve content for selected rounds
-  const leftRevision = useMemo(() => {
-    return revisions.find((r) => r.roundNumber === selectedLeftRound) || revisions[0];
-  }, [revisions, selectedLeftRound]);
+  // Available rounds for comparison (exclude currentRound so user cannot select the same round)
+  const availableComparisonRounds = useMemo(() => {
+    return revisions.filter((r) => r.roundNumber !== currentRound);
+  }, [revisions, currentRound]);
 
-  const rightRevision = useMemo(() => {
+  // Retrieve content for selected comparison round
+  const comparisonRevision = useMemo(() => {
     return (
-      revisions.find((r) => r.roundNumber === selectedRightRound) ||
-      revisions[revisions.length - 1]
+      revisions.find((r) => r.roundNumber === comparisonRound) ||
+      availableComparisonRounds[availableComparisonRounds.length - 1] ||
+      revisions[0]
     );
-  }, [revisions, selectedRightRound]);
+  }, [revisions, comparisonRound, availableComparisonRounds]);
 
-  // Convert markdown to clean HTML without any color highlighting
-  const leftHtml = useMemo(() => {
-    return marked.parse(leftRevision?.contentMarkdown || '') as string;
-  }, [leftRevision]);
+  // Convert comparison markdown to clean HTML without color coding
+  const comparisonHtml = useMemo(() => {
+    return marked.parse(comparisonRevision?.contentMarkdown || '') as string;
+  }, [comparisonRevision]);
 
-  const rightHtml = useMemo(() => {
-    return marked.parse(rightRevision?.contentMarkdown || '') as string;
-  }, [rightRevision]);
+  // Listen for Escape key to exit diff
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        // If an inline comment popover isn't active, close diff
+        const popover = document.querySelector('.pujangga-popover');
+        if (!popover) {
+          onClose();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   // Synced scroll listeners
   const handleLeftScroll = () => {
+    if (!isSyncScroll) return;
     if (isSyncingLeft.current) {
       isSyncingLeft.current = false;
       return;
@@ -68,6 +96,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
   };
 
   const handleRightScroll = () => {
+    if (!isSyncScroll) return;
     if (isSyncingRight.current) {
       isSyncingRight.current = false;
       return;
@@ -86,100 +115,159 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
     left.scrollTop = scrollPercentage * maxScrollLeft;
   };
 
+  const isRevising = status === 'revising';
+  const isSatisfied = status === 'satisfied';
+
   return (
-    <div className="bg-white dark:bg-[#1A1816] rounded-2xl border border-[#E6E0D4] dark:border-[#38332E] shadow-sm flex flex-col transition-colors overflow-hidden">
-      {/* Diff Controls Header */}
-      <div className="p-4 sm:p-5 border-b border-[#F0EBE1] dark:border-[#2C2825] bg-[#FAF8F5]/80 dark:bg-[#151413]/80 flex flex-wrap items-center justify-between gap-4">
-        {/* Left & Right Round Pickers */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-500">
-            <Columns2 className="w-4 h-4" />
-            <span className="hidden sm:inline">Side-by-Side</span>
+    <div className="fixed inset-0 z-50 bg-[#FAF8F5] dark:bg-[#121110] flex flex-col transition-colors animate-in fade-in duration-150">
+      {/* Top Floating Full-Width Header Bar */}
+      <header className="h-16 px-4 sm:px-6 bg-white/95 dark:bg-[#181615]/95 border-b border-[#E6E0D4] dark:border-[#2C2825] flex items-center justify-between gap-4 backdrop-blur-md shrink-0 shadow-xs">
+        {/* Left: Round Configuration */}
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-amber-600 dark:bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-2xs">
+              <Columns2 className="w-4 h-4" />
+            </div>
+            <span className="font-serif font-bold text-sm text-[#2C2825] dark:text-[#EDEAE4] hidden sm:inline">
+              Side-by-Side Review
+            </span>
           </div>
 
+          <div className="h-4 w-px bg-[#DCD5C8] dark:bg-[#38332E] hidden sm:block" />
+
+          {/* Comparison Round Picker */}
           <div className="flex items-center gap-2">
-            {/* Left Round Select */}
+            <span className="text-xs font-semibold text-[#706B65] dark:text-[#A8A29D]">
+              Comparing against:
+            </span>
             <select
-              value={selectedLeftRound}
-              onChange={(e) => onSelectLeftRound(Number(e.target.value))}
-              className="text-xs font-semibold bg-white dark:bg-[#201D1B] border border-[#E6E0D4] dark:border-[#38332E] text-[#2C2825] dark:text-[#EDEAE4] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-500/50 cursor-pointer shadow-2xs"
+              value={comparisonRevision?.roundNumber || comparisonRound}
+              onChange={(e) => onChangeComparisonRound(Number(e.target.value))}
+              disabled={availableComparisonRounds.length === 0}
+              className="text-xs font-bold bg-[#FAF8F5] dark:bg-[#201D1B] border border-[#E6E0D4] dark:border-[#38332E] text-[#2C2825] dark:text-[#EDEAE4] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-500/50 cursor-pointer shadow-2xs"
             >
-              {revisions.map((r) => (
+              {availableComparisonRounds.map((r) => (
                 <option key={r.roundNumber} value={r.roundNumber}>
-                  Round {r.roundNumber}
-                </option>
-              ))}
-            </select>
-
-            <span className="text-xs text-[#8C827A] font-medium">vs</span>
-
-            {/* Right Round Select */}
-            <select
-              value={selectedRightRound}
-              onChange={(e) => onSelectRightRound(Number(e.target.value))}
-              className="text-xs font-semibold bg-white dark:bg-[#201D1B] border border-[#E6E0D4] dark:border-[#38332E] text-[#2C2825] dark:text-[#EDEAE4] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-500/50 cursor-pointer shadow-2xs"
-            >
-              {revisions.map((r) => (
-                <option key={r.roundNumber} value={r.roundNumber}>
-                  Round {r.roundNumber}
+                  Round {r.roundNumber} {r.roundNumber === currentRound - 1 ? '(Previous)' : ''}
                 </option>
               ))}
             </select>
           </div>
         </div>
 
-        {/* Right: Synced Scroll Badge & Close */}
-        <div className="flex items-center gap-3">
-          <span className="hidden sm:inline-block text-[11px] text-[#8C827A] dark:text-[#A8A29D]">
-            Synced scroll active
-          </span>
+        {/* Right: Controls & Actions */}
+        <div className="flex items-center gap-2.5">
+          {/* Synced Scroll Toggle */}
+          <button
+            type="button"
+            onClick={() => setIsSyncScroll((v) => !v)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer select-none ${
+              isSyncScroll
+                ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800'
+                : 'bg-[#FAF8F5] dark:bg-[#1E1C1A] text-[#8C827A] dark:text-[#A8A29D] border-[#E6E0D4] dark:border-[#38332E]'
+            }`}
+            title={isSyncScroll ? 'Click to disable synced scroll' : 'Click to enable synced scroll'}
+          >
+            {isSyncScroll ? (
+              <Link2 className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+            ) : (
+              <Unlink2 className="w-3.5 h-3.5 text-[#8C827A]" />
+            )}
+            <span className="hidden md:inline">Synced Scroll:</span>
+            <span>{isSyncScroll ? 'ON' : 'OFF'}</span>
+          </button>
+
+          {/* Quick Submit Buttons */}
+          <button
+            onClick={onSubmitRevision}
+            disabled={isRevising || isSatisfied || isSubmitting}
+            className="hidden lg:flex items-center gap-1.5 px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white text-xs font-semibold rounded-lg shadow-2xs transition-colors cursor-pointer"
+          >
+            {isSubmitting ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Send className="w-3.5 h-3.5" />
+            )}
+            <span>Request Revision</span>
+          </button>
+
+          <button
+            onClick={onApprove}
+            disabled={isRevising || isSatisfied || isSubmitting}
+            className="hidden lg:flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-semibold rounded-lg shadow-2xs transition-colors cursor-pointer"
+          >
+            {isSatisfied ? (
+              <CheckCircle2 className="w-3.5 h-3.5" />
+            ) : (
+              <Sparkles className="w-3.5 h-3.5" />
+            )}
+            <span>Satisfied ✨</span>
+          </button>
+
+          {/* Close Diff Button */}
           <button
             onClick={onClose}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#FAF8F5] dark:bg-[#201D1B] hover:bg-[#F2EDE4] dark:hover:bg-[#2A2724] border border-[#E6E0D4] dark:border-[#38332E] text-xs font-medium text-[#706B65] dark:text-[#EDEAE4] rounded-lg transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#2C2825] dark:bg-[#EDEAE4] text-white dark:text-[#121110] hover:opacity-90 text-xs font-semibold rounded-lg transition-opacity cursor-pointer shadow-xs"
+            title="Exit diff mode (Esc)"
           >
             <X className="w-3.5 h-3.5" />
             <span>Close Diff</span>
           </button>
         </div>
-      </div>
+      </header>
 
-      {/* Side-by-Side Scrollable Panes */}
-      <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-[#F0EBE1] dark:divide-[#2C2825] h-[75vh]">
-        {/* Left Pane (Round A) */}
-        <div className="flex flex-col min-h-0 h-full">
-          <div className="px-6 py-2.5 bg-[#FAF8F5]/50 dark:bg-[#141312]/50 border-b border-[#F0EBE1] dark:border-[#2C2825] flex items-center justify-between text-xs font-semibold text-[#8C827A] dark:text-[#A8A29D]">
-            <span>Round {selectedLeftRound}</span>
-            <span className="text-[10px] uppercase tracking-wider text-[#A0988F]">Base Version</span>
+      {/* Dual Column Side-by-Side Canvas Covering Full Viewport Width */}
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-[#E6E0D4] dark:divide-[#2C2825] min-h-0 overflow-hidden">
+        {/* Left Column: Current Draft (Editable & Commentable) */}
+        <div className="flex flex-col min-h-0 h-full bg-white dark:bg-[#1A1816]">
+          <div className="px-6 py-2.5 bg-[#FAF8F5]/90 dark:bg-[#151413]/90 border-b border-[#F0EBE1] dark:border-[#2C2825] flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-2">
+              <Edit3 className="w-3.5 h-3.5 text-amber-600 dark:text-amber-500" />
+              <span className="text-xs font-bold text-[#2C2825] dark:text-[#EDEAE4]">
+                Round {currentRound} (Current Draft)
+              </span>
+            </div>
+            <span className="text-[11px] font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-full border border-amber-200/60 dark:border-amber-800/40">
+              Live Editing & Notes Active
+            </span>
           </div>
+
           <div
             ref={leftPaneRef}
             onScroll={handleLeftScroll}
-            className="flex-1 overflow-y-auto p-6 sm:p-8 md:p-10"
+            className="flex-1 overflow-y-auto p-6 sm:p-10 md:p-14"
           >
-            <div
-              className="editorial-prose"
-              dangerouslySetInnerHTML={{ __html: leftHtml }}
-            />
+            <div className="max-w-2xl mx-auto">
+              <EditorContent editor={editor} />
+            </div>
           </div>
         </div>
 
-        {/* Right Pane (Round B) */}
-        <div className="flex flex-col min-h-0 h-full">
-          <div className="px-6 py-2.5 bg-[#FAF8F5]/50 dark:bg-[#141312]/50 border-b border-[#F0EBE1] dark:border-[#2C2825] flex items-center justify-between text-xs font-semibold text-[#8C827A] dark:text-[#A8A29D]">
-            <span>Round {selectedRightRound}</span>
-            <span className="text-[10px] uppercase tracking-wider text-amber-600 dark:text-amber-500">
-              Target Version
+        {/* Right Column: Historical Reference (Clean Rendered Markdown) */}
+        <div className="flex flex-col min-h-0 h-full bg-[#FAF8F5]/40 dark:bg-[#141312]/40">
+          <div className="px-6 py-2.5 bg-[#FAF8F5]/90 dark:bg-[#151413]/90 border-b border-[#F0EBE1] dark:border-[#2C2825] flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-2">
+              <Eye className="w-3.5 h-3.5 text-[#8C827A]" />
+              <span className="text-xs font-bold text-[#706B65] dark:text-[#A8A29D]">
+                Round {comparisonRevision?.roundNumber} (Reference)
+              </span>
+            </div>
+            <span className="text-[11px] text-[#A0988F] uppercase tracking-wider font-semibold">
+              Read-Only
             </span>
           </div>
+
           <div
             ref={rightPaneRef}
             onScroll={handleRightScroll}
-            className="flex-1 overflow-y-auto p-6 sm:p-8 md:p-10"
+            className="flex-1 overflow-y-auto p-6 sm:p-10 md:p-14"
           >
-            <div
-              className="editorial-prose"
-              dangerouslySetInnerHTML={{ __html: rightHtml }}
-            />
+            <div className="max-w-2xl mx-auto">
+              <div
+                className="editorial-prose"
+                dangerouslySetInnerHTML={{ __html: comparisonHtml }}
+              />
+            </div>
           </div>
         </div>
       </div>

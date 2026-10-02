@@ -80,7 +80,7 @@ export const CommentHistoryDrawer: React.FC<CommentHistoryDrawerProps> = ({
   const sortedComments = [...comments].sort((a, b) => b.createdAt - a.createdAt);
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden bg-black/40 backdrop-blur-xs flex justify-end transition-opacity animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-70 overflow-hidden bg-black/40 backdrop-blur-xs flex justify-end transition-opacity animate-in fade-in duration-200">
       <div className="w-full max-w-xl bg-white dark:bg-[#1A1816] h-full shadow-2xl flex flex-col border-l border-[#E6E0D4] dark:border-[#38332E]">
         {/* Header */}
         <div className="p-5 border-b border-[#F0EBE1] dark:border-[#2C2825] flex items-center justify-between">

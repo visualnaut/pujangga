@@ -18,8 +18,7 @@ export const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showDiff, setShowDiff] = useState(false);
-  const [selectedLeftRound, setSelectedLeftRound] = useState<number>(1);
-  const [selectedRightRound, setSelectedRightRound] = useState<number>(1);
+  const [comparisonRound, setComparisonRound] = useState<number>(1);
   const [isCommentHistoryOpen, setIsCommentHistoryOpen] = useState(false);
   const [overallComment, setOverallComment] = useState('');
   const [isDark, setIsDark] = useState(() => {
@@ -192,7 +191,7 @@ export const App: React.FC = () => {
     }
   }, [editor, details?.currentRevision]);
 
-  // Handle clicking on comment highlights in the editor
+  // Handle clicking on comment highlights in the editor (both in standard and diff views)
   useEffect(() => {
     const handleEditorClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
@@ -213,11 +212,8 @@ export const App: React.FC = () => {
       }
     };
 
-    const el = document.querySelector('.editorial-prose');
-    if (el) {
-      el.addEventListener('click', handleEditorClick as any);
-      return () => el.removeEventListener('click', handleEditorClick as any);
-    }
+    document.addEventListener('click', handleEditorClick);
+    return () => document.removeEventListener('click', handleEditorClick);
   }, [localComments]);
 
   // Add Comment from selection tooltip
@@ -291,8 +287,7 @@ export const App: React.FC = () => {
       if (next && details) {
         const current = details.currentRevision?.roundNumber || 1;
         const prevRound = current > 1 ? current - 1 : 1;
-        setSelectedLeftRound(prevRound);
-        setSelectedRightRound(current);
+        setComparisonRound(prevRound);
       }
       return next;
     });
@@ -425,10 +420,10 @@ export const App: React.FC = () => {
             </div>
           )}
 
-          {/* Selection Tooltip for Adding Notes */}
-          {selectionTooltip && details.session.status === 'active' && !showDiff && (
+          {/* Selection Tooltip for Adding Notes (available both in standard canvas and floating diff view) */}
+          {selectionTooltip && details.session.status === 'active' && (
             <div
-              className="fixed z-50 transform -translate-x-1/2 -translate-y-full mb-2 bg-[#2C2825] dark:bg-[#FAF8F5] text-white dark:text-[#121110] px-3 py-1.5 rounded-lg shadow-xl flex items-center gap-1.5 text-xs font-semibold cursor-pointer hover:scale-105 transition-all select-none animate-in fade-in zoom-in-95 border border-black/10 dark:border-white/10"
+              className="fixed z-60 transform -translate-x-1/2 -translate-y-full mb-2 bg-[#2C2825] dark:bg-[#FAF8F5] text-white dark:text-[#121110] px-3 py-1.5 rounded-lg shadow-xl flex items-center gap-1.5 text-xs font-semibold cursor-pointer hover:scale-105 transition-all select-none animate-in fade-in zoom-in-95 border border-black/10 dark:border-white/10"
               style={{
                 top: selectionTooltip.position.top - 8,
                 left: selectionTooltip.position.left,
@@ -440,15 +435,21 @@ export const App: React.FC = () => {
             </div>
           )}
 
-          {/* Side-by-Side Diff View or In-Place Editor */}
+          {/* Side-by-Side Floating Diff View or In-Place Editor */}
           {showDiff && details ? (
             <DiffViewer
               revisions={details.revisions}
-              selectedLeftRound={selectedLeftRound}
-              selectedRightRound={selectedRightRound}
-              onSelectLeftRound={setSelectedLeftRound}
-              onSelectRightRound={setSelectedRightRound}
+              currentRound={currentRound}
+              comparisonRound={comparisonRound}
+              onChangeComparisonRound={setComparisonRound}
               onClose={() => setShowDiff(false)}
+              editor={editor}
+              status={details.session.status}
+              overallComment={overallComment}
+              onOverallCommentChange={setOverallComment}
+              onSubmitRevision={() => submitReview('NEEDS_REVISION')}
+              onApprove={() => submitReview('SATISFIED')}
+              isSubmitting={isSubmitting}
             />
           ) : (
             <div className="bg-white dark:bg-[#1A1816] rounded-2xl border border-[#E6E0D4] dark:border-[#38332E] p-6 sm:p-10 md:p-14 shadow-xs transition-colors">
