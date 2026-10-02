@@ -10,6 +10,7 @@ import { DesktopSidebar } from './components/DesktopSidebar.js';
 import { DiffViewer } from './components/DiffViewer.js';
 import { CommentHistoryDrawer } from './components/CommentHistoryDrawer.js';
 import { CommentPopover, CommentPopoverData } from './components/CommentPopover.js';
+import { ConfirmFinalizeModal } from './components/ConfirmFinalizeModal.js';
 import { SessionDetails, InlineComment, ReviewStatus } from '../shared/types.js';
 import { MessageSquarePlus, CheckCircle2, Feather, Loader2 } from 'lucide-react';
 
@@ -20,6 +21,7 @@ export const App: React.FC = () => {
   const [showDiff, setShowDiff] = useState(false);
   const [comparisonRound, setComparisonRound] = useState<number>(1);
   const [isCommentHistoryOpen, setIsCommentHistoryOpen] = useState(false);
+  const [isConfirmFinalizeOpen, setIsConfirmFinalizeOpen] = useState(false);
   const [overallComment, setOverallComment] = useState('');
   const [isDark, setIsDark] = useState(() => {
     return (
@@ -326,12 +328,27 @@ export const App: React.FC = () => {
       }
 
       setOverallComment('');
+      if (status === 'SATISFIED') {
+        setLocalComments([]);
+        setShowDiff(false);
+      }
       await fetchSession();
     } catch (err: any) {
       alert(`Submission error: ${err.message}`);
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // Request approval: open confirmation modal first
+  const handleRequestApprove = () => {
+    setIsConfirmFinalizeOpen(true);
+  };
+
+  // Confirm approval: submit SATISFIED and close modal
+  const handleConfirmApprove = async () => {
+    await submitReview('SATISFIED');
+    setIsConfirmFinalizeOpen(false);
   };
 
   if (isLoading) {
@@ -448,7 +465,7 @@ export const App: React.FC = () => {
               overallComment={overallComment}
               onOverallCommentChange={setOverallComment}
               onSubmitRevision={() => submitReview('NEEDS_REVISION')}
-              onApprove={() => submitReview('SATISFIED')}
+              onApprove={handleRequestApprove}
               isSubmitting={isSubmitting}
             />
           ) : (
@@ -465,7 +482,7 @@ export const App: React.FC = () => {
           overallComment={overallComment}
           onOverallCommentChange={setOverallComment}
           onSubmitRevision={() => submitReview('NEEDS_REVISION')}
-          onApprove={() => submitReview('SATISFIED')}
+          onApprove={handleRequestApprove}
           isSubmitting={isSubmitting}
           totalCommentsCount={localComments.length}
           onOpenCommentHistory={() => setIsCommentHistoryOpen(true)}
@@ -489,6 +506,16 @@ export const App: React.FC = () => {
         currentRound={currentRound}
       />
 
+      {/* Confirm Finalize & Clear History Modal */}
+      <ConfirmFinalizeModal
+        isOpen={isConfirmFinalizeOpen}
+        onClose={() => setIsConfirmFinalizeOpen(false)}
+        onConfirm={handleConfirmApprove}
+        fileName={details.session.title}
+        roundNumber={currentRound}
+        isSubmitting={isSubmitting}
+      />
+
       {/* Bottom Sticky Action Bar: Only visible on smaller screens */}
       <ActionBar
         status={details.session.status}
@@ -496,7 +523,7 @@ export const App: React.FC = () => {
         overallComment={overallComment}
         onOverallCommentChange={setOverallComment}
         onSubmitRevision={() => submitReview('NEEDS_REVISION')}
-        onApprove={() => submitReview('SATISFIED')}
+        onApprove={handleRequestApprove}
         isSubmitting={isSubmitting}
       />
     </div>

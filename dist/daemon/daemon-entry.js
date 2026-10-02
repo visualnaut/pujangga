@@ -102,6 +102,10 @@ var DatabaseService = class {
         updatedAt: now
       };
     } else {
+      if (existingSession.status === "satisfied") {
+        this.db.prepare("DELETE FROM revisions WHERE session_id = ?").run(sessionId);
+        this.db.prepare("DELETE FROM inline_comments WHERE session_id = ?").run(sessionId);
+      }
       this.db.prepare("UPDATE sessions SET updated_at = ?, status = ? WHERE id = ?").run(now, "active", sessionId);
       session = {
         id: existingSession.id,
@@ -238,30 +242,35 @@ var DatabaseService = class {
       WHERE id = ?
     `).run(payload.userEditedMarkdown, payload.overallComment, payload.status, now, revisionId);
     this.db.prepare("UPDATE sessions SET status = ?, updated_at = ? WHERE id = ?").run(nextSessionStatus, now, sessionId);
-    this.db.prepare(`
-      UPDATE inline_comments
-      SET status = 'resolved', resolved_at_round = ?
-      WHERE session_id = ? AND status = 'open' AND round_number < ?
-    `).run(roundNumber, sessionId, roundNumber);
-    for (const c of payload.inlineComments) {
-      const commentId = c.id || crypto.randomUUID();
+    if (payload.status === "SATISFIED") {
+      this.db.prepare("DELETE FROM inline_comments WHERE session_id = ?").run(sessionId);
+      this.db.prepare("DELETE FROM revisions WHERE session_id = ? AND id != ?").run(sessionId, revisionId);
+    } else {
       this.db.prepare(`
-        INSERT INTO inline_comments
-        (id, revision_id, session_id, anchor_text, context_before, context_after, from_pos, to_pos, comment_text, status, round_number, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?)
-      `).run(
-        commentId,
-        revisionId,
-        sessionId,
-        c.anchorText,
-        c.contextBefore || "",
-        c.contextAfter || "",
-        c.fromPos || 0,
-        c.toPos || 0,
-        c.commentText,
-        roundNumber,
-        now
-      );
+        UPDATE inline_comments
+        SET status = 'resolved', resolved_at_round = ?
+        WHERE session_id = ? AND status = 'open' AND round_number < ?
+      `).run(roundNumber, sessionId, roundNumber);
+      for (const c of payload.inlineComments) {
+        const commentId = c.id || crypto.randomUUID();
+        this.db.prepare(`
+          INSERT INTO inline_comments
+          (id, revision_id, session_id, anchor_text, context_before, context_after, from_pos, to_pos, comment_text, status, round_number, created_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?)
+        `).run(
+          commentId,
+          revisionId,
+          sessionId,
+          c.anchorText,
+          c.contextBefore || "",
+          c.contextAfter || "",
+          c.fromPos || 0,
+          c.toPos || 0,
+          c.commentText,
+          roundNumber,
+          now
+        );
+      }
     }
     const updatedSession = this.getSession(sessionId);
     const updatedRevision = this.getRevisions(sessionId).find((r) => r.id === revisionId);
@@ -554,11 +563,13 @@ var PujanggaServer = class {
           payload: details,
           isNewRound
         });
+        const hasConnectedClients = (this.wsClients.get(session.id)?.size || 0) > 0;
         const response = {
           sessionId: session.id,
           roundNumber: revision.roundNumber,
           url: `http://localhost:${this.port}/review/${session.id}`,
-          isNewRound
+          isNewRound,
+          hasConnectedClients
         };
         this.sendJson(res, 200, response);
         return;

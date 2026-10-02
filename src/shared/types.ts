@@ -60,6 +60,7 @@ export interface RegisterSessionResponse {
   roundNumber: number;
   url: string;
   isNewRound: boolean;
+  hasConnectedClients?: boolean;
 }
 
 export interface SubmitReviewRequest {

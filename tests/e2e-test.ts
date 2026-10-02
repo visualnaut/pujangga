@@ -107,6 +107,33 @@ async function runE2ETest() {
   await approveRes.json();
   console.log(`✓ Review session marked as SATISFIED!`);
 
+  // Verify comments and older revisions are cleared
+  const detailsAfterApproveRes = await fetch(`http://localhost:${port}/api/sessions/${sessionData.sessionId}`);
+  const detailsAfterApprove = await detailsAfterApproveRes.json();
+  if (detailsAfterApprove.comments.length !== 0) {
+    throw new Error(`Expected comments to be cleared upon SATISFIED, found: ${detailsAfterApprove.comments.length}`);
+  }
+  if (detailsAfterApprove.revisions.length !== 1) {
+    throw new Error(`Expected older revisions to be cleared upon SATISFIED, found: ${detailsAfterApprove.revisions.length}`);
+  }
+  console.log(`✓ Comments and historical revisions successfully cleared upon satisfaction!`);
+
+  // Verify next review on this file starts completely fresh at Round 1
+  const freshRegisterRes = await fetch(`http://localhost:${port}/api/sessions/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      filePath: testFile,
+      workspaceDir: process.cwd(),
+      contentMarkdown: '# Fresh Document\n\nFresh review cycle.\n',
+    }),
+  });
+  const freshRegisterData = await freshRegisterRes.json();
+  if (freshRegisterData.roundNumber !== 1) {
+    throw new Error(`Expected fresh review to start at round 1, got ${freshRegisterData.roundNumber}`);
+  }
+  console.log(`✓ Re-registering satisfied session started fresh at Round 1!`);
+
   // 9. Check status
   const finalStatus = await getDaemonStatus();
   console.log(`✓ Daemon status verified: running=${finalStatus.running}, active sessions=${finalStatus.details?.sessions.length}`);

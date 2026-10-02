@@ -3,7 +3,7 @@ import { Command } from "commander";
 import fs3 from "fs";
 import path3 from "path";
 import http from "http";
-import { exec } from "child_process";
+import { spawn as spawn2 } from "child_process";
 
 // src/daemon/manager.ts
 import fs2 from "fs";
@@ -140,14 +140,24 @@ async function stopDaemon() {
 // src/cli/index.ts
 function openBrowser(url) {
   const platform = process.platform;
-  let cmd = `open "${url}"`;
-  if (platform === "win32") {
-    cmd = `start "" "${url}"`;
-  } else if (platform === "linux") {
-    cmd = `xdg-open "${url}"`;
+  let cmd;
+  let args;
+  if (platform === "darwin") {
+    cmd = "open";
+    args = [url];
+  } else if (platform === "win32") {
+    cmd = "cmd.exe";
+    args = ["/c", "start", '""', url];
+  } else {
+    cmd = "xdg-open";
+    args = [url];
   }
-  exec(cmd, () => {
-  });
+  try {
+    const child = spawn2(cmd, args, { stdio: "ignore", detached: true });
+    child.unref();
+  } catch (err) {
+    console.error(`[Pujangga] Note: Could not auto-open browser: ${err?.message || err}`);
+  }
 }
 async function handleReview(file, options) {
   const resolvedPath = path3.resolve(process.cwd(), file);
@@ -172,8 +182,10 @@ async function handleReview(file, options) {
       throw new Error(`Failed to register review session: ${registerRes.statusText}`);
     }
     const sessionData = await registerRes.json();
-    if (options.open !== false && sessionData.isNewRound && sessionData.roundNumber === 1) {
-      openBrowser(sessionData.url);
+    if (options.open !== false) {
+      if (!sessionData.hasConnectedClients || sessionData.roundNumber === 1) {
+        openBrowser(sessionData.url);
+      }
     }
     console.error(`[Pujangga] Review surface active: ${sessionData.url}`);
     console.error(`[Pujangga] Round ${sessionData.roundNumber} waiting for review in browser... (Press Ctrl+C to pause)`);

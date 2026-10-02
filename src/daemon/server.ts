@@ -193,11 +193,14 @@ export class PujanggaServer {
           isNewRound,
         });
 
+        const hasConnectedClients = (this.wsClients.get(session.id)?.size || 0) > 0;
+
         const response: RegisterSessionResponse = {
           sessionId: session.id,
           roundNumber: revision.roundNumber,
           url: `http://localhost:${this.port}/review/${session.id}`,
           isNewRound,
+          hasConnectedClients,
         };
 
         this.sendJson(res, 200, response);

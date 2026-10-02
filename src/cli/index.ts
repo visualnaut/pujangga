@@ -2,19 +2,32 @@ import { Command } from 'commander';
 import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
-import { exec } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import { ensureDaemonRunning, getDaemonStatus, stopDaemon } from '../daemon/manager.js';
 import { RegisterSessionResponse, WaitReviewResponse } from '../shared/types.js';
 
 export function openBrowser(url: string) {
   const platform = process.platform;
-  let cmd = `open "${url}"`;
-  if (platform === 'win32') {
-    cmd = `start "" "${url}"`;
-  } else if (platform === 'linux') {
-    cmd = `xdg-open "${url}"`;
+  let cmd: string;
+  let args: string[];
+
+  if (platform === 'darwin') {
+    cmd = 'open';
+    args = [url];
+  } else if (platform === 'win32') {
+    cmd = 'cmd.exe';
+    args = ['/c', 'start', '""', url];
+  } else {
+    cmd = 'xdg-open';
+    args = [url];
   }
-  exec(cmd, () => {});
+
+  try {
+    const child = spawn(cmd, args, { stdio: 'ignore', detached: true });
+    child.unref();
+  } catch (err: any) {
+    console.error(`[Pujangga] Note: Could not auto-open browser: ${err?.message || err}`);
+  }
 }
 
 async function handleReview(file: string, options: { open?: boolean }) {
@@ -48,9 +61,12 @@ async function handleReview(file: string, options: { open?: boolean }) {
 
     const sessionData = (await registerRes.json()) as RegisterSessionResponse;
 
-    // Auto-open browser if it's round 1 or explicitly requested
-    if (options.open !== false && sessionData.isNewRound && sessionData.roundNumber === 1) {
-      openBrowser(sessionData.url);
+    // Auto-open browser unless explicitly disabled with --no-open.
+    // Opens if no browser tab is currently connected, or if it's round 1.
+    if (options.open !== false) {
+      if (!sessionData.hasConnectedClients || sessionData.roundNumber === 1) {
+        openBrowser(sessionData.url);
+      }
     }
 
     // Inform user on stderr so stdout remains dedicated for agent report

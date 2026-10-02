@@ -113,6 +113,13 @@ export class DatabaseService {
         updatedAt: now,
       };
     } else {
+      // If the session was previously finalized as satisfied, reset old revisions and comments
+      // so this new review starts completely fresh from Round 1
+      if (existingSession.status === 'satisfied') {
+        this.db.prepare('DELETE FROM revisions WHERE session_id = ?').run(sessionId);
+        this.db.prepare('DELETE FROM inline_comments WHERE session_id = ?').run(sessionId);
+      }
+
       this.db.prepare('UPDATE sessions SET updated_at = ?, status = ? WHERE id = ?')
         .run(now, 'active', sessionId);
       session = {
@@ -284,33 +291,40 @@ export class DatabaseService {
     this.db.prepare('UPDATE sessions SET status = ?, updated_at = ? WHERE id = ?')
       .run(nextSessionStatus, now, sessionId);
 
-    // 3. Mark previous open comments as resolved by this round
-    this.db.prepare(`
-      UPDATE inline_comments
-      SET status = 'resolved', resolved_at_round = ?
-      WHERE session_id = ? AND status = 'open' AND round_number < ?
-    `).run(roundNumber, sessionId, roundNumber);
-
-    // 4. Insert new inline comments for this round
-    for (const c of payload.inlineComments) {
-      const commentId = c.id || crypto.randomUUID();
+    if (payload.status === 'SATISFIED') {
+      // Clear all comments for this session upon satisfaction and finalization
+      this.db.prepare('DELETE FROM inline_comments WHERE session_id = ?').run(sessionId);
+      // Clear older revision history, retaining only the final approved revision
+      this.db.prepare('DELETE FROM revisions WHERE session_id = ? AND id != ?').run(sessionId, revisionId);
+    } else {
+      // 3. Mark previous open comments as resolved by this round
       this.db.prepare(`
-        INSERT INTO inline_comments
-        (id, revision_id, session_id, anchor_text, context_before, context_after, from_pos, to_pos, comment_text, status, round_number, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?)
-      `).run(
-        commentId,
-        revisionId,
-        sessionId,
-        c.anchorText,
-        c.contextBefore || '',
-        c.contextAfter || '',
-        c.fromPos || 0,
-        c.toPos || 0,
-        c.commentText,
-        roundNumber,
-        now
-      );
+        UPDATE inline_comments
+        SET status = 'resolved', resolved_at_round = ?
+        WHERE session_id = ? AND status = 'open' AND round_number < ?
+      `).run(roundNumber, sessionId, roundNumber);
+
+      // 4. Insert new inline comments for this round
+      for (const c of payload.inlineComments) {
+        const commentId = c.id || crypto.randomUUID();
+        this.db.prepare(`
+          INSERT INTO inline_comments
+          (id, revision_id, session_id, anchor_text, context_before, context_after, from_pos, to_pos, comment_text, status, round_number, created_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?)
+        `).run(
+          commentId,
+          revisionId,
+          sessionId,
+          c.anchorText,
+          c.contextBefore || '',
+          c.contextAfter || '',
+          c.fromPos || 0,
+          c.toPos || 0,
+          c.commentText,
+          roundNumber,
+          now
+        );
+      }
     }
 
     const updatedSession = this.getSession(sessionId)!;
