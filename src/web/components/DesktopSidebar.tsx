@@ -43,17 +43,17 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
 
         {/* State Banners */}
         {isRevising ? (
-          <div className="mb-4 p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-850 flex items-start gap-3">
-            <Loader2 className="w-4 h-4 text-amber-600 dark:text-amber-400 animate-spin mt-0.5 shrink-0" />
-            <div className="text-xs text-amber-900 dark:text-amber-200">
+          <div className="mb-4 p-3.5 rounded-xl bg-accent-subtle dark:bg-accent-subtle-dark border border-accent-border dark:border-accent-border-dark flex items-start gap-3">
+            <Loader2 className="w-4 h-4 text-accent dark:text-accent-pin animate-spin mt-0.5 shrink-0" />
+            <div className="text-xs text-accent-text dark:text-accent-text-dark">
               <span className="font-semibold block mb-0.5">Agent is Revising...</span>
               Keep this tab open. It will automatically re-render when Round {roundNumber + 1} arrives.
             </div>
           </div>
         ) : isSatisfied ? (
-          <div className="mb-4 p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-850 flex items-start gap-3">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
-            <div className="text-xs text-emerald-900 dark:text-emerald-200">
+          <div className="mb-4 p-3.5 rounded-xl bg-success-subtle dark:bg-success-subtle-dark border border-success-border dark:border-success-border-dark flex items-start gap-3">
+            <CheckCircle2 className="w-4 h-4 text-success-icon dark:text-success-icon-dark mt-0.5 shrink-0" />
+            <div className="text-xs text-success-text dark:text-success-text-dark">
               <span className="font-semibold block mb-0.5">Writing Approved!</span>
               The target file on disk contains your approved text. The review loop has completed.
             </div>
@@ -77,7 +77,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                 ? `Waiting for revision...`
                 : 'Write your overarching feedback, tone corrections, or directives here... (Cmd+Enter to send)'
             }
-            className="w-full text-sm bg-paper dark:bg-night-pane border border-paper-border dark:border-night-border-strong rounded-xl p-3 text-ink dark:text-night-text placeholder-ink-faint focus:outline-none focus:ring-2 focus:ring-amber-500/50 resize-none shadow-xs disabled:opacity-60 transition-all leading-relaxed"
+            className="w-full text-sm bg-paper dark:bg-night-pane border border-paper-border dark:border-night-border-strong rounded-xl p-3 text-ink dark:text-night-text placeholder-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/50 resize-none shadow-xs disabled:opacity-60 transition-all leading-relaxed"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
                 e.preventDefault();
@@ -92,7 +92,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
           <button
             onClick={onSubmitRevision}
             disabled={isRevising || isSatisfied || isSubmitting}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white text-sm font-semibold rounded-xl shadow-xs transition-all cursor-pointer"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-accent hover:bg-accent-hover disabled:opacity-50 text-white text-sm font-semibold rounded-xl shadow-xs transition-all cursor-pointer"
           >
             {isSubmitting ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -105,7 +105,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
           <button
             onClick={onApprove}
             disabled={isRevising || isSatisfied || isSubmitting}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-semibold rounded-xl shadow-xs transition-all cursor-pointer"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-success hover:bg-success-hover disabled:opacity-50 text-white text-sm font-semibold rounded-xl shadow-xs transition-all cursor-pointer"
           >
             {isSatisfied ? (
               <CheckCircle2 className="w-4 h-4" />
@@ -127,10 +127,10 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
       {totalCommentsCount > 0 && (
         <button
           onClick={onOpenCommentHistory}
-          className="flex items-center justify-between p-3.5 bg-paper-card dark:bg-night-card rounded-xl border border-paper-border dark:border-night-border-strong hover:border-amber-500/50 text-xs font-semibold text-ink-muted dark:text-night-text-muted shadow-xs transition-colors cursor-pointer"
+          className="flex items-center justify-between p-3.5 bg-paper-card dark:bg-night-card rounded-xl border border-paper-border dark:border-night-border-strong hover:border-accent-pin/50 text-xs font-semibold text-ink-muted dark:text-night-text-muted shadow-xs transition-colors cursor-pointer"
         >
           <div className="flex items-center gap-2">
-            <History className="w-4 h-4 text-amber-600 dark:text-amber-500" />
+            <History className="w-4 h-4 text-accent dark:text-accent-pin" />
             <span>Comment History ({totalCommentsCount})</span>
           </div>
           <ArrowRight className="w-3.5 h-3.5" />

@@ -3,10 +3,10 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  /* Typography */
-  --font-serif: 'Newsreader', Georgia, serif;
-  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  /* Typography - Clean System Font Stacks (zero 3rd-party downloads) */
+  --font-serif: ui-serif, Charter, 'Bitstream Charter', Georgia, Cambria, 'Times New Roman', Times, serif;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
 
   /* Paper Palette (Light Mode Backgrounds & Borders) */
   --color-paper: #FAF8F5;
@@ -58,12 +58,38 @@
   --color-night-h2: #F8F6F0;
   --color-night-h3: #F4F1EA;
 
-  /* Brand / Accent (Editorial Amber) */
+  /* Accent (Primary actions, revision triggers, highlight marks) */
   --color-accent: #D97706;
   --color-accent-hover: #B45309;
-  --color-accent-light: #FEF3C7;
+  --color-accent-active: #92400E;
+  --color-accent-subtle: #FFFBEB;
+  --color-accent-subtle-dark: #32190A;
+  --color-accent-border: #FDE68A;
+  --color-accent-border-dark: #78350F;
+  --color-accent-text: #92400E;
+  --color-accent-text-dark: #FDE68A;
   --color-accent-pin: #F59E0B;
   --color-accent-bright: #FBBF24;
+
+  /* Success (Approval, satisfied states, resolved indicators) */
+  --color-success: #059669;
+  --color-success-hover: #047857;
+  --color-success-subtle: #ECFDF5;
+  --color-success-subtle-dark: #063426;
+  --color-success-border: #A7F3D0;
+  --color-success-border-dark: #065F46;
+  --color-success-text: #065F46;
+  --color-success-text-dark: #6EE7B7;
+  --color-success-icon: #059669;
+  --color-success-icon-dark: #34D399;
+
+  /* Danger / Destructive (Comment deletion, destructive triggers) */
+  --color-danger: #DC2626;
+  --color-danger-hover: #B91C1C;
+  --color-danger-subtle: #FEF2F2;
+  --color-danger-subtle-dark: #3F1010;
+  --color-danger-text: #DC2626;
+  --color-danger-text-dark: #F87171;
 
   /* Diff Syntax & Comparison Colors */
   --color-diff-added-text: #15803D;
@@ -156,7 +182,7 @@
 :where(.dark, .dark *) .editorial-prose blockquote {
   border-left-color: var(--color-accent-pin) !important;
   color: var(--color-night-text-quote) !important;
-  background-color: rgba(245, 158, 11, 0.05);
+  background-color: color-mix(in srgb, var(--color-accent-pin) 5%, transparent);
   padding: 0.75rem 1.25rem;
   border-radius: 0 0.5rem 0.5rem 0;
 }
@@ -228,7 +254,7 @@
 
 /* Comment highlight and pin styles */
 .pujangga-comment-highlight {
-  background-color: rgba(245, 158, 11, 0.22);
+  background-color: color-mix(in srgb, var(--color-accent-pin) 22%, transparent);
   border-bottom: 2px solid var(--color-accent-pin);
   cursor: pointer;
   border-radius: 2px;
@@ -239,12 +265,12 @@
 
 .pujangga-comment-highlight:hover,
 .pujangga-comment-highlight.is-active {
-  background-color: rgba(245, 158, 11, 0.38);
+  background-color: color-mix(in srgb, var(--color-accent-pin) 38%, transparent);
 }
 
 .dark .pujangga-comment-highlight,
 :where(.dark, .dark *) .pujangga-comment-highlight {
-  background-color: rgba(245, 158, 11, 0.3) !important;
+  background-color: color-mix(in srgb, var(--color-accent-pin) 30%, transparent) !important;
   border-bottom-color: var(--color-accent-bright) !important;
   color: var(--color-night-text-heading) !important;
 }

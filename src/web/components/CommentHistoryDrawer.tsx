@@ -85,7 +85,7 @@ export const CommentHistoryDrawer: React.FC<CommentHistoryDrawerProps> = ({
         {/* Header */}
         <div className="p-5 border-b border-paper-border-light dark:border-night-border flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-accent-subtle dark:bg-accent-subtle-dark text-accent dark:text-accent-pin flex items-center justify-center">
               <History className="w-4 h-4" />
             </div>
             <div>
@@ -128,7 +128,7 @@ export const CommentHistoryDrawer: React.FC<CommentHistoryDrawerProps> = ({
                 >
                   {/* Round & Status Header */}
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-md border border-amber-200/60 dark:border-amber-800/40">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-accent-text dark:text-accent-text-dark bg-accent-subtle dark:bg-accent-subtle-dark px-2 py-0.5 rounded-md border border-accent-border dark:border-accent-border-dark">
                       Round {comment.roundNumber} Note
                     </span>
                     <span className="text-[11px] text-ink-faint">
@@ -160,9 +160,9 @@ export const CommentHistoryDrawer: React.FC<CommentHistoryDrawerProps> = ({
                   <div>
                     <div className="flex items-center gap-1.5 mb-1">
                       {agentChange.status === 'revised' ? (
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                        <CheckCircle2 className="w-3.5 h-3.5 text-success-icon dark:text-success-icon-dark" />
                       ) : agentChange.status === 'unchanged' ? (
-                        <AlertCircle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                        <AlertCircle className="w-3.5 h-3.5 text-accent dark:text-accent-pin" />
                       ) : (
                         <Clock className="w-3.5 h-3.5 text-ink-subtle" />
                       )}
@@ -174,9 +174,9 @@ export const CommentHistoryDrawer: React.FC<CommentHistoryDrawerProps> = ({
                     <div
                       className={`text-xs p-2.5 rounded-xl border leading-relaxed ${
                         agentChange.status === 'revised'
-                          ? 'bg-emerald-50/60 dark:bg-emerald-950/20 text-emerald-900 dark:text-emerald-200 border-emerald-200 dark:border-emerald-800/40'
+                          ? 'bg-success-subtle dark:bg-success-subtle-dark text-success-text dark:text-success-text-dark border-success-border dark:border-success-border-dark'
                           : agentChange.status === 'unchanged'
-                          ? 'bg-amber-50/60 dark:bg-amber-950/20 text-amber-900 dark:text-amber-200 border-amber-200 dark:border-amber-800/40'
+                          ? 'bg-accent-subtle dark:bg-accent-subtle-dark text-accent-text dark:text-accent-text-dark border-accent-border dark:border-accent-border-dark'
                           : 'bg-paper-card dark:bg-night-darker text-ink-subtle dark:text-night-text-muted border-paper-border dark:border-night-border italic'
                       }`}
                     >

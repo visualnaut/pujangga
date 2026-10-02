@@ -43,7 +43,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Left: Brand & File Info */}
         <div className="flex items-center gap-4 min-w-0">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-amber-600 dark:bg-amber-500 text-white flex items-center justify-center shadow-xs">
+            <div className="w-8 h-8 rounded-lg bg-accent dark:bg-accent-pin text-white flex items-center justify-center shadow-xs">
               <Feather className="w-4 h-4" />
             </div>
             <span className="font-semibold text-lg tracking-tight font-serif text-ink dark:text-night-text-heading">
@@ -66,8 +66,8 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Center: Status Indicator */}
         <div className="hidden md:flex items-center gap-2 text-xs">
           {status === 'satisfied' && (
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100/70 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 font-medium">
-              <CheckCircle2 className="w-3.5 h-3.5" />
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-success-subtle dark:bg-success-subtle-dark text-success-text dark:text-success-text-dark font-medium border border-success-border dark:border-success-border-dark">
+              <CheckCircle2 className="w-3.5 h-3.5 text-success-icon dark:text-success-icon-dark" />
               <span>Review Approved</span>
             </div>
           )}
@@ -80,8 +80,8 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={onToggleDiff}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
                 showDiff
-                  ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
-                  : 'bg-paper-card dark:bg-night-modal text-ink-body dark:text-night-text-muted border-paper-border dark:border-night-border-strong hover:border-amber-500'
+                  ? 'bg-accent text-white border-accent shadow-xs'
+                  : 'bg-paper-card dark:bg-night-modal text-ink-body dark:text-night-text-muted border-paper-border dark:border-night-border-strong hover:border-accent-pin'
               }`}
             >
               <Columns2 className="w-3.5 h-3.5" />
@@ -92,9 +92,9 @@ export const Navbar: React.FC<NavbarProps> = ({
           {totalCommentsCount > 0 && (
             <button
               onClick={onOpenCommentHistory}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-paper-card dark:bg-night-modal text-ink-body dark:text-night-text-muted border border-paper-border dark:border-night-border-strong hover:border-amber-500 transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-paper-card dark:bg-night-modal text-ink-body dark:text-night-text-muted border border-paper-border dark:border-night-border-strong hover:border-accent-pin transition-colors cursor-pointer"
             >
-              <History className="w-3.5 h-3.5 text-amber-600 dark:text-amber-500" />
+              <History className="w-3.5 h-3.5 text-accent dark:text-accent-pin" />
               <span>Comment History ({totalCommentsCount})</span>
             </button>
           )}

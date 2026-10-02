@@ -46,7 +46,7 @@ export const ConfirmFinalizeModal: React.FC<ConfirmFinalizeModalProps> = ({
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 shadow-2xs">
+            <div className="w-10 h-10 rounded-xl bg-success-subtle dark:bg-success-subtle-dark text-success-icon dark:text-success-icon-dark flex items-center justify-center shrink-0 shadow-2xs">
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
@@ -75,14 +75,14 @@ export const ConfirmFinalizeModal: React.FC<ConfirmFinalizeModalProps> = ({
         {/* Informative Explanation Box */}
         <div className="bg-paper dark:bg-night-inner border border-paper-border-subtle dark:border-night-border-subtle rounded-xl p-4 space-y-3">
           <div className="flex items-start gap-2.5 text-xs text-ink-secondary dark:text-night-text-subtle leading-relaxed">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+            <CheckCircle2 className="w-4 h-4 text-success-icon dark:text-success-icon-dark shrink-0 mt-0.5" />
             <span>
               All current edits will be saved directly to <span className="font-semibold text-ink dark:text-night-text">{fileName}</span> as the final approved version.
             </span>
           </div>
 
-          <div className="flex items-start gap-2.5 text-xs text-amber-800 dark:text-amber-300 leading-relaxed bg-amber-50/80 dark:bg-amber-950/40 p-2.5 rounded-lg border border-amber-200/60 dark:border-amber-900/40">
-            <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+          <div className="flex items-start gap-2.5 text-xs text-accent-text dark:text-accent-text-dark leading-relaxed bg-accent-subtle dark:bg-accent-subtle-dark p-2.5 rounded-lg border border-accent-border dark:border-accent-border-dark">
+            <AlertTriangle className="w-4 h-4 text-accent dark:text-accent-pin shrink-0 mt-0.5" />
             <span>
               <strong>History will be cleared:</strong> All inline comments and revision snapshots will be permanently wiped clean so future review runs start fresh.
             </span>
@@ -104,7 +104,7 @@ export const ConfirmFinalizeModal: React.FC<ConfirmFinalizeModalProps> = ({
             type="button"
             onClick={onConfirm}
             disabled={isSubmitting}
-            className="px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs flex items-center gap-1.5 transition-colors disabled:opacity-50 cursor-pointer"
+            className="px-4 py-2 text-xs font-semibold rounded-lg bg-success hover:bg-success-hover text-white shadow-xs flex items-center gap-1.5 transition-colors disabled:opacity-50 cursor-pointer"
           >
             {isSubmitting ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />

@@ -41,7 +41,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
                 ? `Waiting for agent to revise Round ${roundNumber + 1}...`
                 : 'Overall directive for agent...'
             }
-            className="w-full text-sm bg-paper-card dark:bg-night-card border border-paper-border dark:border-night-border-strong rounded-xl px-4 py-2 text-ink dark:text-night-text-heading placeholder-ink-faint focus:outline-none focus:ring-2 focus:ring-amber-500/50 shadow-xs disabled:opacity-60 transition-all"
+            className="w-full text-sm bg-paper-card dark:bg-night-card border border-paper-border dark:border-night-border-strong rounded-xl px-4 py-2 text-ink dark:text-night-text-heading placeholder-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/50 shadow-xs disabled:opacity-60 transition-all"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
                 onSubmitRevision();
@@ -56,7 +56,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
           <button
             onClick={onSubmitRevision}
             disabled={isRevising || isSatisfied || isSubmitting}
-            className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white text-xs font-semibold rounded-xl shadow-xs transition-all cursor-pointer"
+            className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 bg-accent hover:bg-accent-hover disabled:opacity-50 text-white text-xs font-semibold rounded-xl shadow-xs transition-all cursor-pointer"
           >
             {isSubmitting ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -69,7 +69,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
           <button
             onClick={onApprove}
             disabled={isRevising || isSatisfied || isSubmitting}
-            className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-semibold rounded-xl shadow-xs transition-all cursor-pointer"
+            className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 bg-success hover:bg-success-hover disabled:opacity-50 text-white text-xs font-semibold rounded-xl shadow-xs transition-all cursor-pointer"
           >
             {isSatisfied ? (
               <CheckCircle2 className="w-3.5 h-3.5" />

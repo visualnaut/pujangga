@@ -355,7 +355,7 @@ export const App: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-paper dark:bg-night">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="w-8 h-8 animate-spin text-amber-600 dark:text-amber-500" />
+          <Loader2 className="w-8 h-8 animate-spin text-accent dark:text-accent-pin" />
           <p className="text-sm font-serif text-ink-muted dark:text-night-text-muted">Opening Pujangga review canvas...</p>
         </div>
       </div>
@@ -366,7 +366,7 @@ export const App: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center p-6 bg-paper dark:bg-night">
         <div className="max-w-md w-full bg-paper-card dark:bg-night-popover border border-paper-border dark:border-night-border-strong rounded-2xl p-6 text-center shadow-lg">
-          <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-600 mx-auto flex items-center justify-center mb-4">
+          <div className="w-12 h-12 rounded-full bg-accent-subtle dark:bg-accent-subtle-dark text-accent dark:text-accent-pin mx-auto flex items-center justify-center mb-4">
             <Feather className="w-6 h-6" />
           </div>
           <h2 className="text-lg font-bold font-serif mb-2 text-ink dark:text-night-text-heading">No Active Review Session</h2>
@@ -407,13 +407,13 @@ export const App: React.FC = () => {
         <main className="flex-1 min-w-0 w-full relative">
           {/* Waiting State Notice on Mobile/Tablet */}
           {details.session.status === 'revising' && (
-            <div className="lg:hidden mb-6 p-4 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 flex items-center gap-3 animate-pulse">
-              <Loader2 className="w-5 h-5 text-amber-600 dark:text-amber-400 animate-spin shrink-0" />
+            <div className="lg:hidden mb-6 p-4 rounded-xl bg-accent-subtle dark:bg-accent-subtle-dark border border-accent-border dark:border-accent-border-dark flex items-center gap-3 animate-pulse">
+              <Loader2 className="w-5 h-5 text-accent dark:text-accent-pin animate-spin shrink-0" />
               <div>
-                <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
+                <p className="text-sm font-semibold text-accent-text dark:text-accent-text-dark">
                   Agent is revising Round {currentRound}...
                 </p>
-                <p className="text-xs text-amber-700 dark:text-amber-300/80">
+                <p className="text-xs text-accent dark:text-accent-pin">
                   Keep this tab open. It will automatically update once the agent completes the revision.
                 </p>
               </div>
@@ -422,15 +422,15 @@ export const App: React.FC = () => {
 
           {/* Satisfied Celebration Notice on Mobile/Tablet */}
           {details.session.status === 'satisfied' && (
-            <div className="lg:hidden mb-6 p-5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-300 flex items-center justify-center shrink-0">
+            <div className="lg:hidden mb-6 p-5 rounded-2xl bg-success-subtle dark:bg-success-subtle-dark border border-success-border dark:border-success-border-dark flex items-center gap-4">
+              <div className="w-10 h-10 rounded-full bg-success-subtle dark:bg-success-subtle-dark text-success-icon dark:text-success-icon-dark flex items-center justify-center shrink-0 border border-success-border dark:border-success-border-dark">
                 <CheckCircle2 className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-emerald-900 dark:text-emerald-100 font-serif">
+                <h3 className="text-base font-bold text-success-text dark:text-success-text-dark font-serif">
                   Review Concluded & Approved!
                 </h3>
-                <p className="text-xs text-emerald-700 dark:text-emerald-300/80">
+                <p className="text-xs text-success-icon dark:text-success-icon-dark">
                   The target file on disk contains your approved text.
                 </p>
               </div>
@@ -447,7 +447,7 @@ export const App: React.FC = () => {
               }}
               onClick={handleAddCommentFromSelection}
             >
-              <MessageSquarePlus className="w-3.5 h-3.5 text-amber-400 dark:text-amber-600" />
+              <MessageSquarePlus className="w-3.5 h-3.5 text-accent-bright dark:text-accent" />
               <span>Add Note</span>
             </div>
           )}
