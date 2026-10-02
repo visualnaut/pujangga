@@ -1,5 +1,5 @@
 import React from 'react';
-import { Send, CheckCircle2, Loader2, Sparkles, AlertCircle } from 'lucide-react';
+import { Send, CheckCircle2, Loader2, Sparkles } from 'lucide-react';
 import { SessionStatus } from '../../shared/types.js';
 
 interface ActionBarProps {
@@ -10,7 +10,6 @@ interface ActionBarProps {
   onSubmitRevision: () => boolean | void;
   onApprove: () => void;
   isSubmitting: boolean;
-  revisionAlert?: string | null;
 }
 
 export const ActionBar: React.FC<ActionBarProps> = ({
@@ -21,7 +20,6 @@ export const ActionBar: React.FC<ActionBarProps> = ({
   onSubmitRevision,
   onApprove,
   isSubmitting,
-  revisionAlert,
 }) => {
   const isRevising = status === 'revising';
   const isSatisfied = status === 'satisfied';
@@ -29,14 +27,6 @@ export const ActionBar: React.FC<ActionBarProps> = ({
   return (
     <footer className="fixed bottom-0 left-0 right-0 z-40 lg:hidden backdrop-blur-md bg-paper/95 dark:bg-night/95 border-t border-paper-border dark:border-night-border p-3 sm:p-4 transition-colors shadow-lg">
       <div className="max-w-4xl mx-auto flex flex-col gap-2.5">
-        {/* Revision Alert Warning Banner */}
-        {revisionAlert && (
-          <div className="text-sm text-accent-text dark:text-accent-text-dark bg-accent-subtle dark:bg-accent-subtle-dark border border-accent-border dark:border-accent-border-dark px-3 py-1.5 rounded-lg flex items-center gap-2 animate-in fade-in">
-            <AlertCircle className="w-4 h-4 text-accent dark:text-accent-pin shrink-0" />
-            <span className="truncate">Add an inline note or write a directive first.</span>
-          </div>
-        )}
-
         {/* Overall Directive Input */}
         <div className="relative w-full">
           <input

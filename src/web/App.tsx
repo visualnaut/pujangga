@@ -11,8 +11,9 @@ import { DiffViewer } from './components/DiffViewer.js';
 import { CommentHistoryDrawer } from './components/CommentHistoryDrawer.js';
 import { CommentPopover, CommentPopoverData } from './components/CommentPopover.js';
 import { ConfirmFinalizeModal } from './components/ConfirmFinalizeModal.js';
+import { FloatingAlertBanner } from './components/FloatingAlertBanner.js';
 import { SessionDetails, InlineComment, ReviewStatus } from '../shared/types.js';
-import { MessageSquarePlus, CheckCircle2, Loader2, AlertCircle, X } from 'lucide-react';
+import { MessageSquarePlus, CheckCircle2, Loader2 } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [details, setDetails] = useState<SessionDetails | null>(null);
@@ -456,31 +457,12 @@ export const App: React.FC = () => {
         onToggleTheme={() => setIsDark((v) => !v)}
       />
 
-      {/* Top Floating Alert Banner when unable to request revision */}
-      {revisionAlert && (
-        <div className="fixed top-16 sm:top-18 left-1/2 -translate-x-1/2 z-60 w-full max-w-lg px-4 pointer-events-auto animate-in fade-in slide-in-from-top-3 duration-200">
-          <div className="bg-paper-card dark:bg-night-modal border-2 border-accent dark:border-accent-pin rounded-2xl p-4 shadow-2xl flex items-start gap-3.5 text-ink dark:text-night-text">
-            <div className="w-9 h-9 rounded-xl bg-accent-subtle dark:bg-accent-subtle-dark text-accent dark:text-accent-pin flex items-center justify-center shrink-0 shadow-2xs mt-0.5">
-              <AlertCircle className="w-5 h-5" />
-            </div>
-            <div className="flex-1 min-w-0 pr-1">
-              <h4 className="font-serif font-bold text-sm text-ink dark:text-night-text-heading mb-0.5">
-                Unable to Request Revision
-              </h4>
-              <p className="text-sm text-ink-body dark:text-night-text-subtle leading-relaxed">
-                {revisionAlert}
-              </p>
-            </div>
-            <button
-              onClick={() => setRevisionAlert(null)}
-              className="p-1 rounded-lg text-ink-subtle hover:text-ink dark:hover:text-night-text hover:bg-paper-hover dark:hover:bg-night-hover transition-colors cursor-pointer shrink-0"
-              aria-label="Dismiss alert"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Top Floating Alert Banner with smooth enter/exit animation & 3s auto exit */}
+      <FloatingAlertBanner
+        message={revisionAlert}
+        onClose={() => setRevisionAlert(null)}
+        autoDismissMs={3000}
+      />
 
       {/* Main Container: Flex Row on Desktop (Canvas + Right Sidebar), Stack on Mobile */}
       <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 py-8 flex flex-col lg:flex-row gap-4 items-start">
@@ -547,7 +529,6 @@ export const App: React.FC = () => {
               onOverallCommentChange={handleOverallCommentChange}
               onSubmitRevision={handleRequestRevision}
               isSubmitting={isSubmitting}
-              revisionAlert={revisionAlert}
             />
           ) : (
             <div className="bg-paper-card dark:bg-night-card border border-paper-border dark:border-night-border-strong p-6 sm:p-10 md:p-14 shadow-xl transition-colors">
@@ -567,7 +548,6 @@ export const App: React.FC = () => {
           isSubmitting={isSubmitting}
           totalCommentsCount={localComments.length}
           onOpenCommentHistory={() => setIsCommentHistoryOpen(true)}
-          revisionAlert={revisionAlert}
         />
       </div>
 
@@ -607,7 +587,6 @@ export const App: React.FC = () => {
         onSubmitRevision={handleRequestRevision}
         onApprove={handleRequestApprove}
         isSubmitting={isSubmitting}
-        revisionAlert={revisionAlert}
       />
     </div>
   );
