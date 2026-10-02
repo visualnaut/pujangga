@@ -1,6 +1,7 @@
 import { Command } from 'commander';
 import fs from 'node:fs';
 import path from 'node:path';
+import http from 'node:http';
 import { exec } from 'node:child_process';
 import { ensureDaemonRunning, getDaemonStatus, stopDaemon } from '../daemon/manager.js';
 import { RegisterSessionResponse, WaitReviewResponse } from '../shared/types.js';
@@ -67,17 +68,41 @@ async function handleReview(file: string, options: { open?: boolean }) {
       process.exit(0);
     });
 
-    // 2. Block until review submission
-    const waitRes = await fetch(`http://localhost:${port}/api/sessions/${sessionData.sessionId}/wait`, {
-      signal: abortController.signal,
+    // 2. Block until review submission (use node:http to avoid undici 5-min timeout)
+    const waitData = await new Promise<WaitReviewResponse>((resolve, reject) => {
+      const req = http.get(
+        `http://localhost:${port}/api/sessions/${sessionData.sessionId}/wait`,
+        (res) => {
+          if (res.statusCode !== 200) {
+            reject(new Error(`Wait request failed with status: ${res.statusCode}`));
+            return;
+          }
+          let body = '';
+          res.setEncoding('utf8');
+          res.on('data', (chunk) => {
+            body += chunk;
+          });
+          res.on('end', () => {
+            try {
+              resolve(JSON.parse(body));
+            } catch (e) {
+              reject(e);
+            }
+          });
+        }
+      );
+
+      req.setTimeout(0);
+
+      req.on('error', (err) => {
+        if (aborted) return;
+        reject(err);
+      });
+
+      abortController.signal.addEventListener('abort', () => {
+        req.destroy();
+      });
     });
-
-    if (!waitRes.ok) {
-      if (aborted) return;
-      throw new Error(`Wait request failed with status: ${waitRes.status}`);
-    }
-
-    const waitData = (await waitRes.json()) as WaitReviewResponse;
 
     // 3. Print the Agent-optimized Markdown report to stdout
     process.stdout.write(waitData.reportMarkdown + '\n');

@@ -75,12 +75,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <CheckCircle2 className="w-3.5 h-3.5" />
               <span>Review Approved</span>
             </div>
-          ) : (
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAE4D8] dark:bg-[#282522] text-[#635E59] dark:text-[#A8A29D] font-medium">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-              <span>Ready for Review</span>
-            </div>
-          )}
+          ) : null}
         </div>
 
         {/* Right: Controls & Toggles */}

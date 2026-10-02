@@ -269,7 +269,15 @@ export const App: React.FC = () => {
   const handleDeleteComment = (commentId: string) => {
     setLocalComments((prev) => prev.filter((c) => c.id !== commentId));
     if (editor) {
-      editor.commands.unsetComment();
+      editor.commands.removeComment(commentId);
+    }
+    setPopoverData(null);
+  };
+
+  // Close comment popover (cleans up unsaved mark if new)
+  const handleClosePopover = () => {
+    if (popoverData?.isNew && editor) {
+      editor.commands.removeComment(popoverData.commentId);
     }
     setPopoverData(null);
   };
@@ -439,8 +447,6 @@ export const App: React.FC = () => {
         <DesktopSidebar
           status={details.session.status}
           roundNumber={currentRound}
-          inlineCommentsCount={activeRoundComments.length}
-          hasDirectEdits={true}
           overallComment={overallComment}
           onOverallCommentChange={setOverallComment}
           onSubmitRevision={() => submitReview('NEEDS_REVISION')}
@@ -456,7 +462,7 @@ export const App: React.FC = () => {
         data={popoverData}
         onSave={handleSaveComment}
         onDelete={handleDeleteComment}
-        onClose={() => setPopoverData(null)}
+        onClose={handleClosePopover}
       />
 
       {/* Resolved Comments Drawer */}
@@ -471,8 +477,6 @@ export const App: React.FC = () => {
       <ActionBar
         status={details.session.status}
         roundNumber={currentRound}
-        inlineCommentsCount={activeRoundComments.length}
-        hasDirectEdits={true}
         overallComment={overallComment}
         onOverallCommentChange={setOverallComment}
         onSubmitRevision={() => submitReview('NEEDS_REVISION')}

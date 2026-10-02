@@ -5,8 +5,6 @@ import { SessionStatus } from '../../shared/types.js';
 interface DesktopSidebarProps {
   status: SessionStatus;
   roundNumber: number;
-  inlineCommentsCount: number;
-  hasDirectEdits: boolean;
   overallComment: string;
   onOverallCommentChange: (val: string) => void;
   onSubmitRevision: () => void;
@@ -19,8 +17,6 @@ interface DesktopSidebarProps {
 export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
   status,
   roundNumber,
-  inlineCommentsCount,
-  hasDirectEdits,
   overallComment,
   onOverallCommentChange,
   onSubmitRevision,
@@ -64,18 +60,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
           </div>
         ) : null}
 
-        {/* Notes Summary Pills */}
-        <div className="flex items-center gap-2 mb-3 text-xs">
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#FAF8F5] dark:bg-[#201D1B] border border-[#EFEAE1] dark:border-[#332E2A] text-[#706B65] dark:text-[#A8A29D]">
-            <MessageSquare className="w-3.5 h-3.5 text-amber-600 dark:text-amber-500" />
-            <span>{inlineCommentsCount} inline note{inlineCommentsCount !== 1 ? 's' : ''}</span>
-          </div>
 
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#FAF8F5] dark:bg-[#201D1B] border border-[#EFEAE1] dark:border-[#332E2A] text-[#706B65] dark:text-[#A8A29D]">
-            <Edit3 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-500" />
-            <span>Direct edits auto-sync</span>
-          </div>
-        </div>
 
         {/* Overall Directive Textarea */}
         <div className="mb-4">

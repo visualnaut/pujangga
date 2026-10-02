@@ -2,6 +2,7 @@
 import { Command } from "commander";
 import fs3 from "fs";
 import path3 from "path";
+import http from "http";
 import { exec } from "child_process";
 
 // src/daemon/manager.ts
@@ -185,14 +186,37 @@ async function handleReview(file, options) {
 [Pujangga] Review paused. State preserved. Run 'pujangga "${file}"' anytime to resume.`);
       process.exit(0);
     });
-    const waitRes = await fetch(`http://localhost:${port}/api/sessions/${sessionData.sessionId}/wait`, {
-      signal: abortController.signal
+    const waitData = await new Promise((resolve, reject) => {
+      const req = http.get(
+        `http://localhost:${port}/api/sessions/${sessionData.sessionId}/wait`,
+        (res) => {
+          if (res.statusCode !== 200) {
+            reject(new Error(`Wait request failed with status: ${res.statusCode}`));
+            return;
+          }
+          let body = "";
+          res.setEncoding("utf8");
+          res.on("data", (chunk) => {
+            body += chunk;
+          });
+          res.on("end", () => {
+            try {
+              resolve(JSON.parse(body));
+            } catch (e) {
+              reject(e);
+            }
+          });
+        }
+      );
+      req.setTimeout(0);
+      req.on("error", (err) => {
+        if (aborted) return;
+        reject(err);
+      });
+      abortController.signal.addEventListener("abort", () => {
+        req.destroy();
+      });
     });
-    if (!waitRes.ok) {
-      if (aborted) return;
-      throw new Error(`Wait request failed with status: ${waitRes.status}`);
-    }
-    const waitData = await waitRes.json();
     process.stdout.write(waitData.reportMarkdown + "\n");
     process.exit(0);
   } catch (err) {

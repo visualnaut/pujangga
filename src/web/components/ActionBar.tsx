@@ -5,8 +5,6 @@ import { SessionStatus } from '../../shared/types.js';
 interface ActionBarProps {
   status: SessionStatus;
   roundNumber: number;
-  inlineCommentsCount: number;
-  hasDirectEdits: boolean;
   overallComment: string;
   onOverallCommentChange: (val: string) => void;
   onSubmitRevision: () => void;
@@ -17,8 +15,6 @@ interface ActionBarProps {
 export const ActionBar: React.FC<ActionBarProps> = ({
   status,
   roundNumber,
-  inlineCommentsCount,
-  hasDirectEdits,
   overallComment,
   onOverallCommentChange,
   onSubmitRevision,
@@ -52,11 +48,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
               }
             }}
           />
-          {inlineCommentsCount > 0 && !isRevising && !isSatisfied && (
-            <span className="absolute right-3 top-2 text-[10px] font-medium text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-950/50 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-800">
-              {inlineCommentsCount} note{inlineCommentsCount > 1 ? 's' : ''}
-            </span>
-          )}
+
         </div>
 
         {/* Action Buttons */}
