@@ -1,7 +1,7 @@
 import React, { useRef, useMemo, useState, useEffect } from 'react';
 import { EditorContent } from '@tiptap/react';
 import { Revision, SessionStatus } from '../../shared/types.js';
-import { Columns2, Link2, Unlink2, X, Send, Loader2, Edit3, Lock } from 'lucide-react';
+import { Columns2, Link2, Unlink2, X, Send, Loader2, Edit3, Lock, AlertCircle } from 'lucide-react';
 import { marked } from 'marked';
 
 interface DiffViewerProps {
@@ -14,8 +14,9 @@ interface DiffViewerProps {
   status: SessionStatus;
   overallComment: string;
   onOverallCommentChange: (val: string) => void;
-  onSubmitRevision: () => void;
+  onSubmitRevision: () => boolean | void;
   isSubmitting: boolean;
+  revisionAlert?: string | null;
 }
 
 export const DiffViewer: React.FC<DiffViewerProps> = ({
@@ -30,6 +31,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
   onOverallCommentChange,
   onSubmitRevision,
   isSubmitting,
+  revisionAlert,
 }) => {
   const leftPaneRef = useRef<HTMLDivElement>(null);
   const rightPaneRef = useRef<HTMLDivElement>(null);
@@ -279,6 +281,13 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
                   </button>
                 </div>
 
+                {revisionAlert && (
+                  <div className="p-2.5 rounded-lg bg-accent-subtle dark:bg-accent-subtle-dark border border-accent-border dark:border-accent-border-dark text-sm text-accent-text dark:text-accent-text-dark flex items-start gap-2 animate-in fade-in">
+                    <AlertCircle className="w-4 h-4 text-accent dark:text-accent-pin shrink-0 mt-0.5" />
+                    <span>Please write a directive or add an inline note before requesting revision.</span>
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-sm font-semibold text-ink-muted dark:text-night-text-muted uppercase tracking-wider mb-1.5">
                     Overall Instructions for AI Agent
@@ -293,8 +302,10 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
                         e.preventDefault();
-                        onSubmitRevision();
-                        setIsRevisionPopoverOpen(false);
+                        const success = onSubmitRevision();
+                        if (success !== false) {
+                          setIsRevisionPopoverOpen(false);
+                        }
                       }
                     }}
                   />
@@ -316,8 +327,10 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
                   <button
                     type="button"
                     onClick={() => {
-                      onSubmitRevision();
-                      setIsRevisionPopoverOpen(false);
+                      const success = onSubmitRevision();
+                      if (success !== false) {
+                        setIsRevisionPopoverOpen(false);
+                      }
                     }}
                     disabled={isSubmitting || isRevising}
                     className="px-3.5 py-1.5 text-sm font-semibold rounded-lg bg-accent hover:bg-accent-hover text-white shadow-xs flex items-center gap-1.5 transition-colors disabled:opacity-50 cursor-pointer"

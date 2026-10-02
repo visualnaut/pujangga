@@ -649,6 +649,18 @@ var PujanggaServer = class {
           this.sendJson(res, 400, { error: "No active revision found for session" });
           return;
         }
+        if (body.status === "NEEDS_REVISION") {
+          const hasDirective = (body.overallComment || "").trim().length > 0;
+          const hasInlineNotes = (body.inlineComments || []).some(
+            (c) => (c.commentText || "").trim().length > 0
+          );
+          if (!hasDirective && !hasInlineNotes) {
+            this.sendJson(res, 400, {
+              error: "Unable to request revision without any new notes or directive. Please provide guidance for the agent."
+            });
+            return;
+          }
+        }
         const { revision: updatedRevision } = this.db.submitReview(sessionId, currentRevision.id, body);
         if (body.userEditedMarkdown !== void 0 && body.userEditedMarkdown !== null) {
           try {

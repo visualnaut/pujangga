@@ -295,10 +295,23 @@ export class PujanggaServer {
         const body = (await this.parseJsonBody(req)) as SubmitReviewRequest;
         const revisions = this.db.getRevisions(sessionId);
         const currentRevision = revisions[revisions.length - 1];
-
         if (!currentRevision) {
           this.sendJson(res, 400, { error: 'No active revision found for session' });
           return;
+        }
+
+        if (body.status === 'NEEDS_REVISION') {
+          const hasDirective = (body.overallComment || '').trim().length > 0;
+          const hasInlineNotes = (body.inlineComments || []).some(
+            (c) => (c.commentText || '').trim().length > 0
+          );
+          if (!hasDirective && !hasInlineNotes) {
+            this.sendJson(res, 400, {
+              error:
+                'Unable to request revision without any new notes or directive. Please provide guidance for the agent.',
+            });
+            return;
+          }
         }
 
         // 1. Save submission to SQLite

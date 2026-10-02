@@ -12,26 +12,26 @@
   --text-xs: 0.875rem;
   --text-xs--line-height: 1.25rem;
 
-  /* Paper Palette (Light Mode Backgrounds & Borders) */
-  --color-paper: #FAF8F5;
+  /* Paper Palette (Light Mode Backgrounds & Borders - Base #F6F5F2) */
+  --color-paper: #F6F5F2;
   --color-paper-card: #FFFFFF;
-  --color-paper-muted: #F7F4EE;
-  --color-paper-subtle: #EFEAE1;
-  --color-paper-hover: #F2EDE4;
-  --color-paper-active: #F5F2EB;
-  --color-paper-border: #E6E0D4;
-  --color-paper-border-subtle: #EFEAE1;
-  --color-paper-border-light: #F0EBE1;
-  --color-paper-divider: #DCD5C8;
+  --color-paper-muted: #EFECE6;
+  --color-paper-subtle: #E6E3DC;
+  --color-paper-hover: #ECE9E2;
+  --color-paper-active: #E1DDD5;
+  --color-paper-border: #DDD8CE;
+  --color-paper-border-subtle: #E8E5DD;
+  --color-paper-border-light: #ECE9E2;
+  --color-paper-divider: #D0CAC0;
 
   /* Ink Palette (Light Mode Text) */
-  --color-ink: #2C2825;
-  --color-ink-heading: #1A1715;
-  --color-ink-secondary: #524C46;
-  --color-ink-body: #635E59;
-  --color-ink-muted: #706B65;
-  --color-ink-subtle: #8C827A;
-  --color-ink-faint: #A0988F;
+  --color-ink: #292623;
+  --color-ink-heading: #171513;
+  --color-ink-secondary: #4A4642;
+  --color-ink-body: #5C5752;
+  --color-ink-muted: #69645E;
+  --color-ink-subtle: #857F78;
+  --color-ink-faint: #9C968E;
 
   /* Night Palette (Dark Mode Backgrounds & Surfaces) */
   --color-night: #121110;

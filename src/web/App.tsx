@@ -12,7 +12,7 @@ import { CommentHistoryDrawer } from './components/CommentHistoryDrawer.js';
 import { CommentPopover, CommentPopoverData } from './components/CommentPopover.js';
 import { ConfirmFinalizeModal } from './components/ConfirmFinalizeModal.js';
 import { SessionDetails, InlineComment, ReviewStatus } from '../shared/types.js';
-import { MessageSquarePlus, CheckCircle2, Loader2 } from 'lucide-react';
+import { MessageSquarePlus, CheckCircle2, Loader2, AlertCircle, X } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [details, setDetails] = useState<SessionDetails | null>(null);
@@ -23,6 +23,7 @@ export const App: React.FC = () => {
   const [isCommentHistoryOpen, setIsCommentHistoryOpen] = useState(false);
   const [isConfirmFinalizeOpen, setIsConfirmFinalizeOpen] = useState(false);
   const [overallComment, setOverallComment] = useState('');
+  const [revisionAlert, setRevisionAlert] = useState<string | null>(null);
   const [isDark, setIsDark] = useState(() => {
     return (
       localStorage.getItem('pujangga_theme') === 'dark' ||
@@ -244,6 +245,7 @@ export const App: React.FC = () => {
   const handleSaveComment = (commentId: string, text: string) => {
     if (!details?.currentRevision) return;
 
+    setRevisionAlert(null);
     setLocalComments((prev) => {
       const existing = prev.find((c) => c.id === commentId);
       if (existing) {
@@ -263,6 +265,14 @@ export const App: React.FC = () => {
     });
 
     setPopoverData(null);
+  };
+
+  // Update directive and clear revision alert if directive is typed
+  const handleOverallCommentChange = (val: string) => {
+    setOverallComment(val);
+    if (revisionAlert && val.trim().length > 0) {
+      setRevisionAlert(null);
+    }
   };
 
   // Delete comment and strip mark completely
@@ -295,10 +305,50 @@ export const App: React.FC = () => {
     });
   };
 
+  // Validate revision request: requires at least 1 new note or 1 directive
+  const handleRequestRevision = (): boolean => {
+    if (!editor || !details?.currentRevision) return false;
+
+    const currentRound = details.currentRevision.roundNumber;
+    const currentRoundNotes = localComments.filter(
+      (c) => c.roundNumber === currentRound && c.status === 'open' && c.commentText.trim().length > 0
+    );
+    const hasNotes = currentRoundNotes.length > 0;
+    const hasDirective = overallComment.trim().length > 0;
+
+    if (!hasNotes && !hasDirective) {
+      setRevisionAlert(
+        'Unable to request revision without any new notes or directive. Please add at least one note on the draft or write guidance in the directive box.'
+      );
+      return false;
+    }
+
+    setRevisionAlert(null);
+    submitReview('NEEDS_REVISION');
+    return true;
+  };
+
   // Submit review round
   const submitReview = async (status: ReviewStatus) => {
     if (!editor || !details) return;
 
+    if (status === 'NEEDS_REVISION') {
+      const currentRound = details.currentRevision?.roundNumber || 1;
+      const currentRoundNotes = localComments.filter(
+        (c) => c.roundNumber === currentRound && c.status === 'open' && c.commentText.trim().length > 0
+      );
+      const hasNotes = currentRoundNotes.length > 0;
+      const hasDirective = overallComment.trim().length > 0;
+
+      if (!hasNotes && !hasDirective) {
+        setRevisionAlert(
+          'Unable to request revision without any new notes or directive. Please add at least one note on the draft or write guidance in the directive box.'
+        );
+        return false;
+      }
+    }
+
+    setRevisionAlert(null);
     setIsSubmitting(true);
     try {
       const markdown = (editor.storage as any).markdown?.getMarkdown?.() || editor.getText();
@@ -324,7 +374,8 @@ export const App: React.FC = () => {
       });
 
       if (!res.ok) {
-        throw new Error('Failed to submit review');
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to submit review');
       }
 
       setOverallComment('');
@@ -333,8 +384,10 @@ export const App: React.FC = () => {
         setShowDiff(false);
       }
       await fetchSession();
+      return true;
     } catch (err: any) {
       alert(`Submission error: ${err.message}`);
+      return false;
     } finally {
       setIsSubmitting(false);
     }
@@ -403,6 +456,32 @@ export const App: React.FC = () => {
         onToggleTheme={() => setIsDark((v) => !v)}
       />
 
+      {/* Top Floating Alert Banner when unable to request revision */}
+      {revisionAlert && (
+        <div className="fixed top-16 sm:top-18 left-1/2 -translate-x-1/2 z-60 w-full max-w-lg px-4 pointer-events-auto animate-in fade-in slide-in-from-top-3 duration-200">
+          <div className="bg-paper-card dark:bg-night-modal border-2 border-accent dark:border-accent-pin rounded-2xl p-4 shadow-2xl flex items-start gap-3.5 text-ink dark:text-night-text">
+            <div className="w-9 h-9 rounded-xl bg-accent-subtle dark:bg-accent-subtle-dark text-accent dark:text-accent-pin flex items-center justify-center shrink-0 shadow-2xs mt-0.5">
+              <AlertCircle className="w-5 h-5" />
+            </div>
+            <div className="flex-1 min-w-0 pr-1">
+              <h4 className="font-serif font-bold text-sm text-ink dark:text-night-text-heading mb-0.5">
+                Unable to Request Revision
+              </h4>
+              <p className="text-sm text-ink-body dark:text-night-text-subtle leading-relaxed">
+                {revisionAlert}
+              </p>
+            </div>
+            <button
+              onClick={() => setRevisionAlert(null)}
+              className="p-1 rounded-lg text-ink-subtle hover:text-ink dark:hover:text-night-text hover:bg-paper-hover dark:hover:bg-night-hover transition-colors cursor-pointer shrink-0"
+              aria-label="Dismiss alert"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Main Container: Flex Row on Desktop (Canvas + Right Sidebar), Stack on Mobile */}
       <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 py-8 flex flex-col lg:flex-row gap-4 items-start">
         {/* Left/Center Editorial Reading & Writing Canvas */}
@@ -465,9 +544,10 @@ export const App: React.FC = () => {
               editor={editor}
               status={details.session.status}
               overallComment={overallComment}
-              onOverallCommentChange={setOverallComment}
-              onSubmitRevision={() => submitReview('NEEDS_REVISION')}
+              onOverallCommentChange={handleOverallCommentChange}
+              onSubmitRevision={handleRequestRevision}
               isSubmitting={isSubmitting}
+              revisionAlert={revisionAlert}
             />
           ) : (
             <div className="bg-paper-card dark:bg-night-card border border-paper-border dark:border-night-border-strong p-6 sm:p-10 md:p-14 shadow-xl transition-colors">
@@ -481,12 +561,13 @@ export const App: React.FC = () => {
           status={details.session.status}
           roundNumber={currentRound}
           overallComment={overallComment}
-          onOverallCommentChange={setOverallComment}
-          onSubmitRevision={() => submitReview('NEEDS_REVISION')}
+          onOverallCommentChange={handleOverallCommentChange}
+          onSubmitRevision={handleRequestRevision}
           onApprove={handleRequestApprove}
           isSubmitting={isSubmitting}
           totalCommentsCount={localComments.length}
           onOpenCommentHistory={() => setIsCommentHistoryOpen(true)}
+          revisionAlert={revisionAlert}
         />
       </div>
 
@@ -522,10 +603,11 @@ export const App: React.FC = () => {
         status={details.session.status}
         roundNumber={currentRound}
         overallComment={overallComment}
-        onOverallCommentChange={setOverallComment}
-        onSubmitRevision={() => submitReview('NEEDS_REVISION')}
+        onOverallCommentChange={handleOverallCommentChange}
+        onSubmitRevision={handleRequestRevision}
         onApprove={handleRequestApprove}
         isSubmitting={isSubmitting}
+        revisionAlert={revisionAlert}
       />
     </div>
   );

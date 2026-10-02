@@ -37,6 +37,27 @@ async function runE2ETest() {
   }
   console.log(`✓ Session details loaded: "${details.session.title}"`);
 
+  // 3b. Verify that submitting NEEDS_REVISION without notes or directive is rejected
+  console.log('2b. Testing revision request rejection when no notes or directive provided...');
+  const invalidSubmitRes = await fetch(`http://localhost:${port}/api/sessions/${sessionData.sessionId}/submit`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      userEditedMarkdown: '# Test Document\n\nContent',
+      overallComment: '   ',
+      status: 'NEEDS_REVISION',
+      inlineComments: [],
+    }),
+  });
+  if (invalidSubmitRes.status !== 400) {
+    throw new Error(`Expected 400 status when submitting without notes or directive, got ${invalidSubmitRes.status}`);
+  }
+  const invalidData = await invalidSubmitRes.json();
+  if (!invalidData.error?.includes('Unable to request revision without any new notes or directive')) {
+    throw new Error(`Unexpected error message: ${JSON.stringify(invalidData)}`);
+  }
+  console.log(`✓ Revision request safely blocked when missing both notes and directive!`);
+
   // 4. Submit review for Round 1
   console.log('3. Submitting Round 1 review with direct edits & inline comments...');
   const editedText = '# Test Document\n\nThis is paragraph one, directly polished by editor.\n\nThis is paragraph two.\n';

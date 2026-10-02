@@ -1,5 +1,5 @@
 import React from 'react';
-import { SendHorizonal, CheckCircle2, Loader2, BookCheck, History, ArrowRight } from 'lucide-react';
+import { SendHorizonal, CheckCircle2, Loader2, BookCheck, History, ArrowRight, AlertCircle } from 'lucide-react';
 import { SessionStatus } from '../../shared/types.js';
 
 interface DesktopSidebarProps {
@@ -7,11 +7,12 @@ interface DesktopSidebarProps {
   roundNumber: number;
   overallComment: string;
   onOverallCommentChange: (val: string) => void;
-  onSubmitRevision: () => void;
+  onSubmitRevision: () => boolean | void;
   onApprove: () => void;
   isSubmitting: boolean;
   totalCommentsCount: number;
   onOpenCommentHistory: () => void;
+  revisionAlert?: string | null;
 }
 
 export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
@@ -24,6 +25,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
   isSubmitting,
   totalCommentsCount,
   onOpenCommentHistory,
+  revisionAlert,
 }) => {
   const isRevising = status === 'revising';
   const isSatisfied = status === 'satisfied';
@@ -59,6 +61,16 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
             </div>
           </div>
         ) : null}
+
+        {/* Unable to Request Revision Notice */}
+        {revisionAlert && (
+          <div className="mb-3.5 p-3 rounded-xl bg-accent-subtle dark:bg-accent-subtle-dark border border-accent-border dark:border-accent-border-dark flex items-start gap-2.5 text-sm text-accent-text dark:text-accent-text-dark animate-in fade-in">
+            <AlertCircle className="w-4 h-4 text-accent dark:text-accent-pin shrink-0 mt-0.5" />
+            <div className="leading-snug">
+              <strong>Directive or note required:</strong> Add guidance below or highlight text to add a note before requesting revision.
+            </div>
+          </div>
+        )}
 
         {/* Directive Textarea */}
         <div className="mb-4">
