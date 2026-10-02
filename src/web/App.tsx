@@ -14,18 +14,10 @@ import { LockedTextDrawer } from './components/LockedTextDrawer.js';
 import { CommentPopover, CommentPopoverData } from './components/CommentPopover.js';
 import { LockPopover, LockPopoverData } from './components/LockPopover.js';
 import { ConfirmFinalizeModal } from './components/ConfirmFinalizeModal.js';
-import { FloatingAlertBanner } from './components/FloatingAlertBanner.js';
+import { EditorialBubbleMenu } from './components/EditorialBubbleMenu.js';
+import { Snackbar, SnackbarData } from './components/Snackbar.js';
 import { SessionDetails, InlineComment, LockedText, ReviewStatus } from '../shared/types.js';
-import UnderlineExtension from '@tiptap/extension-underline';
-import {
-  MessageSquarePlus,
-  CheckCircle2,
-  Loader2,
-  Lock,
-  Bold,
-  Italic,
-  Underline as UnderlineIcon,
-} from 'lucide-react';
+import { CheckCircle2, Loader2 } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [details, setDetails] = useState<SessionDetails | null>(null);
@@ -38,7 +30,7 @@ export const App: React.FC = () => {
   const [isConfirmFinalizeOpen, setIsConfirmFinalizeOpen] = useState(false);
   const [isZenMode, setIsZenMode] = useState(false);
   const [overallComment, setOverallComment] = useState('');
-  const [revisionAlert, setRevisionAlert] = useState<string | null>(null);
+  const [snackbarData, setSnackbarData] = useState<SnackbarData | null>(null);
   const [isDark, setIsDark] = useState(() => {
     return (
       localStorage.getItem('pujangga_theme') === 'dark' ||
@@ -54,11 +46,6 @@ export const App: React.FC = () => {
   // Locked texts state
   const [localLockedTexts, setLocalLockedTexts] = useState<LockedText[]>([]);
   const [lockPopoverData, setLockPopoverData] = useState<LockPopoverData | null>(null);
-
-  const [selectionTooltip, setSelectionTooltip] = useState<{
-    text: string;
-    position: { top: number; left: number };
-  } | null>(null);
 
   // Extract sessionId from URL (/review/:id or ?sessionId=xyz)
   const sessionId = React.useMemo(() => {
@@ -97,6 +84,38 @@ export const App: React.FC = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isZenMode, isCommentHistoryOpen, isLockedDrawerOpen, isConfirmFinalizeOpen, popoverData, lockPopoverData]);
+
+  // Listen for locked text delete / modification violation attempts
+  useEffect(() => {
+    const handleLockViolation = (e: any) => {
+      const msg =
+        e.detail?.message ||
+        'Cannot delete content containing locked text. Unlock the text segment first.';
+      setSnackbarData({
+        title: 'Locked Text Protected',
+        message: msg,
+        type: 'lock',
+      });
+    };
+    window.addEventListener('pujangga:locked-text-delete-attempt', handleLockViolation);
+    return () => window.removeEventListener('pujangga:locked-text-delete-attempt', handleLockViolation);
+  }, []);
+
+  // Listen for noted text delete / modification violation attempts
+  useEffect(() => {
+    const handleNotedViolation = (e: any) => {
+      const msg =
+        e.detail?.message ||
+        'Cannot delete content containing active notes. Remove or resolve the note first.';
+      setSnackbarData({
+        title: 'Noted Text Protected',
+        message: msg,
+        type: 'info',
+      });
+    };
+    window.addEventListener('pujangga:noted-text-delete-attempt', handleNotedViolation);
+    return () => window.removeEventListener('pujangga:noted-text-delete-attempt', handleNotedViolation);
+  }, []);
 
   // Fetch session details
   const fetchSession = useCallback(async () => {
@@ -153,7 +172,7 @@ export const App: React.FC = () => {
             // If a new round was pushed by agent, update editor text!
             if (msg.type === 'ROUND_UPDATED' && editor) {
               const newContent = updatedDetails.currentRevision?.contentMarkdown || '';
-              editor.commands.setContent(newContent);
+              editor.chain().setMeta('allowLockEdit', true).setMeta('allowCommentEdit', true).setContent(newContent).run();
             }
           }
         } catch {
@@ -178,7 +197,8 @@ export const App: React.FC = () => {
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-        heading: { levels: [1, 2, 3] },
+        heading: { levels: [1, 2, 3, 4] },
+        link: { openOnClick: false },
       }),
       Markdown.configure({
         html: false,
@@ -187,7 +207,6 @@ export const App: React.FC = () => {
       }),
       CommentMark,
       LockMark,
-      UnderlineExtension,
       Placeholder.configure({
         placeholder: 'Writing draft appears here...',
       }),
@@ -197,37 +216,6 @@ export const App: React.FC = () => {
       attributes: {
         class: 'editorial-prose min-h-[500px] focus:outline-none',
       },
-    },
-    onSelectionUpdate: ({ editor }) => {
-      const { from, to } = editor.state.selection;
-      if (from === to) {
-        setSelectionTooltip(null);
-        return;
-      }
-
-      // Check if selection contains or overlaps with any locked text
-      const lockMarkType = editor.state.schema.marks.lock;
-      if (lockMarkType && editor.state.doc.rangeHasMark(from, to, lockMarkType)) {
-        setSelectionTooltip(null);
-        return;
-      }
-
-      const text = editor.state.doc.textBetween(from, to, ' ');
-      if (!text.trim()) {
-        setSelectionTooltip(null);
-        return;
-      }
-
-      const view = editor.view;
-      const coords = view.coordsAtPos(to);
-
-      setSelectionTooltip({
-        text: text.trim(),
-        position: {
-          top: coords.top,
-          left: coords.left,
-        },
-      });
     },
   });
 
@@ -361,7 +349,7 @@ export const App: React.FC = () => {
     if (editor && details?.currentRevision) {
       if (prevRevIdRef.current !== details.currentRevision.id) {
         prevRevIdRef.current = details.currentRevision.id;
-        editor.commands.setContent(details.currentRevision.contentMarkdown);
+        editor.chain().setMeta('allowLockEdit', true).setMeta('allowCommentEdit', true).setContent(details.currentRevision.contentMarkdown).run();
         if (localLockedTexts.length > 0) {
           setTimeout(() => {
             applyLocksToEditor(editor, localLockedTexts);
@@ -424,21 +412,70 @@ export const App: React.FC = () => {
     return () => document.removeEventListener('click', handleEditorClick);
   }, [localComments, localLockedTexts]);
 
-  // Add Comment from selection tooltip
+  // Handle Link from selection tooltip or keyboard shortcut
+  // Handle Link from keyboard shortcut (Cmd+K)
+  const handleLinkPrompt = () => {
+    if (!editor) return;
+    const isLinkActive = editor.isActive('link');
+    const previousUrl = isLinkActive ? editor.getAttributes('link').href || '' : '';
+    const url = window.prompt(
+      isLinkActive ? 'Edit URL (leave blank to remove link):' : 'Enter link URL (e.g. https://example.com):',
+      previousUrl || 'https://'
+    );
+    if (url === null) return;
+    if (!url.trim()) {
+      editor.chain().focus().extendMarkRange('link').unsetLink().run();
+      return;
+    }
+    const { from, to } = editor.state.selection;
+    if (from === to && !isLinkActive) {
+      editor.chain().focus().insertContent(`<a href="${url.trim()}">${url.trim()}</a>`).run();
+    } else {
+      editor.chain().focus().extendMarkRange('link').setLink({ href: url.trim() }).run();
+    }
+  };
+
+  // Keyboard shortcut for Insert/Edit Link (Cmd+K)
+  useEffect(() => {
+    const handleLinkShortcut = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === 'k') {
+        if (editor && editor.isFocused) {
+          e.preventDefault();
+          handleLinkPrompt();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleLinkShortcut);
+    return () => window.removeEventListener('keydown', handleLinkShortcut);
+  }, [editor]);
+
+  // Add Comment from selection
   const handleAddCommentFromSelection = () => {
-    if (!editor || !selectionTooltip) return;
+    if (!editor) return;
 
     const { from, to } = editor.state.selection;
+    if (from === to) return;
 
     // Disallow adding notes to locked text
     const lockMarkType = editor.state.schema.marks.lock;
     if (lockMarkType && editor.state.doc.rangeHasMark(from, to, lockMarkType)) {
-      setSelectionTooltip(null);
       return;
     }
 
+    const anchorText = editor.state.doc.textBetween(from, to, ' ').trim();
+    if (!anchorText) return;
+
     const commentId = crypto.randomUUID();
-    const anchorText = selectionTooltip.text;
+
+    let position = { top: 0, left: 0 };
+    if (editor.view) {
+      try {
+        const coords = editor.view.coordsAtPos(to);
+        position = { top: coords.top, left: coords.left };
+      } catch {
+        // fallback
+      }
+    }
 
     // Apply comment mark to the selected text
     editor.chain().focus().setComment(commentId).run();
@@ -448,26 +485,26 @@ export const App: React.FC = () => {
       anchorText,
       commentText: '',
       isNew: true,
-      position: selectionTooltip.position,
+      position,
     });
-
-    setSelectionTooltip(null);
   };
 
-  // Lock Text from selection tooltip with Contextual Anchoring
+  // Lock Text from selection with Contextual Anchoring
   const handleLockTextFromSelection = async () => {
-    if (!editor || !selectionTooltip || !details) return;
+    if (!editor || !details) return;
 
     const { from, to } = editor.state.selection;
+    if (from === to) return;
 
     // Disallow re-locking if already locked
     const lockMarkType = editor.state.schema.marks.lock;
     if (lockMarkType && editor.state.doc.rangeHasMark(from, to, lockMarkType)) {
-      setSelectionTooltip(null);
       return;
     }
 
-    const text = selectionTooltip.text;
+    const text = editor.state.doc.textBetween(from, to, ' ').trim();
+    if (!text) return;
+
     const lockId = crypto.randomUUID();
 
     // Contextual Anchoring: Find nearest preceding markdown heading in the document
@@ -505,7 +542,6 @@ export const App: React.FC = () => {
     };
 
     setLocalLockedTexts((prev) => [...prev, newLock]);
-    setSelectionTooltip(null);
 
     try {
       await fetch(`/api/sessions/${details.session.id}/locked-texts`, {
@@ -548,7 +584,9 @@ export const App: React.FC = () => {
   const handleSaveComment = (commentId: string, text: string) => {
     if (!details?.currentRevision) return;
 
-    setRevisionAlert(null);
+    if (snackbarData?.type === 'warning') {
+      setSnackbarData(null);
+    }
     setLocalComments((prev) => {
       const existing = prev.find((c) => c.id === commentId);
       if (existing) {
@@ -570,11 +608,11 @@ export const App: React.FC = () => {
     setPopoverData(null);
   };
 
-  // Update directive and clear revision alert if directive is typed
+  // Update directive and clear revision warning if directive is typed
   const handleOverallCommentChange = (val: string) => {
     setOverallComment(val);
-    if (revisionAlert && val.trim().length > 0) {
-      setRevisionAlert(null);
+    if (snackbarData?.type === 'warning' && val.trim().length > 0) {
+      setSnackbarData(null);
     }
   };
 
@@ -620,13 +658,18 @@ export const App: React.FC = () => {
     const hasDirective = overallComment.trim().length > 0;
 
     if (!hasNotes && !hasDirective) {
-      setRevisionAlert(
-        'Unable to request revision without any new notes or directive. Please add at least one note on the draft or write guidance in the directive box.'
-      );
+      setSnackbarData({
+        title: 'Unable to Request Revision',
+        message:
+          'Please add at least one note on the draft or write guidance in the directive box.',
+        type: 'warning',
+      });
       return false;
     }
 
-    setRevisionAlert(null);
+    if (snackbarData?.type === 'warning') {
+      setSnackbarData(null);
+    }
     submitReview('NEEDS_REVISION');
     return true;
   };
@@ -644,14 +687,19 @@ export const App: React.FC = () => {
       const hasDirective = overallComment.trim().length > 0;
 
       if (!hasNotes && !hasDirective) {
-        setRevisionAlert(
-          'Unable to request revision without any new notes or directive. Please add at least one note on the draft or write guidance in the directive box.'
-        );
+        setSnackbarData({
+          title: 'Unable to Request Revision',
+          message:
+            'Please add at least one note on the draft or write guidance in the directive box.',
+          type: 'warning',
+        });
         return false;
       }
     }
 
-    setRevisionAlert(null);
+    if (snackbarData?.type === 'warning') {
+      setSnackbarData(null);
+    }
     setIsSubmitting(true);
     try {
       const markdown = (editor.storage as any).markdown?.getMarkdown?.() || editor.getText();
@@ -771,11 +819,11 @@ export const App: React.FC = () => {
         onToggleZenMode={() => setIsZenMode((v) => !v)}
       />
 
-      {/* Top Floating Alert Banner with smooth enter/exit animation & 3s auto exit */}
-      <FloatingAlertBanner
-        message={revisionAlert}
-        onClose={() => setRevisionAlert(null)}
-        autoDismissMs={3000}
+      {/* Floating Snackbar for Locked Text Protection & Revision Warnings */}
+      <Snackbar
+        data={snackbarData}
+        onClose={() => setSnackbarData(null)}
+        autoDismissMs={3500}
       />
 
       {/* Main Container: Flex Row on Desktop (Canvas + Right Sidebar), Centered in Zen Mode */}
@@ -822,67 +870,13 @@ export const App: React.FC = () => {
             </div>
           )}
 
-          {/* Selection Tooltip for Formatting, Notes & Locking Text */}
-          {selectionTooltip && details.session.status === 'active' && (
-            <div
-              className="fixed z-60 transform -translate-x-1/2 -translate-y-full mb-2 bg-ink dark:bg-paper text-white dark:text-night p-1 rounded-xl shadow-2xl flex items-center gap-0.5 text-sm font-semibold select-none animate-in fade-in zoom-in-95 border border-black/10 dark:border-white/10"
-              style={{
-                top: selectionTooltip.position.top - 8,
-                left: selectionTooltip.position.left,
-              }}
-            >
-              <button
-                type="button"
-                title="Bold (⌘+B)"
-                onClick={() => editor.chain().focus().toggleBold().run()}
-                className={`p-1.5 rounded-lg hover:bg-white/10 dark:hover:bg-black/10 transition-colors cursor-pointer ${
-                  editor.isActive('bold') ? 'bg-white/20 dark:bg-black/20 text-accent-bright dark:text-accent' : ''
-                }`}
-              >
-                <Bold className="w-3.5 h-3.5" />
-              </button>
-              <button
-                type="button"
-                title="Italic (⌘+I)"
-                onClick={() => editor.chain().focus().toggleItalic().run()}
-                className={`p-1.5 rounded-lg hover:bg-white/10 dark:hover:bg-black/10 transition-colors cursor-pointer ${
-                  editor.isActive('italic') ? 'bg-white/20 dark:bg-black/20 text-accent-bright dark:text-accent' : ''
-                }`}
-              >
-                <Italic className="w-3.5 h-3.5" />
-              </button>
-              <button
-                type="button"
-                title="Underline (⌘+U)"
-                onClick={() => editor.chain().focus().toggleUnderline().run()}
-                className={`p-1.5 rounded-lg hover:bg-white/10 dark:hover:bg-black/10 transition-colors cursor-pointer ${
-                  editor.isActive('underline') ? 'bg-white/20 dark:bg-black/20 text-accent-bright dark:text-accent' : ''
-                }`}
-              >
-                <UnderlineIcon className="w-3.5 h-3.5" />
-              </button>
-
-              <div className="w-[1px] h-4 bg-white/20 dark:bg-black/20 mx-1" />
-
-              <button
-                type="button"
-                onClick={handleAddCommentFromSelection}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-md hover:bg-white/10 dark:hover:bg-black/10 transition-colors cursor-pointer"
-              >
-                <MessageSquarePlus className="w-3.5 h-3.5 text-accent-bright dark:text-accent" />
-                <span>Add Note</span>
-              </button>
-              <div className="w-[1px] h-4 bg-white/20 dark:bg-black/20 mx-0.5" />
-              <button
-                type="button"
-                onClick={handleLockTextFromSelection}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-md hover:bg-white/10 dark:hover:bg-black/10 transition-colors cursor-pointer"
-              >
-                <Lock className="w-3.5 h-3.5 text-success dark:text-success-icon-dark" />
-                <span>Lock Text</span>
-              </button>
-            </div>
-          )}
+          {/* Editorial Bubble Menu for Formatting, Notes & Locking Text */}
+          <EditorialBubbleMenu
+            editor={editor}
+            disabled={details.session.status !== 'active'}
+            onAddComment={handleAddCommentFromSelection}
+            onLockText={handleLockTextFromSelection}
+          />
 
           {/* Side-by-Side Floating Diff View or In-Place Editor */}
           {showDiff && details ? (
@@ -900,7 +894,7 @@ export const App: React.FC = () => {
               isSubmitting={isSubmitting}
             />
           ) : (
-            <div className="bg-paper-card dark:bg-night-card border border-paper-border dark:border-night-border-strong p-6 sm:p-10 md:p-14 shadow-xl transition-colors">
+            <div className="bg-paper-card dark:bg-night-card border border-paper-border dark:border-night-border-strong rounded-2xl shadow-xl transition-colors p-6 sm:p-10 md:p-14">
               <EditorContent editor={editor} />
             </div>
           )}

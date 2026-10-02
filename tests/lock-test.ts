@@ -419,6 +419,410 @@ function testTypingAfterLockedOrCommentedText() {
   console.log('✓ Text typed after locked text is clean and does NOT inherit lock mark!');
 }
 
+function testLockedTextFormattingImmutability() {
+  console.log('--- 7. Testing Locked Text Formatting Immutability ---');
+
+  const schema = new Schema({
+    nodes: {
+      doc: { content: 'block+' },
+      paragraph: { group: 'block', content: 'inline*' },
+      heading: { group: 'block', content: 'inline*', attrs: { level: { default: 1 } } },
+      text: { group: 'inline' },
+    },
+    marks: {
+      lock: { inclusive: false, attrs: { lockId: { default: null } } },
+      bold: {},
+      italic: {},
+    },
+  });
+
+  const lockMarkType = schema.marks.lock;
+  const boldMarkType = schema.marks.bold;
+  const l1Mark = lockMarkType.create({ lockId: 'lock-fmt-1' });
+  const bMark = boldMarkType.create();
+
+  // Create doc:
+  // Para 1: "Prefix " (1..8), "immutable thesis" (8..24, locked), " suffix" (24..31)
+  // Para 2: "Normal paragraph" (33..49)
+  const doc = schema.node('doc', null, [
+    schema.node('paragraph', null, [
+      schema.text('Prefix '),
+      schema.text('immutable thesis', [l1Mark]),
+      schema.text(' suffix'),
+    ]),
+    schema.node('paragraph', null, [
+      schema.text('Normal paragraph'),
+    ]),
+  ]);
+
+  const plugins = LockMark.config.addProseMirrorPlugins?.call({} as any) || [];
+  const state = EditorState.create({ doc, schema, plugins });
+
+  const filter = (tr: any) => {
+    for (const plugin of plugins) {
+      if (plugin.spec.filterTransaction && !plugin.spec.filterTransaction(tr, state)) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  // 1. Try to add bold to locked text (pos 8 to 24)
+  const trBoldLocked = state.tr.addMark(8, 24, bMark);
+  if (filter(trBoldLocked)) {
+    throw new Error('Expected adding bold to locked text to be BLOCKED, but was allowed!');
+  }
+  console.log('✓ Adding formatting (bold) to locked text is successfully BLOCKED!');
+
+  // 2. Try to add bold to unlocked text (pos 1 to 7)
+  const trBoldUnlocked = state.tr.addMark(1, 7, bMark);
+  if (!filter(trBoldUnlocked)) {
+    throw new Error('Expected adding bold to unlocked text to be ALLOWED, but was blocked!');
+  }
+  console.log('✓ Adding formatting (bold) to unlocked text is successfully ALLOWED!');
+
+  // 3. Try to convert paragraph 1 (containing locked text) into a heading
+  const para1End = doc.child(0).nodeSize; // 32
+  const trHeadingPara1 = state.tr.setBlockType(0, para1End, schema.nodes.heading, { level: 1 });
+  if (filter(trHeadingPara1)) {
+    throw new Error('Expected converting block with locked text to heading to be BLOCKED, but was allowed!');
+  }
+  console.log('✓ Block conversion (heading) on section containing locked text is successfully BLOCKED!');
+
+  // 4. Try to convert paragraph 2 (no locked text) into a heading
+  const para2Start = para1End;
+  const para2End = para1End + doc.child(1).nodeSize;
+  const trHeadingPara2 = state.tr.setBlockType(para2Start, para2End, schema.nodes.heading, { level: 2 });
+  if (!filter(trHeadingPara2)) {
+    throw new Error('Expected converting block without locked text to heading to be ALLOWED, but was blocked!');
+  }
+  console.log('✓ Block conversion (heading) on section without locked text is successfully ALLOWED!');
+
+  // 5. Test removing mark from locked text (when locked text already has another mark)
+  const docWithBoldLock = schema.node('doc', null, [
+    schema.node('paragraph', null, [
+      schema.text('Prefix '),
+      schema.text('immutable thesis', [l1Mark, bMark]),
+    ]),
+  ]);
+  const stateWithBold = EditorState.create({ doc: docWithBoldLock, schema, plugins });
+  const trRemoveBold = stateWithBold.tr.removeMark(8, 24, bMark);
+  let removeBlocked = false;
+  for (const plugin of plugins) {
+    if (plugin.spec.filterTransaction && !plugin.spec.filterTransaction(trRemoveBold, stateWithBold)) {
+      removeBlocked = true;
+      break;
+    }
+  }
+  if (!removeBlocked) {
+    throw new Error('Expected removing mark from locked text to be BLOCKED, but was allowed!');
+  }
+  console.log('✓ Removing formatting marks from locked text is successfully BLOCKED!');
+
+  // 6. Test adding link mark to locked text vs unlocked text
+  const linkSchema = new Schema({
+    nodes: {
+      doc: { content: 'block+' },
+      paragraph: { group: 'block', content: 'inline*' },
+      text: { group: 'inline' },
+    },
+    marks: {
+      lock: { inclusive: false, attrs: { lockId: { default: null } } },
+      link: { attrs: { href: { default: '' } } },
+    },
+  });
+  const linkMark = linkSchema.marks.link.create({ href: 'https://example.com' });
+  const docWithLinkTest = linkSchema.node('doc', null, [
+    linkSchema.node('paragraph', null, [
+      linkSchema.text('Prefix '),
+      linkSchema.text('immutable thesis', [linkSchema.marks.lock.create({ lockId: 'l-link' })]),
+      linkSchema.text(' suffix'),
+    ]),
+  ]);
+  const stateWithLink = EditorState.create({ doc: docWithLinkTest, schema: linkSchema, plugins });
+  const trLinkLocked = stateWithLink.tr.addMark(8, 24, linkMark);
+  let linkBlocked = false;
+  for (const plugin of plugins) {
+    if (plugin.spec.filterTransaction && !plugin.spec.filterTransaction(trLinkLocked, stateWithLink)) {
+      linkBlocked = true;
+      break;
+    }
+  }
+  if (!linkBlocked) {
+    throw new Error('Expected adding link to locked text to be BLOCKED, but was allowed!');
+  }
+  console.log('✓ Adding link to locked text is successfully BLOCKED!');
+
+  const trLinkUnlocked = stateWithLink.tr.addMark(1, 7, linkMark);
+  let linkAllowed = true;
+  for (const plugin of plugins) {
+    if (plugin.spec.filterTransaction && !plugin.spec.filterTransaction(trLinkUnlocked, stateWithLink)) {
+      linkAllowed = false;
+      break;
+    }
+  }
+  if (!linkAllowed) {
+    throw new Error('Expected adding link to unlocked text to be ALLOWED, but was blocked!');
+  }
+  console.log('✓ Adding link to unlocked text is successfully ALLOWED!');
+
+  // 7. Test H4 block conversion on locked vs unlocked sections
+  const trH4Locked = state.tr.setBlockType(0, para1End, schema.nodes.heading, { level: 4 });
+  if (filter(trH4Locked)) {
+    throw new Error('Expected H4 conversion on locked section to be BLOCKED, but was allowed!');
+  }
+  console.log('✓ Converting section with locked text to Heading 4 is successfully BLOCKED!');
+
+  const trH4Unlocked = state.tr.setBlockType(para2Start, para2End, schema.nodes.heading, { level: 4 });
+  if (!filter(trH4Unlocked)) {
+    throw new Error('Expected H4 conversion on unlocked section to be ALLOWED, but was blocked!');
+  }
+  console.log('✓ Converting section without locked text to Heading 4 is successfully ALLOWED!');
+}
+
+function testSelectAllDeletePreventionWithSnackbarNotice() {
+  console.log('--- 8. Testing Select-All Delete Prevention & Snackbar Notice ---');
+
+  const schema = new Schema({
+    nodes: {
+      doc: { content: 'block+' },
+      paragraph: { group: 'block', content: 'inline*' },
+      text: { group: 'inline' },
+    },
+    marks: {
+      lock: { inclusive: false, attrs: { lockId: { default: null } } },
+    },
+  });
+
+  const lockMarkType = schema.marks.lock;
+  const l1Mark = lockMarkType.create({ lockId: 'lock-nodelete' });
+
+  // Mock global window event listener
+  let capturedEvent: any = null;
+  (globalThis as any).window = {
+    dispatchEvent: (e: any) => {
+      capturedEvent = e;
+    },
+  };
+  (globalThis as any).CustomEvent = class {
+    type: string;
+    detail: any;
+    constructor(type: string, options: any) {
+      this.type = type;
+      this.detail = options?.detail;
+    }
+  };
+
+  const doc = schema.node('doc', null, [
+    schema.node('paragraph', null, [
+      schema.text('Opening thoughts. '),
+      schema.text('Immutable thesis that must persist.', [l1Mark]),
+      schema.text(' Closing thoughts.'),
+    ]),
+  ]);
+
+  const plugins = LockMark.config.addProseMirrorPlugins?.call({} as any) || [];
+  const state = EditorState.create({ doc, schema, plugins });
+
+  const filter = (tr: any) => {
+    for (const plugin of plugins) {
+      if (plugin.spec.filterTransaction && !plugin.spec.filterTransaction(tr, state)) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  // 1. Try to Select All and Delete (0 to doc.content.size)
+  const trSelectAllDelete = state.tr.delete(0, state.doc.content.size);
+  const isSelectAllAllowed = filter(trSelectAllDelete);
+
+  if (isSelectAllAllowed) {
+    throw new Error('Expected Select All + Delete to be strictly BLOCKED when locked text exists, but was allowed!');
+  }
+  console.log('✓ Select All + Delete across entire document is strictly BLOCKED when locked text exists!');
+
+  if (!capturedEvent || capturedEvent.type !== 'pujangga:locked-text-delete-attempt') {
+    throw new Error('Expected pujangga:locked-text-delete-attempt event to be dispatched, but was not!');
+  }
+  console.log('✓ Snackbar event pujangga:locked-text-delete-attempt dispatched with message: "' + capturedEvent.detail.message + '"');
+
+  // 2. Test handleKeyDown on Select All selection
+  const mockView = {
+    state: {
+      selection: { from: 0, to: state.doc.content.size },
+      schema,
+      doc: state.doc,
+    },
+  };
+  const guardPlugin = plugins.find((p: any) => p.key?.startsWith('textLockGuard'));
+  if (guardPlugin && guardPlugin.props.handleKeyDown) {
+    capturedEvent = null;
+    const handledBackspace = guardPlugin.props.handleKeyDown(mockView as any, { key: 'Backspace' } as any);
+    if (!handledBackspace) {
+      throw new Error('Expected handleKeyDown to intercept Backspace on Select All selection!');
+    }
+    if (!capturedEvent) {
+      throw new Error('Expected handleKeyDown to dispatch snackbar event!');
+    }
+    console.log('✓ handleKeyDown cleanly intercepts Backspace on select-all selection and triggers snackbar!');
+
+    capturedEvent = null;
+    const handledCut = guardPlugin.props.handleKeyDown(mockView as any, { key: 'x', metaKey: true } as any);
+    if (!handledCut) {
+      throw new Error('Expected handleKeyDown to intercept Cut (Cmd+X) on Select All selection!');
+    }
+    console.log('✓ handleKeyDown cleanly intercepts Cut (Cmd+X) on select-all selection and triggers snackbar!');
+  }
+
+  // 3. Document without locked text should permit select all delete
+  const docUnlocked = schema.node('doc', null, [
+    schema.node('paragraph', null, [
+      schema.text('Completely unlocked text.'),
+    ]),
+  ]);
+  const stateUnlocked = EditorState.create({ doc: docUnlocked, schema, plugins });
+  const filterUnlocked = (tr: any) => {
+    for (const plugin of plugins) {
+      if (plugin.spec.filterTransaction && !plugin.spec.filterTransaction(tr, stateUnlocked)) {
+        return false;
+      }
+    }
+    return true;
+  };
+  const trUnlockedDelete = stateUnlocked.tr.delete(0, docUnlocked.content.size);
+  if (!filterUnlocked(trUnlockedDelete)) {
+    throw new Error('Expected Select All + Delete on unlocked document to be ALLOWED, but was blocked!');
+  }
+  console.log('✓ Select All + Delete on unlocked document is cleanly ALLOWED!');
+
+  // Cleanup globals
+  delete (globalThis as any).window;
+  delete (globalThis as any).CustomEvent;
+}
+
+function testSelectAllDeletePreventionForNotedTextWithSnackbar() {
+  console.log('--- 9. Testing Select-All Delete Prevention & Info Snackbar for Noted Text ---');
+
+  const schema = new Schema({
+    nodes: {
+      doc: { content: 'paragraph+' },
+      paragraph: { content: 'text*' },
+      text: { group: 'inline' },
+    },
+    marks: {
+      comment: { inclusive: false, attrs: { commentId: { default: null } } },
+      lock: { inclusive: false, attrs: { lockId: { default: null } } },
+    },
+  });
+
+  const commentMarkType = schema.marks.comment;
+  const c1Mark = commentMarkType.create({ commentId: 'comment-nodelete' });
+
+  // Mock global window event listener
+  let capturedEvent: any = null;
+  (globalThis as any).window = {
+    dispatchEvent: (e: any) => {
+      capturedEvent = e;
+    },
+  };
+  (globalThis as any).CustomEvent = class {
+    type: string;
+    detail: any;
+    constructor(type: string, options: any) {
+      this.type = type;
+      this.detail = options?.detail;
+    }
+  };
+
+  const doc = schema.node('doc', null, [
+    schema.node('paragraph', null, [
+      schema.text('Initial paragraph. '),
+      schema.text('Noted sentence with active feedback.', [c1Mark]),
+      schema.text(' Final remarks.'),
+    ]),
+  ]);
+
+  const plugins = CommentMark.config.addProseMirrorPlugins?.call({} as any) || [];
+  const state = EditorState.create({ doc, schema, plugins });
+
+  const filter = (tr: any) => {
+    for (const plugin of plugins) {
+      if (plugin.spec.filterTransaction && !plugin.spec.filterTransaction(tr, state)) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  // 1. Try to Select All and Delete (0 to doc.content.size)
+  const trSelectAllDelete = state.tr.delete(0, state.doc.content.size);
+  const isSelectAllAllowed = filter(trSelectAllDelete);
+
+  if (isSelectAllAllowed) {
+    throw new Error('Expected Select All + Delete to be strictly BLOCKED when noted text exists, but was allowed!');
+  }
+  console.log('✓ Select All + Delete across entire document is strictly BLOCKED when noted text exists!');
+
+  if (!capturedEvent || capturedEvent.type !== 'pujangga:noted-text-delete-attempt') {
+    throw new Error('Expected pujangga:noted-text-delete-attempt event to be dispatched, but was not!');
+  }
+  console.log('✓ Snackbar event pujangga:noted-text-delete-attempt dispatched with message: "' + capturedEvent.detail.message + '"');
+
+  // 2. Test handleKeyDown on Select All selection
+  const mockView = {
+    state: {
+      selection: { from: 0, to: state.doc.content.size },
+      schema,
+      doc: state.doc,
+    },
+  };
+  const guardPlugin = plugins.find((p: any) => p.key?.startsWith('commentLock'));
+  if (guardPlugin && guardPlugin.props.handleKeyDown) {
+    capturedEvent = null;
+    const handledBackspace = guardPlugin.props.handleKeyDown(mockView as any, { key: 'Backspace' } as any);
+    if (!handledBackspace) {
+      throw new Error('Expected handleKeyDown to intercept Backspace on Select All selection with noted text!');
+    }
+    if (!capturedEvent || capturedEvent.type !== 'pujangga:noted-text-delete-attempt') {
+      throw new Error('Expected handleKeyDown to dispatch pujangga:noted-text-delete-attempt event!');
+    }
+    console.log('✓ handleKeyDown cleanly intercepts Backspace on select-all selection and triggers info snackbar!');
+
+    capturedEvent = null;
+    const handledCut = guardPlugin.props.handleKeyDown(mockView as any, { key: 'x', metaKey: true } as any);
+    if (!handledCut) {
+      throw new Error('Expected handleKeyDown to intercept Cut (Cmd+X) on Select All selection with noted text!');
+    }
+    console.log('✓ handleKeyDown cleanly intercepts Cut (Cmd+X) on select-all selection and triggers info snackbar!');
+  }
+
+  // 3. Document without comments should permit select all delete
+  const docUncommented = schema.node('doc', null, [
+    schema.node('paragraph', null, [
+      schema.text('Completely note-free text.'),
+    ]),
+  ]);
+  const stateUncommented = EditorState.create({ doc: docUncommented, schema, plugins });
+  const filterUncommented = (tr: any) => {
+    for (const plugin of plugins) {
+      if (plugin.spec.filterTransaction && !plugin.spec.filterTransaction(tr, stateUncommented)) {
+        return false;
+      }
+    }
+    return true;
+  };
+  const trUncommentedDelete = stateUncommented.tr.delete(0, docUncommented.content.size);
+  if (!filterUncommented(trUncommentedDelete)) {
+    throw new Error('Expected Select All + Delete on note-free document to be ALLOWED, but was blocked!');
+  }
+  console.log('✓ Select All + Delete on note-free document is cleanly ALLOWED!');
+
+  // Cleanup globals
+  delete (globalThis as any).window;
+  delete (globalThis as any).CustomEvent;
+}
+
 function runAll() {
   testCommentLock();
   testLockMarkGuard();
@@ -426,6 +830,9 @@ function runAll() {
   testDatabaseLockedTextPersistence();
   testLockedTextCannotBeCommented();
   testTypingAfterLockedOrCommentedText();
+  testLockedTextFormattingImmutability();
+  testSelectAllDeletePreventionWithSnackbarNotice();
+  testSelectAllDeletePreventionForNotedTextWithSnackbar();
   console.log('\n=== All Text Locking & Anchoring Tests Passed! ===\n');
 }
 

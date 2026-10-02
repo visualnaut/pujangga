@@ -1,6 +1,6 @@
 import { Mark, mergeAttributes } from '@tiptap/core';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
-import { ReplaceStep } from '@tiptap/pm/transform';
+import { ReplaceStep, AddMarkStep, RemoveMarkStep, ReplaceAroundStep } from '@tiptap/pm/transform';
 
 export interface LockMarkOptions {
   HTMLAttributes: Record<string, any>;
@@ -13,6 +13,16 @@ declare module '@tiptap/core' {
       unsetLock: () => ReturnType;
       removeLock: (lockId: string) => ReturnType;
     };
+  }
+}
+
+function notifyLockViolation(message: string) {
+  if (typeof window !== 'undefined' && window.dispatchEvent) {
+    window.dispatchEvent(
+      new CustomEvent('pujangga:locked-text-delete-attempt', {
+        detail: { message },
+      })
+    );
   }
 }
 
@@ -102,6 +112,56 @@ export const LockMark = Mark.create<LockMarkOptions>({
     return [
       new Plugin({
         key: new PluginKey('textLockGuard'),
+        props: {
+          handleKeyDown(view, event) {
+            const { from, to } = view.state.selection;
+            const lockMarkType = view.state.schema.marks.lock;
+            if (!lockMarkType) return false;
+
+            const isRangeSelection = from !== to;
+            const rangeHasLock = isRangeSelection && view.state.doc.rangeHasMark(from, to, lockMarkType);
+
+            // 1. Backspace / Delete
+            if (event.key === 'Backspace' || event.key === 'Delete') {
+              if (rangeHasLock) {
+                notifyLockViolation('Cannot delete content containing locked text. Unlock the text segment first.');
+                return true;
+              }
+              // Collapsed selection directly adjacent to locked text
+              if (!isRangeSelection) {
+                if (event.key === 'Backspace' && from > 0) {
+                  const $pos = view.state.doc.resolve(from);
+                  if ($pos.nodeBefore && $pos.nodeBefore.marks.some((m) => m.type === lockMarkType)) {
+                    notifyLockViolation('Cannot delete locked text. Unlock the text segment first.');
+                    return true;
+                  }
+                } else if (event.key === 'Delete' && to < view.state.doc.content.size) {
+                  const $pos = view.state.doc.resolve(to);
+                  if ($pos.nodeAfter && $pos.nodeAfter.marks.some((m) => m.type === lockMarkType)) {
+                    notifyLockViolation('Cannot delete locked text. Unlock the text segment first.');
+                    return true;
+                  }
+                }
+              }
+            }
+
+            // 2. Cut (Cmd+X / Ctrl+X)
+            if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'x') {
+              if (rangeHasLock) {
+                notifyLockViolation('Cannot cut content containing locked text. Unlock the text segment first.');
+                return true;
+              }
+            }
+
+            // 3. Typing any character over selection containing locked text
+            if (rangeHasLock && event.key.length === 1 && !event.metaKey && !event.ctrlKey && !event.altKey) {
+              notifyLockViolation('Cannot overwrite content containing locked text. Unlock the text segment first.');
+              return true;
+            }
+
+            return false;
+          },
+        },
         filterTransaction(tr, state) {
           if (!tr.docChanged) return true;
           // Explicit bypass for programmatic document loads or unlock operations
@@ -122,20 +182,49 @@ export const LockMark = Mark.create<LockMarkOptions>({
 
           if (lockedRanges.length === 0) return true;
 
-          // Block any ReplaceStep that modifies characters within or across a locked range
+          // Block any step that modifies characters or formatting within or across a locked range
           for (const step of tr.steps) {
-            if (step instanceof ReplaceStep || step.constructor.name === 'ReplaceStep') {
+            const stepName = step.constructor.name;
+            if (step instanceof ReplaceStep || stepName === 'ReplaceStep') {
               const { from, to } = step as any;
-              // Allow full document replacement (e.g. setContent or initial load)
-              if (from === 0 && to >= state.doc.content.size) {
-                continue;
-              }
               for (const range of lockedRanges) {
                 const overlaps =
                   (from < range.to && to > range.from) ||
                   (from === to && from > range.from && from < range.to);
                 if (overlaps) {
+                  notifyLockViolation('Cannot delete or modify content containing locked text.');
                   return false;
+                }
+              }
+            } else if (
+              step instanceof AddMarkStep ||
+              stepName === 'AddMarkStep' ||
+              step instanceof RemoveMarkStep ||
+              stepName === 'RemoveMarkStep' ||
+              step instanceof ReplaceAroundStep ||
+              stepName === 'ReplaceAroundStep'
+            ) {
+              const { from, to } = step as any;
+              for (const range of lockedRanges) {
+                const overlaps = from < range.to && to > range.from;
+                if (overlaps) {
+                  return false;
+                }
+              }
+            } else if (
+              stepName === 'AttrStep' ||
+              stepName === 'AddNodeMarkStep' ||
+              stepName === 'RemoveNodeMarkStep'
+            ) {
+              const { pos } = step as any;
+              const node = state.doc.nodeAt(pos);
+              if (node) {
+                const nodeTo = pos + node.nodeSize;
+                for (const range of lockedRanges) {
+                  const overlaps = pos < range.to && nodeTo > range.from;
+                  if (overlaps) {
+                    return false;
+                  }
                 }
               }
             }

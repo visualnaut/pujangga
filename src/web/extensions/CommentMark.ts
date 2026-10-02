@@ -16,6 +16,16 @@ declare module '@tiptap/core' {
   }
 }
 
+function notifyCommentViolation(message: string) {
+  if (typeof window !== 'undefined' && window.dispatchEvent) {
+    window.dispatchEvent(
+      new CustomEvent('pujangga:noted-text-delete-attempt', {
+        detail: { message },
+      })
+    );
+  }
+}
+
 export const CommentMark = Mark.create<CommentMarkOptions>({
   name: 'comment',
   inclusive: false,
@@ -102,6 +112,63 @@ export const CommentMark = Mark.create<CommentMarkOptions>({
     return [
       new Plugin({
         key: new PluginKey('commentLock'),
+        props: {
+          handleKeyDown(view, event) {
+            const { from, to } = view.state.selection;
+            const commentMarkType = view.state.schema.marks.comment;
+            if (!commentMarkType) return false;
+
+            const isRangeSelection = from !== to;
+            const rangeHasComment = isRangeSelection && view.state.doc.rangeHasMark(from, to, commentMarkType);
+
+            // If range also has locked text, let LockMark handle it with its own lock notification
+            const lockMarkType = view.state.schema.marks.lock;
+            const rangeHasLock = isRangeSelection && lockMarkType && view.state.doc.rangeHasMark(from, to, lockMarkType);
+
+            // 1. Backspace / Delete
+            if (event.key === 'Backspace' || event.key === 'Delete') {
+              if (rangeHasComment) {
+                if (rangeHasLock) return false;
+                notifyCommentViolation('Cannot delete content containing active notes. Remove or resolve the note first.');
+                return true;
+              }
+              // Collapsed selection directly adjacent to commented text
+              if (!isRangeSelection) {
+                if (event.key === 'Backspace' && from > 0) {
+                  const $pos = view.state.doc.resolve(from);
+                  if ($pos.nodeBefore && $pos.nodeBefore.marks.some((m) => m.type === commentMarkType)) {
+                    notifyCommentViolation('Cannot delete noted text. Remove or resolve the note first.');
+                    return true;
+                  }
+                } else if (event.key === 'Delete' && to < view.state.doc.content.size) {
+                  const $pos = view.state.doc.resolve(to);
+                  if ($pos.nodeAfter && $pos.nodeAfter.marks.some((m) => m.type === commentMarkType)) {
+                    notifyCommentViolation('Cannot delete noted text. Remove or resolve the note first.');
+                    return true;
+                  }
+                }
+              }
+            }
+
+            // 2. Cut (Cmd+X / Ctrl+X)
+            if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'x') {
+              if (rangeHasComment) {
+                if (rangeHasLock) return false;
+                notifyCommentViolation('Cannot cut content containing active notes. Remove or resolve the note first.');
+                return true;
+              }
+            }
+
+            // 3. Typing any character over selection containing commented text
+            if (rangeHasComment && event.key.length === 1 && !event.metaKey && !event.ctrlKey && !event.altKey) {
+              if (rangeHasLock) return false;
+              notifyCommentViolation('Cannot overwrite content containing active notes. Remove or resolve the note first.');
+              return true;
+            }
+
+            return false;
+          },
+        },
         filterTransaction(tr, state) {
           if (!tr.docChanged) return true;
           // Explicit bypass for programmatic document loads or comment removals
@@ -122,19 +189,22 @@ export const CommentMark = Mark.create<CommentMarkOptions>({
 
           if (commentRanges.length === 0) return true;
 
+          const lockMarkType = state.schema.marks.lock;
+
           // Block any ReplaceStep that modifies characters within or across a locked comment range
           for (const step of tr.steps) {
-            if (step instanceof ReplaceStep || step.constructor.name === 'ReplaceStep') {
+            const stepName = step.constructor.name;
+            if (step instanceof ReplaceStep || stepName === 'ReplaceStep') {
               const { from, to } = step as any;
-              // Allow full document replacement (e.g. setContent or initial load)
-              if (from === 0 && to >= state.doc.content.size) {
-                continue;
-              }
               for (const range of commentRanges) {
                 const overlaps =
                   (from < range.to && to > range.from) ||
                   (from === to && from > range.from && from < range.to);
                 if (overlaps) {
+                  if (lockMarkType && state.doc.rangeHasMark(from, to, lockMarkType)) {
+                    return false;
+                  }
+                  notifyCommentViolation('Cannot delete or modify content containing active notes.');
                   return false;
                 }
               }
