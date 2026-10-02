@@ -92,7 +92,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           {totalCommentsCount > 0 && (
             <button
               onClick={onOpenCommentHistory}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-paper-card dark:bg-night-modal text-ink-body dark:text-night-text-muted border border-paper-border dark:border-night-border-strong hover:border-accent-pin transition-colors cursor-pointer"
+              className="lg:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-paper-card dark:bg-night-modal text-ink-body dark:text-night-text-muted border border-paper-border dark:border-night-border-strong hover:border-accent-pin transition-colors cursor-pointer"
             >
               <History className="w-3.5 h-3.5 text-accent dark:text-accent-pin" />
               <span>Comment History ({totalCommentsCount})</span>

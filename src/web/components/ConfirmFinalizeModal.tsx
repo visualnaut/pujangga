@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Sparkles, X, CheckCircle2, AlertTriangle, Loader2, FileText } from 'lucide-react';
+import {X, CheckCircle2, AlertTriangle, Loader2, FileText, BookCheck } from 'lucide-react';
 
 interface ConfirmFinalizeModalProps {
   isOpen: boolean;
@@ -86,7 +86,7 @@ export const ConfirmFinalizeModal: React.FC<ConfirmFinalizeModalProps> = ({
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-success-subtle dark:bg-success-subtle-dark text-success-icon dark:text-success-icon-dark flex items-center justify-center shrink-0 shadow-2xs">
-              <Sparkles className="w-5 h-5" />
+              <BookCheck className="w-5 h-5" />
             </div>
             <div>
               <h3 className="font-serif font-bold text-base text-ink dark:text-night-text">
@@ -148,9 +148,9 @@ export const ConfirmFinalizeModal: React.FC<ConfirmFinalizeModalProps> = ({
             {isSubmitting ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
             ) : (
-              <Sparkles className="w-3.5 h-3.5" />
+              <BookCheck className="w-3.5 h-3.5" />
             )}
-            <span>Finalize & Clear History</span>
+            <span>Finalize Draft & Clear History</span>
           </button>
         </div>
       </div>

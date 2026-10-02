@@ -402,7 +402,7 @@ export const App: React.FC = () => {
       />
 
       {/* Main Container: Flex Row on Desktop (Canvas + Right Sidebar), Stack on Mobile */}
-      <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 py-8 flex flex-col lg:flex-row gap-8 items-start">
+      <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 py-8 flex flex-col lg:flex-row gap-4 items-start">
         {/* Left/Center Editorial Reading & Writing Canvas */}
         <main className="flex-1 min-w-0 w-full relative">
           {/* Waiting State Notice on Mobile/Tablet */}
@@ -468,7 +468,7 @@ export const App: React.FC = () => {
               isSubmitting={isSubmitting}
             />
           ) : (
-            <div className="bg-paper-card dark:bg-night-card border border-paper-border dark:border-night-border-strong p-6 sm:p-10 md:p-14 shadow-xs transition-colors">
+            <div className="bg-paper-card dark:bg-night-card border border-paper-border dark:border-night-border-strong p-6 sm:p-10 md:p-14 shadow-xl transition-colors">
               <EditorContent editor={editor} />
             </div>
           )}
