@@ -1,5 +1,5 @@
 import React from 'react';
-import { Send, CheckCircle2, Loader2, Sparkles, MessageSquare, Edit3, ArrowRight } from 'lucide-react';
+import { Send, CheckCircle2, Loader2, Sparkles, History, ArrowRight } from 'lucide-react';
 import { SessionStatus } from '../../shared/types.js';
 
 interface DesktopSidebarProps {
@@ -10,8 +10,8 @@ interface DesktopSidebarProps {
   onSubmitRevision: () => void;
   onApprove: () => void;
   isSubmitting: boolean;
-  resolvedCommentsCount: number;
-  onOpenResolvedDrawer: () => void;
+  totalCommentsCount: number;
+  onOpenCommentHistory: () => void;
 }
 
 export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
@@ -22,8 +22,8 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
   onSubmitRevision,
   onApprove,
   isSubmitting,
-  resolvedCommentsCount,
-  onOpenResolvedDrawer,
+  totalCommentsCount,
+  onOpenCommentHistory,
 }) => {
   const isRevising = status === 'revising';
   const isSatisfied = status === 'satisfied';
@@ -59,8 +59,6 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
             </div>
           </div>
         ) : null}
-
-
 
         {/* Overall Directive Textarea */}
         <div className="mb-4">
@@ -125,15 +123,15 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
         </div>
       </div>
 
-      {/* Resolved Comments Quick Access */}
-      {resolvedCommentsCount > 0 && (
+      {/* Comment History Quick Access */}
+      {totalCommentsCount > 0 && (
         <button
-          onClick={onOpenResolvedDrawer}
-          className="flex items-center justify-between p-3.5 bg-white dark:bg-[#1A1816] rounded-xl border border-[#E6E0D4] dark:border-[#38332E] hover:border-amber-500/50 text-xs font-medium text-[#706B65] dark:text-[#A8A29D] shadow-xs transition-colors cursor-pointer"
+          onClick={onOpenCommentHistory}
+          className="flex items-center justify-between p-3.5 bg-white dark:bg-[#1A1816] rounded-xl border border-[#E6E0D4] dark:border-[#38332E] hover:border-amber-500/50 text-xs font-semibold text-[#706B65] dark:text-[#A8A29D] shadow-xs transition-colors cursor-pointer"
         >
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-500" />
-            <span>Audit Past Comments ({resolvedCommentsCount})</span>
+            <History className="w-4 h-4 text-amber-600 dark:text-amber-500" />
+            <span>Comment History ({totalCommentsCount})</span>
           </div>
           <ArrowRight className="w-3.5 h-3.5" />
         </button>

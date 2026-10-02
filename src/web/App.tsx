@@ -8,7 +8,7 @@ import { Navbar } from './components/Navbar.js';
 import { ActionBar } from './components/ActionBar.js';
 import { DesktopSidebar } from './components/DesktopSidebar.js';
 import { DiffViewer } from './components/DiffViewer.js';
-import { ResolvedCommentsDrawer } from './components/ResolvedCommentsDrawer.js';
+import { CommentHistoryDrawer } from './components/CommentHistoryDrawer.js';
 import { CommentPopover, CommentPopoverData } from './components/CommentPopover.js';
 import { SessionDetails, InlineComment, ReviewStatus } from '../shared/types.js';
 import { MessageSquarePlus, CheckCircle2, Feather, Loader2 } from 'lucide-react';
@@ -18,7 +18,9 @@ export const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showDiff, setShowDiff] = useState(false);
-  const [isResolvedDrawerOpen, setIsResolvedDrawerOpen] = useState(false);
+  const [selectedLeftRound, setSelectedLeftRound] = useState<number>(1);
+  const [selectedRightRound, setSelectedRightRound] = useState<number>(1);
+  const [isCommentHistoryOpen, setIsCommentHistoryOpen] = useState(false);
   const [overallComment, setOverallComment] = useState('');
   const [isDark, setIsDark] = useState(() => {
     return (
@@ -204,7 +206,7 @@ export const App: React.FC = () => {
             commentId,
             anchorText: comment?.anchorText || highlight.innerText,
             commentText: comment?.commentText || '',
-            isNew: false,
+            isNew: !comment,
             position: { top: rect.top, left: rect.left },
           });
         }
@@ -265,7 +267,7 @@ export const App: React.FC = () => {
     setPopoverData(null);
   };
 
-  // Delete comment
+  // Delete comment and strip mark completely
   const handleDeleteComment = (commentId: string) => {
     setLocalComments((prev) => prev.filter((c) => c.id !== commentId));
     if (editor) {
@@ -280,6 +282,20 @@ export const App: React.FC = () => {
       editor.commands.removeComment(popoverData.commentId);
     }
     setPopoverData(null);
+  };
+
+  // Toggle Diff Mode (always defaults to comparing previous round with current round)
+  const handleToggleDiff = () => {
+    setShowDiff((prev) => {
+      const next = !prev;
+      if (next && details) {
+        const current = details.currentRevision?.roundNumber || 1;
+        const prevRound = current > 1 ? current - 1 : 1;
+        setSelectedLeftRound(prevRound);
+        setSelectedRightRound(current);
+      }
+      return next;
+    });
   };
 
   // Submit review round
@@ -354,12 +370,7 @@ export const App: React.FC = () => {
   }
 
   const currentRound = details.currentRevision?.roundNumber || 1;
-  const activeRoundComments = localComments.filter(
-    (c) => c.status === 'open' && c.roundNumber === currentRound
-  );
-  const resolvedComments = localComments.filter(
-    (c) => c.status === 'resolved' || c.roundNumber < currentRound
-  );
+  const hasMultipleRounds = details.revisions.length >= 2;
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF8F5] text-[#2C2825] dark:bg-[#121110] dark:text-[#EDEAE4] transition-colors pb-24 lg:pb-12">
@@ -370,10 +381,10 @@ export const App: React.FC = () => {
         roundNumber={currentRound}
         status={details.session.status}
         showDiff={showDiff}
-        onToggleDiff={() => setShowDiff((v) => !v)}
-        hasPreviousRevision={!!details.previousRevision}
-        resolvedCommentsCount={resolvedComments.length}
-        onOpenResolvedDrawer={() => setIsResolvedDrawerOpen(true)}
+        onToggleDiff={handleToggleDiff}
+        hasPreviousRevision={hasMultipleRounds}
+        totalCommentsCount={localComments.length}
+        onOpenCommentHistory={() => setIsCommentHistoryOpen(true)}
         isDark={isDark}
         onToggleTheme={() => setIsDark((v) => !v)}
       />
@@ -415,7 +426,7 @@ export const App: React.FC = () => {
           )}
 
           {/* Selection Tooltip for Adding Notes */}
-          {selectionTooltip && details.session.status === 'active' && (
+          {selectionTooltip && details.session.status === 'active' && !showDiff && (
             <div
               className="fixed z-50 transform -translate-x-1/2 -translate-y-full mb-2 bg-[#2C2825] dark:bg-[#FAF8F5] text-white dark:text-[#121110] px-3 py-1.5 rounded-lg shadow-xl flex items-center gap-1.5 text-xs font-semibold cursor-pointer hover:scale-105 transition-all select-none animate-in fade-in zoom-in-95 border border-black/10 dark:border-white/10"
               style={{
@@ -429,12 +440,15 @@ export const App: React.FC = () => {
             </div>
           )}
 
-          {/* Diff View or In-Place Editor */}
-          {showDiff && details.previousRevision ? (
+          {/* Side-by-Side Diff View or In-Place Editor */}
+          {showDiff && details ? (
             <DiffViewer
-              previousMarkdown={details.previousRevision.contentMarkdown}
-              currentMarkdown={details.currentRevision.contentMarkdown}
-              roundNumber={currentRound}
+              revisions={details.revisions}
+              selectedLeftRound={selectedLeftRound}
+              selectedRightRound={selectedRightRound}
+              onSelectLeftRound={setSelectedLeftRound}
+              onSelectRightRound={setSelectedRightRound}
+              onClose={() => setShowDiff(false)}
             />
           ) : (
             <div className="bg-white dark:bg-[#1A1816] rounded-2xl border border-[#E6E0D4] dark:border-[#38332E] p-6 sm:p-10 md:p-14 shadow-xs transition-colors">
@@ -452,8 +466,8 @@ export const App: React.FC = () => {
           onSubmitRevision={() => submitReview('NEEDS_REVISION')}
           onApprove={() => submitReview('SATISFIED')}
           isSubmitting={isSubmitting}
-          resolvedCommentsCount={resolvedComments.length}
-          onOpenResolvedDrawer={() => setIsResolvedDrawerOpen(true)}
+          totalCommentsCount={localComments.length}
+          onOpenCommentHistory={() => setIsCommentHistoryOpen(true)}
         />
       </div>
 
@@ -465,11 +479,12 @@ export const App: React.FC = () => {
         onClose={handleClosePopover}
       />
 
-      {/* Resolved Comments Drawer */}
-      <ResolvedCommentsDrawer
-        isOpen={isResolvedDrawerOpen}
-        onClose={() => setIsResolvedDrawerOpen(false)}
+      {/* Comment History Drawer */}
+      <CommentHistoryDrawer
+        isOpen={isCommentHistoryOpen}
+        onClose={() => setIsCommentHistoryOpen(false)}
         comments={localComments}
+        revisions={details.revisions}
         currentRound={currentRound}
       />
 

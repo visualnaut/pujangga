@@ -1,8 +1,8 @@
 import React from 'react';
 import {
   Feather,
-  GitCompare,
-  CheckSquare,
+  Columns2,
+  History,
   Sun,
   Moon,
   Loader2,
@@ -18,8 +18,8 @@ interface NavbarProps {
   showDiff: boolean;
   onToggleDiff: () => void;
   hasPreviousRevision: boolean;
-  resolvedCommentsCount: number;
-  onOpenResolvedDrawer: () => void;
+  totalCommentsCount: number;
+  onOpenCommentHistory: () => void;
   isDark: boolean;
   onToggleTheme: () => void;
 }
@@ -32,8 +32,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   showDiff,
   onToggleDiff,
   hasPreviousRevision,
-  resolvedCommentsCount,
-  onOpenResolvedDrawer,
+  totalCommentsCount,
+  onOpenCommentHistory,
   isDark,
   onToggleTheme,
 }) => {
@@ -63,7 +63,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
 
-        {/* Center: Live Status Indicator */}
+        {/* Center: Live Status Indicator (Only shown during active transition) */}
         <div className="hidden md:flex items-center gap-2 text-xs">
           {status === 'revising' ? (
             <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100/70 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 animate-pulse font-medium">
@@ -89,18 +89,18 @@ export const Navbar: React.FC<NavbarProps> = ({
                   : 'bg-white dark:bg-[#1C1A18] text-[#635E59] dark:text-[#A8A29D] border-[#E6E0D4] dark:border-[#38332E] hover:border-amber-500'
               }`}
             >
-              <GitCompare className="w-3.5 h-3.5" />
-              <span>Revision Diff</span>
+              <Columns2 className="w-3.5 h-3.5" />
+              <span>Side-by-Side Diff</span>
             </button>
           )}
 
-          {resolvedCommentsCount > 0 && (
+          {totalCommentsCount > 0 && (
             <button
-              onClick={onOpenResolvedDrawer}
+              onClick={onOpenCommentHistory}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-white dark:bg-[#1C1A18] text-[#635E59] dark:text-[#A8A29D] border border-[#E6E0D4] dark:border-[#38332E] hover:border-amber-500 transition-colors cursor-pointer"
             >
-              <CheckSquare className="w-3.5 h-3.5 text-amber-600 dark:text-amber-500" />
-              <span>Audit ({resolvedCommentsCount})</span>
+              <History className="w-3.5 h-3.5 text-amber-600 dark:text-amber-500" />
+              <span>Comment History ({totalCommentsCount})</span>
             </button>
           )}
 
