@@ -309,6 +309,40 @@
   user-select: none;
 }
 
+/* Locked text highlight and indicator styles */
+.pujangga-locked-highlight {
+  background-color: color-mix(in srgb, var(--color-accent) 14%, transparent);
+  border-bottom: 2px dashed var(--color-accent);
+  cursor: pointer;
+  border-radius: 2px;
+  padding: 1px 3px;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.pujangga-locked-highlight:hover,
+.pujangga-locked-highlight.is-active {
+  background-color: color-mix(in srgb, var(--color-accent) 26%, transparent);
+  border-bottom-style: solid;
+}
+
+.dark .pujangga-locked-highlight,
+:where(.dark, .dark *) .pujangga-locked-highlight {
+  background-color: color-mix(in srgb, var(--color-accent-bright) 18%, transparent) !important;
+  border-bottom-color: var(--color-accent-bright) !important;
+  color: var(--color-night-text-heading) !important;
+}
+
+.pujangga-locked-highlight::after {
+  content: ' 🔒';
+  font-size: 0.72em;
+  vertical-align: 0.15em;
+  opacity: 0.85;
+  display: inline-block;
+  user-select: none;
+  pointer-events: none;
+}
+
 /* Diff highlights */
 .diff-added {
   background-color: rgba(34, 197, 94, 0.2);

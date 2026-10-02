@@ -58,8 +58,18 @@ async function runE2ETest() {
   }
   console.log(`✓ Revision request safely blocked when missing both notes and directive!`);
 
-  // 4. Submit review for Round 1
-  console.log('3. Submitting Round 1 review with direct edits & inline comments...');
+  // 4. Submit review for Round 1 with direct edits, inline comments, and locked text
+  console.log('3. Locking text segment & submitting Round 1 review...');
+  const lockRes = await fetch(`http://localhost:${port}/api/sessions/${sessionData.sessionId}/locked-texts`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      text: 'This is paragraph one, directly polished by editor.',
+    }),
+  });
+  const lockData = await lockRes.json();
+  console.log(`✓ Text segment locked: "${lockData.text}" (id: ${lockData.id})`);
+
   const editedText = '# Test Document\n\nThis is paragraph one, directly polished by editor.\n\nThis is paragraph two.\n';
   const submitRes = await fetch(`http://localhost:${port}/api/sessions/${sessionData.sessionId}/submit`, {
     method: 'POST',
@@ -74,11 +84,28 @@ async function runE2ETest() {
           commentText: 'Add latency benchmarks here.',
         },
       ],
+      lockedTexts: [
+        {
+          id: lockData.id,
+          text: lockData.text,
+        },
+      ],
     }),
   });
 
   const submitData = await submitRes.json();
   console.log(`✓ Round 1 submitted:`, submitData);
+
+  // 4b. Verify /wait endpoint returns lockedTexts and agent report includes locked directive
+  const waitRes = await fetch(`http://localhost:${port}/api/sessions/${sessionData.sessionId}/wait`);
+  const waitData = await waitRes.json();
+  if (!waitData.reportMarkdown.includes('## 🔒 Locked Text Segments (CRITICAL: DO NOT MODIFY)')) {
+    throw new Error('Expected agent report to include Locked Text Segments header!');
+  }
+  if (!waitData.lockedTexts || waitData.lockedTexts.length !== 1) {
+    throw new Error('Expected 1 lockedText in wait response');
+  }
+  console.log(`✓ Agent report and wait response properly include locked text immutability directive!`);
 
   // 5. Verify file on disk was updated with direct edits
   const onDiskContent = fs.readFileSync(testFile, 'utf8');
@@ -107,11 +134,16 @@ async function runE2ETest() {
   }
   console.log(`✓ Round 2 successfully registered!`);
 
-  // 7. Verify previous comment is marked resolved
+  // 7. Verify previous comment is marked resolved and locked text persisted into Round 2!
   const details2Res = await fetch(`http://localhost:${port}/api/sessions/${sessionData.sessionId}`);
   const details2 = await details2Res.json();
   const prevComment = details2.comments.find((c: any) => c.anchorText === 'paragraph two');
   console.log(`✓ Previous round comment status: ${prevComment?.status} (resolved at round ${prevComment?.resolvedAtRound})`);
+
+  if (!details2.lockedTexts || details2.lockedTexts.length !== 1 || details2.lockedTexts[0].id !== lockData.id) {
+    throw new Error('Expected locked text to persist into Round 2 details!');
+  }
+  console.log(`✓ Locked text verified to persist across rounds into Round 2!`);
 
   // 8. Human approves as SATISFIED
   console.log('5. Submitting approval (SATISFIED)...');
@@ -128,7 +160,7 @@ async function runE2ETest() {
   await approveRes.json();
   console.log(`✓ Review session marked as SATISFIED!`);
 
-  // Verify comments and older revisions are cleared
+  // Verify comments, older revisions, and locked texts are cleared upon SATISFIED
   const detailsAfterApproveRes = await fetch(`http://localhost:${port}/api/sessions/${sessionData.sessionId}`);
   const detailsAfterApprove = await detailsAfterApproveRes.json();
   if (detailsAfterApprove.comments.length !== 0) {
@@ -137,7 +169,10 @@ async function runE2ETest() {
   if (detailsAfterApprove.revisions.length !== 1) {
     throw new Error(`Expected older revisions to be cleared upon SATISFIED, found: ${detailsAfterApprove.revisions.length}`);
   }
-  console.log(`✓ Comments and historical revisions successfully cleared upon satisfaction!`);
+  if (detailsAfterApprove.lockedTexts && detailsAfterApprove.lockedTexts.length !== 0) {
+    throw new Error(`Expected locked texts to be cleared upon SATISFIED, found: ${detailsAfterApprove.lockedTexts.length}`);
+  }
+  console.log(`✓ Comments, locked texts, and historical revisions successfully cleared upon satisfaction!`);
 
   // Verify next review on this file starts completely fresh at Round 1
   const freshRegisterRes = await fetch(`http://localhost:${port}/api/sessions/register`, {

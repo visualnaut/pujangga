@@ -40,12 +40,21 @@ export interface Session {
   updatedAt: number;
 }
 
+export interface LockedText {
+  id: string;
+  sessionId: string;
+  text: string;
+  roundNumber: number;
+  createdAt: number;
+}
+
 export interface SessionDetails {
   session: Session;
   currentRevision: Revision;
   previousRevision?: Revision | null;
   revisions: Revision[];
   comments: InlineComment[];
+  lockedTexts: LockedText[];
   activePort: number;
 }
 
@@ -76,6 +85,10 @@ export interface SubmitReviewRequest {
     toPos?: number;
     commentText: string;
   }>;
+  lockedTexts?: Array<{
+    id: string;
+    text: string;
+  }>;
 }
 
 export interface WaitReviewResponse {
@@ -87,6 +100,10 @@ export interface WaitReviewResponse {
     anchorText: string;
     commentText: string;
     contextBefore?: string;
+  }>;
+  lockedTexts?: Array<{
+    id: string;
+    text: string;
   }>;
   hasDirectEdits: boolean;
   diffSummary?: string;

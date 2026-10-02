@@ -1,5 +1,5 @@
 import React from 'react';
-import { SendHorizonal, CheckCircle2, Loader2, BookCheck, History, ArrowRight } from 'lucide-react';
+import { SendHorizonal, CheckCircle2, Loader2, BookCheck, History, ArrowRight, Lock } from 'lucide-react';
 import { SessionStatus } from '../../shared/types.js';
 
 interface DesktopSidebarProps {
@@ -11,6 +11,7 @@ interface DesktopSidebarProps {
   onApprove: () => void;
   isSubmitting: boolean;
   totalCommentsCount: number;
+  lockedTextsCount?: number;
   onOpenCommentHistory: () => void;
 }
 
@@ -23,6 +24,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
   onApprove,
   isSubmitting,
   totalCommentsCount,
+  lockedTextsCount = 0,
   onOpenCommentHistory,
 }) => {
   const isRevising = status === 'revising';
@@ -36,9 +38,20 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
           <h3 className="text-sm font-bold uppercase tracking-wider text-ink-muted dark:text-night-text-muted">
             Brainstorm Session
           </h3>
-          <span className="text-sm px-2.5 py-0.5 rounded-full font-medium bg-paper-subtle dark:bg-night-subtle text-ink-muted dark:text-night-text-muted">
-            Round {roundNumber}
-          </span>
+          <div className="flex items-center gap-1.5">
+            {lockedTextsCount > 0 && (
+              <span
+                className="text-xs px-2 py-0.5 rounded-full font-semibold bg-paper-subtle dark:bg-night-subtle text-accent dark:text-accent-pin border border-accent/30 flex items-center gap-1"
+                title={`${lockedTextsCount} locked text segment(s)`}
+              >
+                <Lock className="w-3 h-3" />
+                {lockedTextsCount}
+              </span>
+            )}
+            <span className="text-sm px-2.5 py-0.5 rounded-full font-medium bg-paper-subtle dark:bg-night-subtle text-ink-muted dark:text-night-text-muted">
+              Round {roundNumber}
+            </span>
+          </div>
         </div>
 
         {/* State Banners */}

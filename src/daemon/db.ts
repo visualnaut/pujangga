@@ -9,6 +9,7 @@ import {
   Session,
   Revision,
   InlineComment,
+  LockedText,
   SessionDetails,
   ReviewStatus,
   SubmitReviewRequest,
@@ -75,6 +76,15 @@ export class DatabaseService {
         created_at INTEGER,
         resolved_at_round INTEGER
       );
+
+      CREATE TABLE IF NOT EXISTS locked_texts (
+        id TEXT PRIMARY KEY,
+        session_id TEXT NOT NULL,
+        text TEXT NOT NULL,
+        round_number INTEGER NOT NULL,
+        created_at INTEGER NOT NULL,
+        FOREIGN KEY (session_id) REFERENCES sessions(id)
+      );
     `);
   }
 
@@ -113,11 +123,12 @@ export class DatabaseService {
         updatedAt: now,
       };
     } else {
-      // If the session was previously finalized as satisfied, reset old revisions and comments
+      // If the session was previously finalized as satisfied, reset old revisions, comments, and locked texts
       // so this new review starts completely fresh from Round 1
       if (existingSession.status === 'satisfied') {
         this.db.prepare('DELETE FROM revisions WHERE session_id = ?').run(sessionId);
         this.db.prepare('DELETE FROM inline_comments WHERE session_id = ?').run(sessionId);
+        this.db.prepare('DELETE FROM locked_texts WHERE session_id = ?').run(sessionId);
       }
 
       this.db.prepare('UPDATE sessions SET updated_at = ?, status = ? WHERE id = ?')
@@ -243,6 +254,37 @@ export class DatabaseService {
     }));
   }
 
+  public getLockedTexts(sessionId: string): LockedText[] {
+    const rows = this.db.prepare('SELECT * FROM locked_texts WHERE session_id = ? ORDER BY created_at ASC').all(sessionId) as any[];
+    return rows.map((l) => ({
+      id: l.id,
+      sessionId: l.session_id,
+      text: l.text,
+      roundNumber: l.round_number,
+      createdAt: l.created_at,
+    }));
+  }
+
+  public addLockedText(sessionId: string, lock: { id?: string; text: string; roundNumber: number }): LockedText {
+    const id = lock.id || crypto.randomUUID();
+    const now = Date.now();
+    this.db.prepare(`
+      INSERT OR REPLACE INTO locked_texts (id, session_id, text, round_number, created_at)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(id, sessionId, lock.text, lock.roundNumber, now);
+    return {
+      id,
+      sessionId,
+      text: lock.text,
+      roundNumber: lock.roundNumber,
+      createdAt: now,
+    };
+  }
+
+  public removeLockedText(lockId: string): void {
+    this.db.prepare('DELETE FROM locked_texts WHERE id = ?').run(lockId);
+  }
+
   public getSessionDetails(sessionId: string, activePort: number = 4173): SessionDetails | null {
     const session = this.getSession(sessionId);
     if (!session) return null;
@@ -251,6 +293,7 @@ export class DatabaseService {
     const currentRevision = revisions[revisions.length - 1];
     const previousRevision = revisions.length > 1 ? revisions[revisions.length - 2] : null;
     const comments = this.getComments(sessionId);
+    const lockedTexts = this.getLockedTexts(sessionId);
 
     return {
       session,
@@ -258,6 +301,7 @@ export class DatabaseService {
       previousRevision,
       revisions,
       comments,
+      lockedTexts,
       activePort,
     };
   }
@@ -294,6 +338,8 @@ export class DatabaseService {
     if (payload.status === 'SATISFIED') {
       // Clear all comments for this session upon satisfaction and finalization
       this.db.prepare('DELETE FROM inline_comments WHERE session_id = ?').run(sessionId);
+      // Clear all locked texts for this session upon finalization
+      this.db.prepare('DELETE FROM locked_texts WHERE session_id = ?').run(sessionId);
       // Clear older revision history, retaining only the final approved revision
       this.db.prepare('DELETE FROM revisions WHERE session_id = ? AND id != ?').run(sessionId, revisionId);
     } else {
@@ -324,6 +370,17 @@ export class DatabaseService {
           roundNumber,
           now
         );
+      }
+
+      // 5. Ensure any submitted locked texts are saved
+      if (payload.lockedTexts && Array.isArray(payload.lockedTexts)) {
+        for (const lt of payload.lockedTexts) {
+          this.addLockedText(sessionId, {
+            id: lt.id,
+            text: lt.text,
+            roundNumber,
+          });
+        }
       }
     }
 

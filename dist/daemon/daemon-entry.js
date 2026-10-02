@@ -74,6 +74,15 @@ var DatabaseService = class {
         created_at INTEGER,
         resolved_at_round INTEGER
       );
+
+      CREATE TABLE IF NOT EXISTS locked_texts (
+        id TEXT PRIMARY KEY,
+        session_id TEXT NOT NULL,
+        text TEXT NOT NULL,
+        round_number INTEGER NOT NULL,
+        created_at INTEGER NOT NULL,
+        FOREIGN KEY (session_id) REFERENCES sessions(id)
+      );
     `);
   }
   generateSessionId(filePath) {
@@ -105,6 +114,7 @@ var DatabaseService = class {
       if (existingSession.status === "satisfied") {
         this.db.prepare("DELETE FROM revisions WHERE session_id = ?").run(sessionId);
         this.db.prepare("DELETE FROM inline_comments WHERE session_id = ?").run(sessionId);
+        this.db.prepare("DELETE FROM locked_texts WHERE session_id = ?").run(sessionId);
       }
       this.db.prepare("UPDATE sessions SET updated_at = ?, status = ? WHERE id = ?").run(now, "active", sessionId);
       session = {
@@ -212,6 +222,34 @@ var DatabaseService = class {
       resolvedAtRound: c.resolved_at_round
     }));
   }
+  getLockedTexts(sessionId) {
+    const rows = this.db.prepare("SELECT * FROM locked_texts WHERE session_id = ? ORDER BY created_at ASC").all(sessionId);
+    return rows.map((l) => ({
+      id: l.id,
+      sessionId: l.session_id,
+      text: l.text,
+      roundNumber: l.round_number,
+      createdAt: l.created_at
+    }));
+  }
+  addLockedText(sessionId, lock) {
+    const id = lock.id || crypto.randomUUID();
+    const now = Date.now();
+    this.db.prepare(`
+      INSERT OR REPLACE INTO locked_texts (id, session_id, text, round_number, created_at)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(id, sessionId, lock.text, lock.roundNumber, now);
+    return {
+      id,
+      sessionId,
+      text: lock.text,
+      roundNumber: lock.roundNumber,
+      createdAt: now
+    };
+  }
+  removeLockedText(lockId) {
+    this.db.prepare("DELETE FROM locked_texts WHERE id = ?").run(lockId);
+  }
   getSessionDetails(sessionId, activePort = 4173) {
     const session = this.getSession(sessionId);
     if (!session) return null;
@@ -219,12 +257,14 @@ var DatabaseService = class {
     const currentRevision = revisions[revisions.length - 1];
     const previousRevision = revisions.length > 1 ? revisions[revisions.length - 2] : null;
     const comments = this.getComments(sessionId);
+    const lockedTexts = this.getLockedTexts(sessionId);
     return {
       session,
       currentRevision,
       previousRevision,
       revisions,
       comments,
+      lockedTexts,
       activePort
     };
   }
@@ -244,6 +284,7 @@ var DatabaseService = class {
     this.db.prepare("UPDATE sessions SET status = ?, updated_at = ? WHERE id = ?").run(nextSessionStatus, now, sessionId);
     if (payload.status === "SATISFIED") {
       this.db.prepare("DELETE FROM inline_comments WHERE session_id = ?").run(sessionId);
+      this.db.prepare("DELETE FROM locked_texts WHERE session_id = ?").run(sessionId);
       this.db.prepare("DELETE FROM revisions WHERE session_id = ? AND id != ?").run(sessionId, revisionId);
     } else {
       this.db.prepare(`
@@ -270,6 +311,15 @@ var DatabaseService = class {
           roundNumber,
           now
         );
+      }
+      if (payload.lockedTexts && Array.isArray(payload.lockedTexts)) {
+        for (const lt of payload.lockedTexts) {
+          this.addLockedText(sessionId, {
+            id: lt.id,
+            text: lt.text,
+            roundNumber
+          });
+        }
       }
     }
     const updatedSession = this.getSession(sessionId);
@@ -350,7 +400,8 @@ function generateAgentReport(options) {
     originalMarkdown,
     userEditedMarkdown,
     overallComment,
-    inlineComments
+    inlineComments,
+    lockedTexts
   } = options;
   if (status === "SATISFIED") {
     return [
@@ -382,6 +433,16 @@ ${overallComment}
     lines.push(`> ${overallComment.trim().replace(/\n/g, "\n> ")}`);
     lines.push(``);
   }
+  if (lockedTexts && lockedTexts.length > 0) {
+    lines.push(`## \u{1F512} Locked Text Segments (CRITICAL: DO NOT MODIFY)`);
+    lines.push(
+      `The reviewer has locked the following text segment(s). They MUST remain VERBATIM in your revision \u2014 do not rephrase, edit, or delete:`
+    );
+    lockedTexts.forEach((lt, idx) => {
+      lines.push(`${idx + 1}. "${lt.text.trim()}"`);
+    });
+    lines.push(``);
+  }
   if (diff2.hasChanges) {
     lines.push(`## \u{1F4DD} Direct Edits Made by Reviewer`);
     lines.push(`The reviewer directly edited the text in the review interface. **The target file on disk has already been updated with these direct edits.**`);
@@ -398,21 +459,26 @@ ${overallComment}
       lines.push(`   *Feedback*: ${c.commentText}`);
       lines.push(``);
     });
-  } else if (!diff2.hasChanges && (!overallComment || !overallComment.trim())) {
+  } else if (!diff2.hasChanges && (!overallComment || !overallComment.trim()) && (!lockedTexts || lockedTexts.length === 0)) {
     lines.push(`*Note: Reviewer requested revisions without specific inline notes.*`);
     lines.push(``);
   }
   lines.push(`---`);
   lines.push(`### Next Steps for Agent:`);
   lines.push(`1. Inspect the updated file at \`${filePath}\` (contains the reviewer's direct edits).`);
+  if (lockedTexts && lockedTexts.length > 0) {
+    lines.push(`2. Ensure all \u{1F512} Locked Text Segments (${lockedTexts.length} segment${lockedTexts.length > 1 ? "s" : ""}) remain unchanged word-for-word.`);
+  }
   if (inlineComments && inlineComments.length > 0) {
-    lines.push(`2. Address each of the ${inlineComments.length} inline comment(s) above.`);
+    lines.push(`${lockedTexts && lockedTexts.length > 0 ? "3" : "2"}. Address each of the ${inlineComments.length} inline comment(s) above.`);
   }
   if (overallComment && overallComment.trim()) {
-    lines.push(`3. Incorporate the overall directive into your revision.`);
+    const num = (lockedTexts && lockedTexts.length > 0 ? 1 : 0) + (inlineComments && inlineComments.length > 0 ? 1 : 0) + 2;
+    lines.push(`${num}. Incorporate the overall directive into your revision.`);
   }
-  lines.push(`4. Save your updated draft to \`${filePath}\`.`);
-  lines.push(`5. Execute \`pujangga review "${filePath}"\` to present Round ${roundNumber + 1} for review.`);
+  const nextNum = (lockedTexts && lockedTexts.length > 0 ? 1 : 0) + (inlineComments && inlineComments.length > 0 ? 1 : 0) + (overallComment && overallComment.trim() ? 1 : 0) + 2;
+  lines.push(`${nextNum}. Save your updated draft to \`${filePath}\`.`);
+  lines.push(`${nextNum + 1}. Execute \`pujangga review "${filePath}"\` to present Round ${roundNumber + 1} for review.`);
   return lines.join("\n");
 }
 
@@ -596,6 +662,7 @@ var PujanggaServer = class {
         const latestRevision = revisions[revisions.length - 1];
         if (latestRevision && latestRevision.submittedAt && latestRevision.status) {
           const inlineComments = this.db.getComments(sessionId).filter((c) => c.roundNumber === latestRevision.roundNumber);
+          const lockedTexts = this.db.getLockedTexts(sessionId);
           const report = generateAgentReport({
             status: latestRevision.status,
             roundNumber: latestRevision.roundNumber,
@@ -603,7 +670,8 @@ var PujanggaServer = class {
             originalMarkdown: latestRevision.contentMarkdown,
             userEditedMarkdown: latestRevision.userEditedMarkdown,
             overallComment: latestRevision.overallComment,
-            inlineComments
+            inlineComments,
+            lockedTexts
           });
           const waitResponse = {
             status: latestRevision.status,
@@ -611,6 +679,7 @@ var PujanggaServer = class {
             filePath: session.filePath,
             overallComment: latestRevision.overallComment,
             inlineComments,
+            lockedTexts,
             hasDirectEdits: latestRevision.userEditedMarkdown !== void 0 && latestRevision.userEditedMarkdown !== latestRevision.contentMarkdown,
             reportMarkdown: report
           };
@@ -632,6 +701,53 @@ var PujanggaServer = class {
             if (idx !== -1) currentWaiters.splice(idx, 1);
           }
         });
+        return;
+      }
+      if (method === "POST" && pathname.startsWith("/api/sessions/") && pathname.endsWith("/locked-texts")) {
+        const parts = pathname.split("/");
+        const sessionId = parts[3];
+        const session = this.db.getSession(sessionId);
+        if (!session) {
+          this.sendJson(res, 404, { error: "Session not found" });
+          return;
+        }
+        const body = await this.parseJsonBody(req);
+        if (!body.text || !body.text.trim()) {
+          this.sendJson(res, 400, { error: "Missing locked text content" });
+          return;
+        }
+        const revisions = this.db.getRevisions(sessionId);
+        const currentRevision = revisions[revisions.length - 1];
+        const roundNumber = currentRevision ? currentRevision.roundNumber : 1;
+        const lock = this.db.addLockedText(sessionId, {
+          id: body.id,
+          text: body.text,
+          roundNumber
+        });
+        const updatedDetails = this.db.getSessionDetails(sessionId, this.port);
+        this.broadcastToSession(sessionId, {
+          type: "LOCKED_TEXTS_UPDATED",
+          payload: updatedDetails
+        });
+        this.sendJson(res, 200, lock);
+        return;
+      }
+      if (method === "DELETE" && pathname.startsWith("/api/sessions/") && pathname.includes("/locked-texts/")) {
+        const parts = pathname.split("/");
+        const sessionId = parts[3];
+        const lockId = parts[5];
+        const session = this.db.getSession(sessionId);
+        if (!session) {
+          this.sendJson(res, 404, { error: "Session not found" });
+          return;
+        }
+        this.db.removeLockedText(lockId);
+        const updatedDetails = this.db.getSessionDetails(sessionId, this.port);
+        this.broadcastToSession(sessionId, {
+          type: "LOCKED_TEXTS_UPDATED",
+          payload: updatedDetails
+        });
+        this.sendJson(res, 200, { success: true });
         return;
       }
       if (method === "POST" && pathname.startsWith("/api/sessions/") && pathname.endsWith("/submit")) {
@@ -669,6 +785,7 @@ var PujanggaServer = class {
             console.error(`Failed to write edits to ${session.filePath}:`, writeErr);
           }
         }
+        const lockedTexts = this.db.getLockedTexts(sessionId);
         const report = generateAgentReport({
           status: body.status,
           roundNumber: currentRevision.roundNumber,
@@ -676,7 +793,8 @@ var PujanggaServer = class {
           originalMarkdown: currentRevision.contentMarkdown,
           userEditedMarkdown: body.userEditedMarkdown,
           overallComment: body.overallComment,
-          inlineComments: body.inlineComments || []
+          inlineComments: body.inlineComments || [],
+          lockedTexts
         });
         const waiters = this.pendingWaiters.get(sessionId) || [];
         const waitResponse = {
@@ -685,6 +803,7 @@ var PujanggaServer = class {
           filePath: session.filePath,
           overallComment: body.overallComment,
           inlineComments: body.inlineComments || [],
+          lockedTexts,
           hasDirectEdits: currentRevision.contentMarkdown !== body.userEditedMarkdown,
           reportMarkdown: report
         };

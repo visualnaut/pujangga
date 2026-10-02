@@ -13,6 +13,10 @@ export interface GenerateReportOptions {
     commentText: string;
     contextBefore?: string;
   }>;
+  lockedTexts?: Array<{
+    id?: string;
+    text: string;
+  }>;
 }
 
 /**
@@ -27,6 +31,7 @@ export function generateAgentReport(options: GenerateReportOptions): string {
     userEditedMarkdown,
     overallComment,
     inlineComments,
+    lockedTexts,
   } = options;
 
   if (status === 'SATISFIED') {
@@ -61,6 +66,17 @@ export function generateAgentReport(options: GenerateReportOptions): string {
     lines.push(``);
   }
 
+  if (lockedTexts && lockedTexts.length > 0) {
+    lines.push(`## 🔒 Locked Text Segments (CRITICAL: DO NOT MODIFY)`);
+    lines.push(
+      `The reviewer has locked the following text segment(s). They MUST remain VERBATIM in your revision — do not rephrase, edit, or delete:`
+    );
+    lockedTexts.forEach((lt, idx) => {
+      lines.push(`${idx + 1}. "${lt.text.trim()}"`);
+    });
+    lines.push(``);
+  }
+
   if (diff.hasChanges) {
     lines.push(`## 📝 Direct Edits Made by Reviewer`);
     lines.push(`The reviewer directly edited the text in the review interface. **The target file on disk has already been updated with these direct edits.**`);
@@ -78,7 +94,7 @@ export function generateAgentReport(options: GenerateReportOptions): string {
       lines.push(`   *Feedback*: ${c.commentText}`);
       lines.push(``);
     });
-  } else if (!diff.hasChanges && (!overallComment || !overallComment.trim())) {
+  } else if (!diff.hasChanges && (!overallComment || !overallComment.trim()) && (!lockedTexts || lockedTexts.length === 0)) {
     lines.push(`*Note: Reviewer requested revisions without specific inline notes.*`);
     lines.push(``);
   }
@@ -86,14 +102,19 @@ export function generateAgentReport(options: GenerateReportOptions): string {
   lines.push(`---`);
   lines.push(`### Next Steps for Agent:`);
   lines.push(`1. Inspect the updated file at \`${filePath}\` (contains the reviewer's direct edits).`);
+  if (lockedTexts && lockedTexts.length > 0) {
+    lines.push(`2. Ensure all 🔒 Locked Text Segments (${lockedTexts.length} segment${lockedTexts.length > 1 ? 's' : ''}) remain unchanged word-for-word.`);
+  }
   if (inlineComments && inlineComments.length > 0) {
-    lines.push(`2. Address each of the ${inlineComments.length} inline comment(s) above.`);
+    lines.push(`${lockedTexts && lockedTexts.length > 0 ? '3' : '2'}. Address each of the ${inlineComments.length} inline comment(s) above.`);
   }
   if (overallComment && overallComment.trim()) {
-    lines.push(`3. Incorporate the overall directive into your revision.`);
+    const num = (lockedTexts && lockedTexts.length > 0 ? 1 : 0) + (inlineComments && inlineComments.length > 0 ? 1 : 0) + 2;
+    lines.push(`${num}. Incorporate the overall directive into your revision.`);
   }
-  lines.push(`4. Save your updated draft to \`${filePath}\`.`);
-  lines.push(`5. Execute \`pujangga review "${filePath}"\` to present Round ${roundNumber + 1} for review.`);
+  const nextNum = (lockedTexts && lockedTexts.length > 0 ? 1 : 0) + (inlineComments && inlineComments.length > 0 ? 1 : 0) + (overallComment && overallComment.trim() ? 1 : 0) + 2;
+  lines.push(`${nextNum}. Save your updated draft to \`${filePath}\`.`);
+  lines.push(`${nextNum + 1}. Execute \`pujangga review "${filePath}"\` to present Round ${roundNumber + 1} for review.`);
 
   return lines.join('\n');
 }

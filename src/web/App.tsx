@@ -4,16 +4,18 @@ import StarterKit from '@tiptap/starter-kit';
 import { Markdown } from 'tiptap-markdown';
 import Placeholder from '@tiptap/extension-placeholder';
 import { CommentMark } from './extensions/CommentMark.js';
+import { LockMark } from './extensions/LockMark.js';
 import { Navbar } from './components/Navbar.js';
 import { ActionBar } from './components/ActionBar.js';
 import { DesktopSidebar } from './components/DesktopSidebar.js';
 import { DiffViewer } from './components/DiffViewer.js';
 import { CommentHistoryDrawer } from './components/CommentHistoryDrawer.js';
 import { CommentPopover, CommentPopoverData } from './components/CommentPopover.js';
+import { LockPopover, LockPopoverData } from './components/LockPopover.js';
 import { ConfirmFinalizeModal } from './components/ConfirmFinalizeModal.js';
 import { FloatingAlertBanner } from './components/FloatingAlertBanner.js';
-import { SessionDetails, InlineComment, ReviewStatus } from '../shared/types.js';
-import { MessageSquarePlus, CheckCircle2, Loader2 } from 'lucide-react';
+import { SessionDetails, InlineComment, LockedText, ReviewStatus } from '../shared/types.js';
+import { MessageSquarePlus, CheckCircle2, Loader2, Lock } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [details, setDetails] = useState<SessionDetails | null>(null);
@@ -36,6 +38,11 @@ export const App: React.FC = () => {
   // Comments state
   const [localComments, setLocalComments] = useState<InlineComment[]>([]);
   const [popoverData, setPopoverData] = useState<CommentPopoverData | null>(null);
+
+  // Locked texts state
+  const [localLockedTexts, setLocalLockedTexts] = useState<LockedText[]>([]);
+  const [lockPopoverData, setLockPopoverData] = useState<LockPopoverData | null>(null);
+
   const [selectionTooltip, setSelectionTooltip] = useState<{
     text: string;
     position: { top: number; left: number };
@@ -77,6 +84,7 @@ export const App: React.FC = () => {
       const data: SessionDetails = await res.json();
       setDetails(data);
       setLocalComments(data.comments || []);
+      setLocalLockedTexts(data.lockedTexts || []);
       setError(null);
     } catch (err: any) {
       setError(err.message || 'Error loading session');
@@ -106,11 +114,13 @@ export const App: React.FC = () => {
             msg.type === 'SESSION_INIT' ||
             msg.type === 'ROUND_UPDATED' ||
             msg.type === 'REVISING_WAIT' ||
-            msg.type === 'SESSION_SATISFIED'
+            msg.type === 'SESSION_SATISFIED' ||
+            msg.type === 'LOCKED_TEXTS_UPDATED'
           ) {
             const updatedDetails: SessionDetails = msg.payload;
             setDetails(updatedDetails);
             setLocalComments(updatedDetails.comments || []);
+            setLocalLockedTexts(updatedDetails.lockedTexts || []);
 
             // If a new round was pushed by agent, update editor text!
             if (msg.type === 'ROUND_UPDATED' && editor) {
@@ -148,6 +158,7 @@ export const App: React.FC = () => {
         transformCopiedText: true,
       }),
       CommentMark,
+      LockMark,
       Placeholder.configure({
         placeholder: 'Writing draft appears here...',
       }),
@@ -184,6 +195,95 @@ export const App: React.FC = () => {
     },
   });
 
+  // Helper to re-apply lock marks across the document for known locked texts
+  const applyLocksToEditor = useCallback(
+    (currentEditor: any, lockedList: LockedText[]) => {
+      if (!currentEditor || !lockedList || lockedList.length === 0) return;
+      const { state, view } = currentEditor;
+      if (!state || !view) return;
+
+      const lockMarkType = state.schema.marks.lock;
+      if (!lockMarkType) return;
+
+      const { tr } = state;
+      tr.setMeta('allowLockEdit', true);
+      let changed = false;
+
+      for (const lock of lockedList) {
+        const targetText = lock.text.trim();
+        if (!targetText) continue;
+
+        let alreadyMarked = false;
+        tr.doc.descendants((node: any) => {
+          if (node.isText && node.marks) {
+            if (node.marks.some((m: any) => m.type === lockMarkType && m.attrs.lockId === lock.id)) {
+              alreadyMarked = true;
+            }
+          }
+        });
+        if (alreadyMarked) continue;
+
+        // Try simple text node search
+        tr.doc.descendants((node: any, pos: number) => {
+          if (alreadyMarked) return;
+          if (node.isText && node.text) {
+            const idx = node.text.indexOf(targetText);
+            if (idx !== -1) {
+              const from = pos + idx;
+              const to = from + targetText.length;
+              tr.addMark(from, to, lockMarkType.create({ lockId: lock.id }));
+              changed = true;
+              alreadyMarked = true;
+            }
+          }
+        });
+
+        // If not found in a single text node, check block level textContent
+        if (!alreadyMarked) {
+          tr.doc.descendants((blockNode: any, blockPos: number) => {
+            if (alreadyMarked || !blockNode.isBlock || blockNode.content.size === 0) return;
+            const fullBlockText = blockNode.textContent;
+            const matchIndex = fullBlockText.indexOf(targetText);
+            if (matchIndex !== -1) {
+              let currentOffset = 0;
+              let fromPos: number | null = null;
+              let toPos: number | null = null;
+
+              blockNode.descendants((child: any, childPos: number) => {
+                if (!child.isText || !child.text) return;
+                const childStart = currentOffset;
+                const childEnd = currentOffset + child.text.length;
+
+                if (fromPos === null && matchIndex >= childStart && matchIndex < childEnd) {
+                  fromPos = blockPos + 1 + childPos + (matchIndex - childStart);
+                }
+                if (
+                  toPos === null &&
+                  matchIndex + targetText.length <= childEnd &&
+                  matchIndex + targetText.length > childStart
+                ) {
+                  toPos = blockPos + 1 + childPos + (matchIndex + targetText.length - childStart);
+                }
+                currentOffset += child.text.length;
+              });
+
+              if (fromPos !== null && toPos !== null) {
+                tr.addMark(fromPos, toPos, lockMarkType.create({ lockId: lock.id }));
+                changed = true;
+                alreadyMarked = true;
+              }
+            }
+          });
+        }
+      }
+
+      if (changed) {
+        view.dispatch(tr);
+      }
+    },
+    []
+  );
+
   // Sync content into editor on first load or when revision id changes
   const prevRevIdRef = useRef<string | null>(null);
   useEffect(() => {
@@ -191,14 +291,44 @@ export const App: React.FC = () => {
       if (prevRevIdRef.current !== details.currentRevision.id) {
         prevRevIdRef.current = details.currentRevision.id;
         editor.commands.setContent(details.currentRevision.contentMarkdown);
+        if (localLockedTexts.length > 0) {
+          setTimeout(() => {
+            applyLocksToEditor(editor, localLockedTexts);
+          }, 20);
+        }
       }
     }
-  }, [editor, details?.currentRevision]);
+  }, [editor, details?.currentRevision, localLockedTexts, applyLocksToEditor]);
 
-  // Handle clicking on comment highlights in the editor (both in standard and diff views)
+  // Keep locks applied when localLockedTexts changes
+  useEffect(() => {
+    if (editor && localLockedTexts.length > 0) {
+      applyLocksToEditor(editor, localLockedTexts);
+    }
+  }, [editor, localLockedTexts, applyLocksToEditor]);
+
+  // Handle clicking on comment or lock highlights in the editor (both in standard and diff views)
   useEffect(() => {
     const handleEditorClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
+
+      // 1. Check if user clicked on a locked text highlight
+      const lockHighlight = target.closest('[data-lock-id]') as HTMLElement;
+      if (lockHighlight) {
+        const lockId = lockHighlight.getAttribute('data-lock-id');
+        if (lockId) {
+          const rect = lockHighlight.getBoundingClientRect();
+          const lock = localLockedTexts.find((l) => l.id === lockId);
+          setLockPopoverData({
+            lockId,
+            text: lock?.text || lockHighlight.innerText.replace(/🔒/g, '').trim(),
+            position: { top: rect.top, left: rect.left },
+          });
+          return;
+        }
+      }
+
+      // 2. Check if user clicked on a comment highlight
       const highlight = target.closest('[data-comment-id]') as HTMLElement;
       if (highlight) {
         const commentId = highlight.getAttribute('data-comment-id');
@@ -218,7 +348,7 @@ export const App: React.FC = () => {
 
     document.addEventListener('click', handleEditorClick);
     return () => document.removeEventListener('click', handleEditorClick);
-  }, [localComments]);
+  }, [localComments, localLockedTexts]);
 
   // Add Comment from selection tooltip
   const handleAddCommentFromSelection = () => {
@@ -240,6 +370,58 @@ export const App: React.FC = () => {
     });
 
     setSelectionTooltip(null);
+  };
+
+  // Lock Text from selection tooltip
+  const handleLockTextFromSelection = async () => {
+    if (!editor || !selectionTooltip || !details) return;
+
+    const text = selectionTooltip.text;
+    const lockId = crypto.randomUUID();
+
+    // Apply lock mark in Tiptap
+    editor.chain().focus().setLock(lockId).run();
+
+    const newLock: LockedText = {
+      id: lockId,
+      sessionId: details.session.id,
+      text,
+      roundNumber: details.currentRevision?.roundNumber || 1,
+      createdAt: Date.now(),
+    };
+
+    setLocalLockedTexts((prev) => [...prev, newLock]);
+    setSelectionTooltip(null);
+
+    try {
+      await fetch(`/api/sessions/${details.session.id}/locked-texts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: lockId, text }),
+      });
+    } catch (err) {
+      console.error('Failed to persist locked text:', err);
+    }
+  };
+
+  // Unlock Text
+  const handleUnlockText = async (lockId: string) => {
+    if (!details) return;
+
+    if (editor) {
+      editor.commands.removeLock(lockId);
+    }
+
+    setLocalLockedTexts((prev) => prev.filter((l) => l.id !== lockId));
+    setLockPopoverData(null);
+
+    try {
+      await fetch(`/api/sessions/${details.session.id}/locked-texts/${lockId}`, {
+        method: 'DELETE',
+      });
+    } catch (err) {
+      console.error('Failed to delete locked text:', err);
+    }
   };
 
   // Save comment in local state
@@ -371,6 +553,7 @@ export const App: React.FC = () => {
           overallComment,
           status,
           inlineComments: openComments,
+          lockedTexts: localLockedTexts.map((l) => ({ id: l.id, text: l.text })),
         }),
       });
 
@@ -382,6 +565,7 @@ export const App: React.FC = () => {
       setOverallComment('');
       if (status === 'SATISFIED') {
         setLocalComments([]);
+        setLocalLockedTexts([]);
         setShowDiff(false);
       }
       await fetchSession();
@@ -500,18 +684,32 @@ export const App: React.FC = () => {
             </div>
           )}
 
-          {/* Selection Tooltip for Adding Notes (available both in standard canvas and floating diff view) */}
+          {/* Selection Tooltip for Adding Notes & Locking Text */}
           {selectionTooltip && details.session.status === 'active' && (
             <div
-              className="fixed z-60 transform -translate-x-1/2 -translate-y-full mb-2 bg-ink dark:bg-paper text-white dark:text-night px-3 py-1.5 rounded-lg shadow-xl flex items-center gap-1.5 text-sm font-semibold cursor-pointer hover:scale-105 transition-all select-none animate-in fade-in zoom-in-95 border border-black/10 dark:border-white/10"
+              className="fixed z-60 transform -translate-x-1/2 -translate-y-full mb-2 bg-ink dark:bg-paper text-white dark:text-night p-1 rounded-lg shadow-xl flex items-center gap-1 text-sm font-semibold select-none animate-in fade-in zoom-in-95 border border-black/10 dark:border-white/10"
               style={{
                 top: selectionTooltip.position.top - 8,
                 left: selectionTooltip.position.left,
               }}
-              onClick={handleAddCommentFromSelection}
             >
-              <MessageSquarePlus className="w-3.5 h-3.5 text-accent-bright dark:text-accent" />
-              <span>Add Note</span>
+              <button
+                type="button"
+                onClick={handleAddCommentFromSelection}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-md hover:bg-white/10 dark:hover:bg-black/10 transition-colors cursor-pointer"
+              >
+                <MessageSquarePlus className="w-3.5 h-3.5 text-accent-bright dark:text-accent" />
+                <span>Add Note</span>
+              </button>
+              <div className="w-[1px] h-4 bg-white/20 dark:bg-black/20" />
+              <button
+                type="button"
+                onClick={handleLockTextFromSelection}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-md hover:bg-white/10 dark:hover:bg-black/10 transition-colors cursor-pointer"
+              >
+                <Lock className="w-3.5 h-3.5 text-accent-bright dark:text-accent" />
+                <span>Lock Text</span>
+              </button>
             </div>
           )}
 
@@ -547,6 +745,7 @@ export const App: React.FC = () => {
           onApprove={handleRequestApprove}
           isSubmitting={isSubmitting}
           totalCommentsCount={localComments.length}
+          lockedTextsCount={localLockedTexts.length}
           onOpenCommentHistory={() => setIsCommentHistoryOpen(true)}
         />
       </div>
@@ -557,6 +756,13 @@ export const App: React.FC = () => {
         onSave={handleSaveComment}
         onDelete={handleDeleteComment}
         onClose={handleClosePopover}
+      />
+
+      {/* Floating Lock Popover */}
+      <LockPopover
+        data={lockPopoverData}
+        onUnlock={handleUnlockText}
+        onClose={() => setLockPopoverData(null)}
       />
 
       {/* Comment History Drawer */}

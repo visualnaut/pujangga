@@ -235,6 +235,7 @@ export class PujanggaServer {
         const latestRevision = revisions[revisions.length - 1];
         if (latestRevision && latestRevision.submittedAt && latestRevision.status) {
           const inlineComments = this.db.getComments(sessionId).filter((c) => c.roundNumber === latestRevision.roundNumber);
+          const lockedTexts = this.db.getLockedTexts(sessionId);
           const report = generateAgentReport({
             status: latestRevision.status,
             roundNumber: latestRevision.roundNumber,
@@ -243,6 +244,7 @@ export class PujanggaServer {
             userEditedMarkdown: latestRevision.userEditedMarkdown,
             overallComment: latestRevision.overallComment,
             inlineComments,
+            lockedTexts,
           });
 
           const waitResponse: WaitReviewResponse = {
@@ -251,6 +253,7 @@ export class PujanggaServer {
             filePath: session.filePath,
             overallComment: latestRevision.overallComment,
             inlineComments,
+            lockedTexts,
             hasDirectEdits: latestRevision.userEditedMarkdown !== undefined && latestRevision.userEditedMarkdown !== latestRevision.contentMarkdown,
             reportMarkdown: report,
           };
@@ -281,7 +284,68 @@ export class PujanggaServer {
         return;
       }
 
-      // 4. API: Submit Review from Browser
+      // 4. API: Add Locked Text
+      if (method === 'POST' && pathname.startsWith('/api/sessions/') && pathname.endsWith('/locked-texts')) {
+        const parts = pathname.split('/');
+        const sessionId = parts[3];
+
+        const session = this.db.getSession(sessionId);
+        if (!session) {
+          this.sendJson(res, 404, { error: 'Session not found' });
+          return;
+        }
+
+        const body = await this.parseJsonBody(req);
+        if (!body.text || !body.text.trim()) {
+          this.sendJson(res, 400, { error: 'Missing locked text content' });
+          return;
+        }
+
+        const revisions = this.db.getRevisions(sessionId);
+        const currentRevision = revisions[revisions.length - 1];
+        const roundNumber = currentRevision ? currentRevision.roundNumber : 1;
+
+        const lock = this.db.addLockedText(sessionId, {
+          id: body.id,
+          text: body.text,
+          roundNumber,
+        });
+
+        const updatedDetails = this.db.getSessionDetails(sessionId, this.port);
+        this.broadcastToSession(sessionId, {
+          type: 'LOCKED_TEXTS_UPDATED',
+          payload: updatedDetails,
+        });
+
+        this.sendJson(res, 200, lock);
+        return;
+      }
+
+      // 4b. API: Remove Locked Text
+      if (method === 'DELETE' && pathname.startsWith('/api/sessions/') && pathname.includes('/locked-texts/')) {
+        const parts = pathname.split('/');
+        const sessionId = parts[3];
+        const lockId = parts[5];
+
+        const session = this.db.getSession(sessionId);
+        if (!session) {
+          this.sendJson(res, 404, { error: 'Session not found' });
+          return;
+        }
+
+        this.db.removeLockedText(lockId);
+
+        const updatedDetails = this.db.getSessionDetails(sessionId, this.port);
+        this.broadcastToSession(sessionId, {
+          type: 'LOCKED_TEXTS_UPDATED',
+          payload: updatedDetails,
+        });
+
+        this.sendJson(res, 200, { success: true });
+        return;
+      }
+
+      // 5. API: Submit Review from Browser
       if (method === 'POST' && pathname.startsWith('/api/sessions/') && pathname.endsWith('/submit')) {
         const parts = pathname.split('/');
         const sessionId = parts[3];
@@ -327,6 +391,7 @@ export class PujanggaServer {
         }
 
         // 3. Generate Agent Report
+        const lockedTexts = this.db.getLockedTexts(sessionId);
         const report = generateAgentReport({
           status: body.status,
           roundNumber: currentRevision.roundNumber,
@@ -335,6 +400,7 @@ export class PujanggaServer {
           userEditedMarkdown: body.userEditedMarkdown,
           overallComment: body.overallComment,
           inlineComments: body.inlineComments || [],
+          lockedTexts,
         });
 
         // 4. Unblock any waiting CLI instances for this session
@@ -345,6 +411,7 @@ export class PujanggaServer {
           filePath: session.filePath,
           overallComment: body.overallComment,
           inlineComments: body.inlineComments || [],
+          lockedTexts,
           hasDirectEdits: currentRevision.contentMarkdown !== body.userEditedMarkdown,
           reportMarkdown: report,
         };
