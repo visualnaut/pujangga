@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { InlineComment, Revision } from '../../shared/types.js';
 import { History, X, Clock, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
 
@@ -76,6 +76,7 @@ export const CommentHistoryDrawer: React.FC<CommentHistoryDrawerProps> = ({
 }) => {
   const [shouldRender, setShouldRender] = useState(isOpen);
   const [isAnimating, setIsAnimating] = useState(false);
+  const drawerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -101,16 +102,28 @@ export const CommentHistoryDrawer: React.FC<CommentHistoryDrawerProps> = ({
   };
 
   useEffect(() => {
+    if (!shouldRender) return;
+
+    const handlePointerDown = (e: MouseEvent | TouchEvent) => {
+      if (drawerRef.current && !drawerRef.current.contains(e.target as Node)) {
+        handleClose();
+      }
+    };
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         handleClose();
       }
     };
 
-    if (shouldRender) {
-      window.addEventListener('keydown', handleKeyDown);
-      return () => window.removeEventListener('keydown', handleKeyDown);
-    }
+    window.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('touchstart', handlePointerDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('touchstart', handlePointerDown);
+    };
   }, [shouldRender]);
 
   if (!shouldRender) return null;
@@ -120,15 +133,23 @@ export const CommentHistoryDrawer: React.FC<CommentHistoryDrawerProps> = ({
 
   return (
     <div
-      className={`fixed inset-0 z-70 overflow-hidden bg-black/40 backdrop-blur-xs flex justify-end transition-opacity duration-250 ease-out ${
-        isAnimating ? 'opacity-100' : 'opacity-0 pointer-events-none'
+      className={`fixed inset-0 z-70 overflow-hidden flex justify-end ${
+        isAnimating ? 'pointer-events-auto' : 'pointer-events-none'
       }`}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) handleClose();
-      }}
     >
+      {/* Clickable Backdrop Overlay */}
       <div
-        className={`w-full max-w-xl bg-paper-card dark:bg-night-card h-full shadow-2xl flex flex-col border-l border-paper-border dark:border-night-border-strong transform transition-transform duration-250 ease-out ${
+        className={`fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity duration-250 ease-out cursor-pointer ${
+          isAnimating ? 'opacity-100' : 'opacity-0'
+        }`}
+        onClick={handleClose}
+        aria-hidden="true"
+      />
+
+      {/* Drawer Panel */}
+      <div
+        ref={drawerRef}
+        className={`relative z-10 w-full max-w-xl bg-paper-card dark:bg-night-card h-full shadow-2xl flex flex-col border-l border-paper-border dark:border-night-border-strong transform transition-transform duration-250 ease-out ${
           isAnimating ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
