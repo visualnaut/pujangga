@@ -39,7 +39,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
                 ? 'Review concluded. Writing marked as Satisfied.'
                 : isRevising
                 ? `Waiting for agent to revise Round ${roundNumber + 1}...`
-                : 'Overall directive for agent...'
+                : 'Directive for agent...'
             }
             className="w-full text-sm bg-paper-card dark:bg-night-card border border-paper-border dark:border-night-border-strong rounded-xl px-4 py-2 text-ink dark:text-night-text-heading placeholder-ink-faint focus:outline-none focus:ring-2 focus:ring-accent/50 shadow-xs disabled:opacity-60 transition-all"
             onKeyDown={(e) => {

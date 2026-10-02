@@ -468,7 +468,7 @@ export const App: React.FC = () => {
               isSubmitting={isSubmitting}
             />
           ) : (
-            <div className="bg-paper-card dark:bg-night-card rounded-2xl border border-paper-border dark:border-night-border-strong p-6 sm:p-10 md:p-14 shadow-xs transition-colors">
+            <div className="bg-paper-card dark:bg-night-card border border-paper-border dark:border-night-border-strong p-6 sm:p-10 md:p-14 shadow-xs transition-colors">
               <EditorContent editor={editor} />
             </div>
           )}

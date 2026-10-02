@@ -81,10 +81,14 @@ export const CommentHistoryDrawer: React.FC<CommentHistoryDrawerProps> = ({
   useEffect(() => {
     if (isOpen) {
       setShouldRender(true);
-      const frame = requestAnimationFrame(() => {
+      setIsAnimating(false);
+      const timer = setTimeout(() => {
+        if (drawerRef.current) {
+          void drawerRef.current.offsetHeight;
+        }
         setIsAnimating(true);
-      });
-      return () => cancelAnimationFrame(frame);
+      }, 25);
+      return () => clearTimeout(timer);
     } else {
       setIsAnimating(false);
       const timer = setTimeout(() => {
@@ -139,7 +143,7 @@ export const CommentHistoryDrawer: React.FC<CommentHistoryDrawerProps> = ({
     >
       {/* Clickable Backdrop Overlay */}
       <div
-        className={`fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity duration-250 ease-out cursor-pointer ${
+        className={`fixed inset-0 bg-black/40 transition-opacity duration-250 ease-out cursor-pointer ${
           isAnimating ? 'opacity-100' : 'opacity-0'
         }`}
         onClick={handleClose}

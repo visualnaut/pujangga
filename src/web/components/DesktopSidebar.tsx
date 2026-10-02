@@ -1,5 +1,5 @@
 import React from 'react';
-import { Send, CheckCircle2, Loader2, Sparkles, History, ArrowRight } from 'lucide-react';
+import { SendHorizonal, CheckCircle2, Loader2, BookCheck, History, ArrowRight } from 'lucide-react';
 import { SessionStatus } from '../../shared/types.js';
 
 interface DesktopSidebarProps {
@@ -34,7 +34,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
       <div className="bg-paper-card dark:bg-night-card rounded-2xl border border-paper-border dark:border-night-border-strong p-5 shadow-xs transition-colors">
         <div className="flex items-center justify-between pb-3 mb-3 border-b border-paper-border-light dark:border-night-border">
           <h3 className="text-sm font-bold uppercase tracking-wider text-ink-muted dark:text-night-text-muted">
-            Editorial Directives
+            Brainstorm Session
           </h3>
           <span className="text-sm px-2.5 py-0.5 rounded-full font-medium bg-paper-subtle dark:bg-night-subtle text-ink-muted dark:text-night-text-muted">
             Round {roundNumber}
@@ -60,10 +60,10 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
           </div>
         ) : null}
 
-        {/* Overall Directive Textarea */}
+        {/* Directive Textarea */}
         <div className="mb-4">
           <label className="block text-sm font-medium text-ink-muted dark:text-night-text-muted mb-1.5">
-            Overall Directive for Agent
+            Directive for Agent
           </label>
           <textarea
             rows={5}
@@ -97,9 +97,9 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
             {isSubmitting ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
-              <Send className="w-4 h-4" />
+              <SendHorizonal className="w-4 h-4" />
             )}
-            <span>Request Revision ↵</span>
+            <span>Request Revision</span>
           </button>
 
           <button
@@ -110,9 +110,9 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
             {isSatisfied ? (
               <CheckCircle2 className="w-4 h-4" />
             ) : (
-              <Sparkles className="w-4 h-4" />
+              <BookCheck className="w-4 h-4" />
             )}
-            <span>Satisfied & Finalize ✨</span>
+            <span>Finalize Draft</span>
           </button>
         </div>
 

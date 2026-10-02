@@ -1,7 +1,7 @@
 import React, { useRef, useMemo, useState, useEffect } from 'react';
 import { EditorContent } from '@tiptap/react';
 import { Revision, SessionStatus } from '../../shared/types.js';
-import { Columns2, Link2, Unlink2, X, Send, Loader2, Edit3, Eye } from 'lucide-react';
+import { Columns2, Link2, Unlink2, X, Send, Loader2, Edit3, Lock } from 'lucide-react';
 import { marked } from 'marked';
 
 interface DiffViewerProps {
@@ -374,7 +374,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
         <div className="flex flex-col min-h-0 h-full bg-paper/40 dark:bg-night-surface/40">
           <div className="px-6 py-2.5 bg-paper/90 dark:bg-night-pane/90 border-b border-paper-border-light dark:border-night-border flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2">
-              <Eye className="w-3.5 h-3.5 text-ink-subtle" />
+              <Lock className="w-3.5 h-3.5 text-ink-subtle" />
               <span className="text-sm font-bold text-ink-muted dark:text-night-text-muted">
                 Round {comparisonRevision?.roundNumber} (Reference)
               </span>

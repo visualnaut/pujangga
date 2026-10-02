@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Sparkles, X, CheckCircle2, AlertTriangle, Loader2, FileText } from 'lucide-react';
 
 interface ConfirmFinalizeModalProps {
@@ -20,14 +20,19 @@ export const ConfirmFinalizeModal: React.FC<ConfirmFinalizeModalProps> = ({
 }) => {
   const [shouldRender, setShouldRender] = useState(isOpen);
   const [isAnimating, setIsAnimating] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isOpen) {
       setShouldRender(true);
-      const frame = requestAnimationFrame(() => {
+      setIsAnimating(false);
+      const timer = setTimeout(() => {
+        if (modalRef.current) {
+          void modalRef.current.offsetHeight;
+        }
         setIsAnimating(true);
-      });
-      return () => cancelAnimationFrame(frame);
+      }, 20);
+      return () => clearTimeout(timer);
     } else {
       setIsAnimating(false);
       const timer = setTimeout(() => {
@@ -62,7 +67,7 @@ export const ConfirmFinalizeModal: React.FC<ConfirmFinalizeModalProps> = ({
 
   return (
     <div
-      className={`fixed inset-0 z-80 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 transition-opacity duration-150 ease-out ${
+      className={`fixed inset-0 z-80 bg-black/50 flex items-center justify-center p-4 transition-opacity duration-150 ease-out ${
         isAnimating ? 'opacity-100' : 'opacity-0 pointer-events-none'
       }`}
       onClick={(e) => {
@@ -72,6 +77,7 @@ export const ConfirmFinalizeModal: React.FC<ConfirmFinalizeModalProps> = ({
       }}
     >
       <div
+        ref={modalRef}
         className={`w-full max-w-md bg-paper-card dark:bg-night-modal border border-paper-border dark:border-night-border-strong rounded-2xl p-6 shadow-2xl space-y-5 transform transition-all duration-150 ease-out ${
           isAnimating ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-2'
         }`}
