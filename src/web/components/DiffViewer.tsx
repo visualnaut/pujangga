@@ -150,32 +150,32 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
   const isSatisfied = status === 'satisfied';
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#FAF8F5] dark:bg-[#121110] flex flex-col transition-colors animate-in fade-in duration-150">
+    <div className="fixed inset-0 z-50 bg-paper dark:bg-night flex flex-col transition-colors animate-in fade-in duration-150">
       {/* Top Floating Full-Width Header Bar */}
-      <header className="h-16 px-4 sm:px-6 bg-white/95 dark:bg-[#181615]/95 border-b border-[#E6E0D4] dark:border-[#2C2825] flex items-center justify-between gap-4 backdrop-blur-md shrink-0 shadow-xs">
+      <header className="h-16 px-4 sm:px-6 bg-paper-card/95 dark:bg-night-header/95 border-b border-paper-border dark:border-night-border flex items-center justify-between gap-4 backdrop-blur-md shrink-0 shadow-xs">
         {/* Left: Round Configuration */}
         <div className="flex items-center gap-3 min-w-0">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-amber-600 dark:bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-2xs">
               <Columns2 className="w-4 h-4" />
             </div>
-            <span className="font-serif font-bold text-sm text-[#2C2825] dark:text-[#EDEAE4] hidden sm:inline">
+            <span className="font-serif font-bold text-sm text-ink dark:text-night-text hidden sm:inline">
               Side-by-Side Review
             </span>
           </div>
 
-          <div className="h-4 w-px bg-[#DCD5C8] dark:bg-[#38332E] hidden sm:block" />
+          <div className="h-4 w-px bg-paper-divider dark:bg-night-border-strong hidden sm:block" />
 
           {/* Comparison Round Picker */}
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-[#706B65] dark:text-[#A8A29D]">
+            <span className="text-xs font-semibold text-ink-muted dark:text-night-text-muted">
               Comparing against:
             </span>
             <select
               value={comparisonRevision?.roundNumber || comparisonRound}
               onChange={(e) => onChangeComparisonRound(Number(e.target.value))}
               disabled={availableComparisonRounds.length === 0}
-              className="text-xs font-bold bg-[#FAF8F5] dark:bg-[#201D1B] border border-[#E6E0D4] dark:border-[#38332E] text-[#2C2825] dark:text-[#EDEAE4] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-500/50 cursor-pointer shadow-2xs"
+              className="text-xs font-bold bg-paper dark:bg-night-input border border-paper-border dark:border-night-border-strong text-ink dark:text-night-text rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-500/50 cursor-pointer shadow-2xs"
             >
               {availableComparisonRounds.map((r) => (
                 <option key={r.roundNumber} value={r.roundNumber}>
@@ -195,14 +195,14 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer select-none ${
               isSyncScroll
                 ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800'
-                : 'bg-[#FAF8F5] dark:bg-[#1E1C1A] text-[#8C827A] dark:text-[#A8A29D] border-[#E6E0D4] dark:border-[#38332E]'
+                : 'bg-paper dark:bg-night-popover text-ink-subtle dark:text-night-text-muted border-paper-border dark:border-night-border-strong'
             }`}
             title={isSyncScroll ? 'Click to disable synced scroll' : 'Click to enable synced scroll'}
           >
             {isSyncScroll ? (
               <Link2 className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
             ) : (
-              <Unlink2 className="w-3.5 h-3.5 text-[#8C827A]" />
+              <Unlink2 className="w-3.5 h-3.5 text-ink-subtle" />
             )}
             <span className="hidden md:inline">Synced Scroll:</span>
             <span>{isSyncScroll ? 'ON' : 'OFF'}</span>
@@ -230,23 +230,23 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
 
             {/* Overall Directive Popover */}
             {isRevisionPopoverOpen && (
-              <div className="fixed sm:absolute right-4 sm:right-0 top-18 sm:top-full mt-2 w-[calc(100vw-2rem)] sm:w-104 bg-white dark:bg-[#1E1C1A] border border-[#E6E0D4] dark:border-[#38332E] rounded-2xl shadow-2xl p-4 z-60 animate-in fade-in zoom-in-95 duration-150 space-y-3">
-                <div className="flex items-center justify-between pb-2 border-b border-[#F0EBE1] dark:border-[#2C2825]">
-                  <div className="flex items-center gap-2 text-xs font-bold text-[#2C2825] dark:text-[#EDEAE4]">
+              <div className="fixed sm:absolute right-4 sm:right-0 top-18 sm:top-full mt-2 w-[calc(100vw-2rem)] sm:w-104 bg-paper-card dark:bg-night-popover border border-paper-border dark:border-night-border-strong rounded-2xl shadow-2xl p-4 z-60 animate-in fade-in zoom-in-95 duration-150 space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-paper-border-light dark:border-night-border">
+                  <div className="flex items-center gap-2 text-xs font-bold text-ink dark:text-night-text">
                     <Send className="w-3.5 h-3.5 text-amber-600 dark:text-amber-500" />
                     <span>Revision Directive (Round {currentRound})</span>
                   </div>
                   <button
                     type="button"
                     onClick={() => setIsRevisionPopoverOpen(false)}
-                    className="p-1 rounded-lg text-[#8C827A] hover:text-[#2C2825] dark:hover:text-[#EDEAE4] hover:bg-[#F2EDE4] dark:hover:bg-[#2A2724] transition-colors"
+                    className="p-1 rounded-lg text-ink-subtle hover:text-ink dark:hover:text-night-text hover:bg-paper-hover dark:hover:bg-night-hover transition-colors"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-semibold text-[#706B65] dark:text-[#A8A29D] uppercase tracking-wider mb-1.5">
+                  <label className="block text-[11px] font-semibold text-ink-muted dark:text-night-text-muted uppercase tracking-wider mb-1.5">
                     Overall Instructions for AI Agent
                   </label>
                   <textarea
@@ -255,7 +255,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
                     value={overallComment}
                     onChange={(e) => onOverallCommentChange(e.target.value)}
                     placeholder="Provide overall guidance for the revision (e.g. improve opening hook, verify latency benchmarks, tighten prose)..."
-                    className="w-full text-xs bg-[#FAF8F5] dark:bg-[#161514] border border-[#E6E0D4] dark:border-[#38332E] text-[#2C2825] dark:text-[#EDEAE4] placeholder-[#A0988F] rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-amber-500/50 resize-y"
+                    className="w-full text-xs bg-paper dark:bg-night-darker border border-paper-border dark:border-night-border-strong text-ink dark:text-night-text placeholder-ink-faint rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-amber-500/50 resize-y"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
                         e.preventDefault();
@@ -264,8 +264,8 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
                       }
                     }}
                   />
-                  <p className="text-[10px] text-[#A0988F] mt-1">
-                    Tip: Press <kbd className="font-mono bg-[#EFEAE1] dark:bg-[#2C2825] px-1 py-0.5 rounded text-[9px]">⌘+Enter</kbd> to submit.
+                  <p className="text-[10px] text-ink-faint mt-1">
+                    Tip: Press <kbd className="font-mono bg-paper-subtle dark:bg-night-border px-1 py-0.5 rounded text-[9px]">⌘+Enter</kbd> to submit.
                   </p>
                 </div>
 
@@ -274,7 +274,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
                     type="button"
                     onClick={() => setIsRevisionPopoverOpen(false)}
                     disabled={isSubmitting}
-                    className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-[#DCD5C8] dark:border-[#38332E] text-[#635E59] dark:text-[#A8A29D] hover:bg-[#F5F2EB] dark:hover:bg-[#252220] transition-colors cursor-pointer"
+                    className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-paper-divider dark:border-night-border-strong text-ink-body dark:text-night-text-muted hover:bg-paper-active dark:hover:bg-night-active transition-colors cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -303,7 +303,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
           {/* Close Diff Button */}
           <button
             onClick={onClose}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#2C2825] dark:bg-[#EDEAE4] text-white dark:text-[#121110] hover:opacity-90 text-xs font-semibold rounded-lg transition-opacity cursor-pointer shadow-xs"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-ink dark:bg-night-text text-white dark:text-night hover:opacity-90 text-xs font-semibold rounded-lg transition-opacity cursor-pointer shadow-xs"
             title="Exit diff mode (Esc)"
           >
             <X className="w-3.5 h-3.5" />
@@ -313,13 +313,13 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
       </header>
 
       {/* Dual Column Side-by-Side Canvas Covering Full Viewport Width */}
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-[#E6E0D4] dark:divide-[#2C2825] min-h-0 overflow-hidden">
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-paper-border dark:divide-night-border min-h-0 overflow-hidden">
         {/* Left Column: Current Draft (Editable & Commentable) */}
-        <div className="flex flex-col min-h-0 h-full bg-white dark:bg-[#1A1816]">
-          <div className="px-6 py-2.5 bg-[#FAF8F5]/90 dark:bg-[#151413]/90 border-b border-[#F0EBE1] dark:border-[#2C2825] flex items-center justify-between shrink-0">
+        <div className="flex flex-col min-h-0 h-full bg-paper-card dark:bg-night-card">
+          <div className="px-6 py-2.5 bg-paper/90 dark:bg-night-pane/90 border-b border-paper-border-light dark:border-night-border flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2">
               <Edit3 className="w-3.5 h-3.5 text-amber-600 dark:text-amber-500" />
-              <span className="text-xs font-bold text-[#2C2825] dark:text-[#EDEAE4]">
+              <span className="text-xs font-bold text-ink dark:text-night-text">
                 Round {currentRound} (Current Draft)
               </span>
             </div>
@@ -340,15 +340,15 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
         </div>
 
         {/* Right Column: Historical Reference (Clean Rendered Markdown) */}
-        <div className="flex flex-col min-h-0 h-full bg-[#FAF8F5]/40 dark:bg-[#141312]/40">
-          <div className="px-6 py-2.5 bg-[#FAF8F5]/90 dark:bg-[#151413]/90 border-b border-[#F0EBE1] dark:border-[#2C2825] flex items-center justify-between shrink-0">
+        <div className="flex flex-col min-h-0 h-full bg-paper/40 dark:bg-night-surface/40">
+          <div className="px-6 py-2.5 bg-paper/90 dark:bg-night-pane/90 border-b border-paper-border-light dark:border-night-border flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2">
-              <Eye className="w-3.5 h-3.5 text-[#8C827A]" />
-              <span className="text-xs font-bold text-[#706B65] dark:text-[#A8A29D]">
+              <Eye className="w-3.5 h-3.5 text-ink-subtle" />
+              <span className="text-xs font-bold text-ink-muted dark:text-night-text-muted">
                 Round {comparisonRevision?.roundNumber} (Reference)
               </span>
             </div>
-            <span className="text-[11px] text-[#A0988F] uppercase tracking-wider font-semibold">
+            <span className="text-[11px] text-ink-faint uppercase tracking-wider font-semibold">
               Read-Only
             </span>
           </div>

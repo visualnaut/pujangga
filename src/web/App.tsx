@@ -353,10 +353,10 @@ export const App: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#FAF8F5] dark:bg-[#121110]">
+      <div className="min-h-screen flex items-center justify-center bg-paper dark:bg-night">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="w-8 h-8 animate-spin text-amber-600 dark:text-amber-500" />
-          <p className="text-sm font-serif text-[#706B65] dark:text-[#A8A29D]">Opening Pujangga review canvas...</p>
+          <p className="text-sm font-serif text-ink-muted dark:text-night-text-muted">Opening Pujangga review canvas...</p>
         </div>
       </div>
     );
@@ -364,16 +364,16 @@ export const App: React.FC = () => {
 
   if (error || !details) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6 bg-[#FAF8F5] dark:bg-[#121110]">
-        <div className="max-w-md w-full bg-white dark:bg-[#1E1C1A] border border-[#E6E0D4] dark:border-[#38332E] rounded-2xl p-6 text-center shadow-lg">
+      <div className="min-h-screen flex items-center justify-center p-6 bg-paper dark:bg-night">
+        <div className="max-w-md w-full bg-paper-card dark:bg-night-popover border border-paper-border dark:border-night-border-strong rounded-2xl p-6 text-center shadow-lg">
           <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-600 mx-auto flex items-center justify-center mb-4">
             <Feather className="w-6 h-6" />
           </div>
-          <h2 className="text-lg font-bold font-serif mb-2 text-[#2C2825] dark:text-[#E8E6E3]">No Active Review Session</h2>
-          <p className="text-sm text-[#706B65] dark:text-[#A8A29D] mb-6">
+          <h2 className="text-lg font-bold font-serif mb-2 text-ink dark:text-night-text-heading">No Active Review Session</h2>
+          <p className="text-sm text-ink-muted dark:text-night-text-muted mb-6">
             {error || 'Start a review by executing `pujangga <filepath>` from your terminal or agent harness.'}
           </p>
-          <div className="text-xs bg-[#FAF8F5] dark:bg-[#141312] p-3 rounded-lg font-mono text-[#8C827A] border border-[#EFEAE1] dark:border-[#2C2825]">
+          <div className="text-xs bg-paper dark:bg-night-surface p-3 rounded-lg font-mono text-ink-subtle border border-paper-border-subtle dark:border-night-border">
             $ npx -y pujangga draft.md
           </div>
         </div>
@@ -385,7 +385,7 @@ export const App: React.FC = () => {
   const hasMultipleRounds = details.revisions.length >= 2;
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#FAF8F5] text-[#2C2825] dark:bg-[#121110] dark:text-[#EDEAE4] transition-colors pb-24 lg:pb-12">
+    <div className="min-h-screen flex flex-col bg-paper text-ink dark:bg-night dark:text-night-text transition-colors pb-24 lg:pb-12">
       {/* Top Navbar */}
       <Navbar
         title={details.session.title}
@@ -440,7 +440,7 @@ export const App: React.FC = () => {
           {/* Selection Tooltip for Adding Notes (available both in standard canvas and floating diff view) */}
           {selectionTooltip && details.session.status === 'active' && (
             <div
-              className="fixed z-60 transform -translate-x-1/2 -translate-y-full mb-2 bg-[#2C2825] dark:bg-[#FAF8F5] text-white dark:text-[#121110] px-3 py-1.5 rounded-lg shadow-xl flex items-center gap-1.5 text-xs font-semibold cursor-pointer hover:scale-105 transition-all select-none animate-in fade-in zoom-in-95 border border-black/10 dark:border-white/10"
+              className="fixed z-60 transform -translate-x-1/2 -translate-y-full mb-2 bg-ink dark:bg-paper text-white dark:text-night px-3 py-1.5 rounded-lg shadow-xl flex items-center gap-1.5 text-xs font-semibold cursor-pointer hover:scale-105 transition-all select-none animate-in fade-in zoom-in-95 border border-black/10 dark:border-white/10"
               style={{
                 top: selectionTooltip.position.top - 8,
                 left: selectionTooltip.position.left,
@@ -468,7 +468,7 @@ export const App: React.FC = () => {
               isSubmitting={isSubmitting}
             />
           ) : (
-            <div className="bg-white dark:bg-[#1A1816] rounded-2xl border border-[#E6E0D4] dark:border-[#38332E] p-6 sm:p-10 md:p-14 shadow-xs transition-colors">
+            <div className="bg-paper-card dark:bg-night-card rounded-2xl border border-paper-border dark:border-night-border-strong p-6 sm:p-10 md:p-14 shadow-xs transition-colors">
               <EditorContent editor={editor} />
             </div>
           )}

@@ -25,7 +25,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
   const isSatisfied = status === 'satisfied';
 
   return (
-    <footer className="fixed bottom-0 left-0 right-0 z-40 lg:hidden backdrop-blur-md bg-[#FAF8F5]/95 dark:bg-[#121110]/95 border-t border-[#E6E0D4] dark:border-[#2C2825] p-3 sm:p-4 transition-colors shadow-lg">
+    <footer className="fixed bottom-0 left-0 right-0 z-40 lg:hidden backdrop-blur-md bg-paper/95 dark:bg-night/95 border-t border-paper-border dark:border-night-border p-3 sm:p-4 transition-colors shadow-lg">
       <div className="max-w-4xl mx-auto flex flex-col gap-2.5">
         {/* Overall Directive Input */}
         <div className="relative w-full">
@@ -41,7 +41,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
                 ? `Waiting for agent to revise Round ${roundNumber + 1}...`
                 : 'Overall directive for agent...'
             }
-            className="w-full text-sm bg-white dark:bg-[#1A1816] border border-[#E6E0D4] dark:border-[#38332E] rounded-xl px-4 py-2 text-[#2C2825] dark:text-[#E8E6E3] placeholder-[#A0988F] focus:outline-none focus:ring-2 focus:ring-amber-500/50 shadow-xs disabled:opacity-60 transition-all"
+            className="w-full text-sm bg-paper-card dark:bg-night-card border border-paper-border dark:border-night-border-strong rounded-xl px-4 py-2 text-ink dark:text-night-text-heading placeholder-ink-faint focus:outline-none focus:ring-2 focus:ring-amber-500/50 shadow-xs disabled:opacity-60 transition-all"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
                 onSubmitRevision();

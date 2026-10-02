@@ -31,12 +31,12 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
   return (
     <aside className="hidden lg:flex flex-col w-84 shrink-0 sticky top-20 gap-4">
       {/* Editorial Review & Directives Panel */}
-      <div className="bg-white dark:bg-[#1A1816] rounded-2xl border border-[#E6E0D4] dark:border-[#38332E] p-5 shadow-xs transition-colors">
-        <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#F0EBE1] dark:border-[#2C2825]">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-[#706B65] dark:text-[#A8A29D]">
+      <div className="bg-paper-card dark:bg-night-card rounded-2xl border border-paper-border dark:border-night-border-strong p-5 shadow-xs transition-colors">
+        <div className="flex items-center justify-between pb-3 mb-3 border-b border-paper-border-light dark:border-night-border">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-ink-muted dark:text-night-text-muted">
             Editorial Directives
           </h3>
-          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-[#EFEAE1] dark:bg-[#262320] text-[#706B65] dark:text-[#A8A29D]">
+          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-paper-subtle dark:bg-night-subtle text-ink-muted dark:text-night-text-muted">
             Round {roundNumber}
           </span>
         </div>
@@ -62,7 +62,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
 
         {/* Overall Directive Textarea */}
         <div className="mb-4">
-          <label className="block text-xs font-medium text-[#706B65] dark:text-[#A8A29D] mb-1.5">
+          <label className="block text-xs font-medium text-ink-muted dark:text-night-text-muted mb-1.5">
             Overall Directive for Agent
           </label>
           <textarea
@@ -77,7 +77,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                 ? `Waiting for revision...`
                 : 'Write your overarching feedback, tone corrections, or directives here... (Cmd+Enter to send)'
             }
-            className="w-full text-sm bg-[#FAF8F5] dark:bg-[#151413] border border-[#E6E0D4] dark:border-[#38332E] rounded-xl p-3 text-[#2C2825] dark:text-[#EDEAE4] placeholder-[#A0988F] focus:outline-none focus:ring-2 focus:ring-amber-500/50 resize-none shadow-xs disabled:opacity-60 transition-all leading-relaxed"
+            className="w-full text-sm bg-paper dark:bg-night-pane border border-paper-border dark:border-night-border-strong rounded-xl p-3 text-ink dark:text-night-text placeholder-ink-faint focus:outline-none focus:ring-2 focus:ring-amber-500/50 resize-none shadow-xs disabled:opacity-60 transition-all leading-relaxed"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
                 e.preventDefault();
@@ -116,9 +116,9 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
           </button>
         </div>
 
-        <div className="mt-3 pt-3 border-t border-[#F0EBE1] dark:border-[#2C2825] text-center">
-          <span className="text-[11px] text-[#A0988F]">
-            Shortcut: <kbd className="px-1.5 py-0.5 rounded bg-[#FAF8F5] dark:bg-[#201D1B] border border-[#E6E0D4] dark:border-[#38332E]">⌘ + ↵</kbd> to submit
+        <div className="mt-3 pt-3 border-t border-paper-border-light dark:border-night-border text-center">
+          <span className="text-[11px] text-ink-faint">
+            Shortcut: <kbd className="px-1.5 py-0.5 rounded bg-paper dark:bg-night-input border border-paper-border dark:border-night-border-strong">⌘ + ↵</kbd> to submit
           </span>
         </div>
       </div>
@@ -127,7 +127,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
       {totalCommentsCount > 0 && (
         <button
           onClick={onOpenCommentHistory}
-          className="flex items-center justify-between p-3.5 bg-white dark:bg-[#1A1816] rounded-xl border border-[#E6E0D4] dark:border-[#38332E] hover:border-amber-500/50 text-xs font-semibold text-[#706B65] dark:text-[#A8A29D] shadow-xs transition-colors cursor-pointer"
+          className="flex items-center justify-between p-3.5 bg-paper-card dark:bg-night-card rounded-xl border border-paper-border dark:border-night-border-strong hover:border-amber-500/50 text-xs font-semibold text-ink-muted dark:text-night-text-muted shadow-xs transition-colors cursor-pointer"
         >
           <div className="flex items-center gap-2">
             <History className="w-4 h-4 text-amber-600 dark:text-amber-500" />

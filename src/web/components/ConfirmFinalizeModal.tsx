@@ -42,7 +42,7 @@ export const ConfirmFinalizeModal: React.FC<ConfirmFinalizeModalProps> = ({
         }
       }}
     >
-      <div className="w-full max-w-md bg-white dark:bg-[#1C1A18] border border-[#E6E0D4] dark:border-[#38332E] rounded-2xl p-6 shadow-2xl space-y-5 transition-all animate-in zoom-in-95 duration-150">
+      <div className="w-full max-w-md bg-paper-card dark:bg-night-modal border border-paper-border dark:border-night-border-strong rounded-2xl p-6 shadow-2xl space-y-5 transition-all animate-in zoom-in-95 duration-150">
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
@@ -50,10 +50,10 @@ export const ConfirmFinalizeModal: React.FC<ConfirmFinalizeModalProps> = ({
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-serif font-bold text-base text-[#2C2825] dark:text-[#EDEAE4]">
+              <h3 className="font-serif font-bold text-base text-ink dark:text-night-text">
                 Finalize & Approve Draft
               </h3>
-              <div className="flex items-center gap-2 mt-0.5 text-xs text-[#8C827A] dark:text-[#A8A29D]">
+              <div className="flex items-center gap-2 mt-0.5 text-xs text-ink-subtle dark:text-night-text-muted">
                 <FileText className="w-3.5 h-3.5" />
                 <span className="font-mono truncate max-w-[180px]">{fileName}</span>
                 <span>•</span>
@@ -65,7 +65,7 @@ export const ConfirmFinalizeModal: React.FC<ConfirmFinalizeModalProps> = ({
           <button
             onClick={onClose}
             disabled={isSubmitting}
-            className="p-1 rounded-lg text-[#8C827A] hover:text-[#2C2825] dark:hover:text-[#EDEAE4] hover:bg-[#F2EDE4] dark:hover:bg-[#2A2724] transition-colors disabled:opacity-50 cursor-pointer"
+            className="p-1 rounded-lg text-ink-subtle hover:text-ink dark:hover:text-night-text hover:bg-paper-hover dark:hover:bg-night-hover transition-colors disabled:opacity-50 cursor-pointer"
             title="Cancel (Esc)"
           >
             <X className="w-5 h-5" />
@@ -73,11 +73,11 @@ export const ConfirmFinalizeModal: React.FC<ConfirmFinalizeModalProps> = ({
         </div>
 
         {/* Informative Explanation Box */}
-        <div className="bg-[#FAF8F5] dark:bg-[#221F1D] border border-[#EFEAE1] dark:border-[#332E2A] rounded-xl p-4 space-y-3">
-          <div className="flex items-start gap-2.5 text-xs text-[#524C46] dark:text-[#C5BFB8] leading-relaxed">
+        <div className="bg-paper dark:bg-night-inner border border-paper-border-subtle dark:border-night-border-subtle rounded-xl p-4 space-y-3">
+          <div className="flex items-start gap-2.5 text-xs text-ink-secondary dark:text-night-text-subtle leading-relaxed">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
             <span>
-              All current edits will be saved directly to <span className="font-semibold text-[#2C2825] dark:text-[#EDEAE4]">{fileName}</span> as the final approved version.
+              All current edits will be saved directly to <span className="font-semibold text-ink dark:text-night-text">{fileName}</span> as the final approved version.
             </span>
           </div>
 
@@ -95,7 +95,7 @@ export const ConfirmFinalizeModal: React.FC<ConfirmFinalizeModalProps> = ({
             type="button"
             onClick={onClose}
             disabled={isSubmitting}
-            className="px-4 py-2 text-xs font-semibold rounded-lg border border-[#DCD5C8] dark:border-[#38332E] text-[#635E59] dark:text-[#A8A29D] hover:bg-[#F5F2EB] dark:hover:bg-[#252220] transition-colors disabled:opacity-50 cursor-pointer"
+            className="px-4 py-2 text-xs font-semibold rounded-lg border border-paper-divider dark:border-night-border-strong text-ink-body dark:text-night-text-muted hover:bg-paper-active dark:hover:bg-night-active transition-colors disabled:opacity-50 cursor-pointer"
           >
             Cancel
           </button>

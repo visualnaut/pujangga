@@ -38,7 +38,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onToggleTheme,
 }) => {
   return (
-    <header className="sticky top-0 z-40 w-full backdrop-blur-md bg-[#FAF8F5]/90 dark:bg-[#121110]/90 border-b border-[#E6E0D4] dark:border-[#2C2825] px-6 py-3 transition-colors">
+    <header className="sticky top-0 z-40 w-full backdrop-blur-md bg-paper/90 dark:bg-night/90 border-b border-paper-border dark:border-night-border px-6 py-3 transition-colors">
       <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
         {/* Left: Brand & File Info */}
         <div className="flex items-center gap-4 min-w-0">
@@ -46,18 +46,18 @@ export const Navbar: React.FC<NavbarProps> = ({
             <div className="w-8 h-8 rounded-lg bg-amber-600 dark:bg-amber-500 text-white flex items-center justify-center shadow-xs">
               <Feather className="w-4 h-4" />
             </div>
-            <span className="font-semibold text-lg tracking-tight font-serif text-[#2C2825] dark:text-[#E8E6E3]">
+            <span className="font-semibold text-lg tracking-tight font-serif text-ink dark:text-night-text-heading">
               Pujangga
             </span>
           </div>
 
-          <div className="h-4 w-px bg-[#DCD5C8] dark:bg-[#38332E]" />
+          <div className="h-4 w-px bg-paper-divider dark:bg-night-border-strong" />
 
           <div className="min-w-0 flex items-center gap-2">
-            <h1 className="text-sm font-semibold truncate text-[#2C2825] dark:text-[#E8E6E3]">
+            <h1 className="text-sm font-semibold truncate text-ink dark:text-night-text-heading">
               {title}
             </h1>
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[#EFEAE1] dark:bg-[#262320] text-[#706B65] dark:text-[#A8A29D]">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-paper-subtle dark:bg-night-subtle text-ink-muted dark:text-night-text-muted">
               Round {roundNumber}
             </span>
           </div>
@@ -81,7 +81,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
                 showDiff
                   ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
-                  : 'bg-white dark:bg-[#1C1A18] text-[#635E59] dark:text-[#A8A29D] border-[#E6E0D4] dark:border-[#38332E] hover:border-amber-500'
+                  : 'bg-paper-card dark:bg-night-modal text-ink-body dark:text-night-text-muted border-paper-border dark:border-night-border-strong hover:border-amber-500'
               }`}
             >
               <Columns2 className="w-3.5 h-3.5" />
@@ -92,7 +92,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           {totalCommentsCount > 0 && (
             <button
               onClick={onOpenCommentHistory}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-white dark:bg-[#1C1A18] text-[#635E59] dark:text-[#A8A29D] border border-[#E6E0D4] dark:border-[#38332E] hover:border-amber-500 transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-paper-card dark:bg-night-modal text-ink-body dark:text-night-text-muted border border-paper-border dark:border-night-border-strong hover:border-amber-500 transition-colors cursor-pointer"
             >
               <History className="w-3.5 h-3.5 text-amber-600 dark:text-amber-500" />
               <span>Comment History ({totalCommentsCount})</span>
@@ -101,7 +101,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           <button
             onClick={onToggleTheme}
-            className="p-2 rounded-lg text-[#706B65] dark:text-[#A8A29D] hover:bg-[#EFEAE1] dark:hover:bg-[#262320] transition-colors cursor-pointer"
+            className="p-2 rounded-lg text-ink-muted dark:text-night-text-muted hover:bg-paper-subtle dark:hover:bg-night-subtle transition-colors cursor-pointer"
             aria-label="Toggle theme"
           >
             {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}

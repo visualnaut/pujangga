@@ -81,25 +81,25 @@ export const CommentHistoryDrawer: React.FC<CommentHistoryDrawerProps> = ({
 
   return (
     <div className="fixed inset-0 z-70 overflow-hidden bg-black/40 backdrop-blur-xs flex justify-end transition-opacity animate-in fade-in duration-200">
-      <div className="w-full max-w-xl bg-white dark:bg-[#1A1816] h-full shadow-2xl flex flex-col border-l border-[#E6E0D4] dark:border-[#38332E]">
+      <div className="w-full max-w-xl bg-paper-card dark:bg-night-card h-full shadow-2xl flex flex-col border-l border-paper-border dark:border-night-border-strong">
         {/* Header */}
-        <div className="p-5 border-b border-[#F0EBE1] dark:border-[#2C2825] flex items-center justify-between">
+        <div className="p-5 border-b border-paper-border-light dark:border-night-border flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 flex items-center justify-center">
               <History className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="font-bold text-base text-[#2C2825] dark:text-[#EDEAE4]">
+              <h3 className="font-bold text-base text-ink dark:text-night-text">
                 Comment History
               </h3>
-              <p className="text-xs text-[#8C827A] dark:text-[#A8A29D]">
+              <p className="text-xs text-ink-subtle dark:text-night-text-muted">
                 Track what you commented and how the agent revised each section.
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-[#8C827A] hover:text-[#2C2825] dark:hover:text-[#EDEAE4] hover:bg-[#F2EDE4] dark:hover:bg-[#2A2724] transition-colors"
+            className="p-1.5 rounded-lg text-ink-subtle hover:text-ink dark:hover:text-night-text hover:bg-paper-hover dark:hover:bg-night-hover transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -109,11 +109,11 @@ export const CommentHistoryDrawer: React.FC<CommentHistoryDrawerProps> = ({
         <div className="flex-1 overflow-y-auto p-5 space-y-4">
           {sortedComments.length === 0 ? (
             <div className="py-16 text-center">
-              <History className="w-10 h-10 mx-auto text-[#A0988F] mb-3 opacity-40" />
-              <p className="text-sm font-medium text-[#706B65] dark:text-[#A8A29D]">
+              <History className="w-10 h-10 mx-auto text-ink-faint mb-3 opacity-40" />
+              <p className="text-sm font-medium text-ink-muted dark:text-night-text-muted">
                 No comments have been recorded yet.
               </p>
-              <p className="text-xs text-[#A0988F] mt-1">
+              <p className="text-xs text-ink-faint mt-1">
                 Highlight text in the editor to attach inline review notes.
               </p>
             </div>
@@ -124,34 +124,34 @@ export const CommentHistoryDrawer: React.FC<CommentHistoryDrawerProps> = ({
               return (
                 <div
                   key={comment.id}
-                  className="bg-[#FAF8F5] dark:bg-[#201D1B] border border-[#EFEAE1] dark:border-[#332E2A] rounded-2xl p-4.5 space-y-3 transition-colors"
+                  className="bg-paper dark:bg-night-input border border-paper-border-subtle dark:border-night-border-subtle rounded-2xl p-4.5 space-y-3 transition-colors"
                 >
                   {/* Round & Status Header */}
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-md border border-amber-200/60 dark:border-amber-800/40">
                       Round {comment.roundNumber} Note
                     </span>
-                    <span className="text-[11px] text-[#A0988F]">
+                    <span className="text-[11px] text-ink-faint">
                       {new Date(comment.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
 
                   {/* 1. Commented Text */}
                   <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#8C827A] dark:text-[#A8A29D] block mb-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-ink-subtle dark:text-night-text-muted block mb-1">
                       Commented Text
                     </span>
-                    <div className="text-xs font-serif italic text-[#4A453F] dark:text-[#D6D0C5] bg-white dark:bg-[#161514] p-2.5 rounded-xl border border-[#E6E0D4] dark:border-[#2C2825]">
+                    <div className="text-xs font-serif italic text-ink-secondary dark:text-night-text-quote bg-paper-card dark:bg-night-darker p-2.5 rounded-xl border border-paper-border dark:border-night-border">
                       "{comment.anchorText}"
                     </div>
                   </div>
 
                   {/* 2. Reviewer Comment */}
                   <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#8C827A] dark:text-[#A8A29D] block mb-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-ink-subtle dark:text-night-text-muted block mb-1">
                       Your Critique / Directive
                     </span>
-                    <div className="text-xs text-[#2C2825] dark:text-[#EDEAE4] bg-white dark:bg-[#161514] p-2.5 rounded-xl border border-[#E6E0D4] dark:border-[#2C2825] font-medium leading-relaxed">
+                    <div className="text-xs text-ink dark:text-night-text bg-paper-card dark:bg-night-darker p-2.5 rounded-xl border border-paper-border dark:border-night-border font-medium leading-relaxed">
                       {comment.commentText}
                     </div>
                   </div>
@@ -164,9 +164,9 @@ export const CommentHistoryDrawer: React.FC<CommentHistoryDrawerProps> = ({
                       ) : agentChange.status === 'unchanged' ? (
                         <AlertCircle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                       ) : (
-                        <Clock className="w-3.5 h-3.5 text-[#8C827A]" />
+                        <Clock className="w-3.5 h-3.5 text-ink-subtle" />
                       )}
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#8C827A] dark:text-[#A8A29D]">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-ink-subtle dark:text-night-text-muted">
                         Agent Change (Round {agentChange.nextRoundNumber})
                       </span>
                     </div>
@@ -177,7 +177,7 @@ export const CommentHistoryDrawer: React.FC<CommentHistoryDrawerProps> = ({
                           ? 'bg-emerald-50/60 dark:bg-emerald-950/20 text-emerald-900 dark:text-emerald-200 border-emerald-200 dark:border-emerald-800/40'
                           : agentChange.status === 'unchanged'
                           ? 'bg-amber-50/60 dark:bg-amber-950/20 text-amber-900 dark:text-amber-200 border-amber-200 dark:border-amber-800/40'
-                          : 'bg-white dark:bg-[#161514] text-[#8C827A] dark:text-[#A8A29D] border-[#E6E0D4] dark:border-[#2C2825] italic'
+                          : 'bg-paper-card dark:bg-night-darker text-ink-subtle dark:text-night-text-muted border-paper-border dark:border-night-border italic'
                       }`}
                     >
                       {agentChange.text}
@@ -190,11 +190,11 @@ export const CommentHistoryDrawer: React.FC<CommentHistoryDrawerProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-[#F0EBE1] dark:border-[#2C2825] bg-[#FAF8F5] dark:bg-[#141312] flex items-center justify-between text-xs text-[#8C827A]">
+        <div className="p-4 border-t border-paper-border-light dark:border-night-border bg-paper dark:bg-night-surface flex items-center justify-between text-xs text-ink-subtle">
           <span>{comments.length} total note{comments.length !== 1 ? 's' : ''} across all rounds</span>
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-[#2C2825] dark:bg-[#EDEAE4] text-white dark:text-[#121110] font-semibold rounded-xl text-xs hover:opacity-90 transition-opacity cursor-pointer"
+            className="px-4 py-2 bg-ink dark:bg-night-text text-white dark:text-night font-semibold rounded-xl text-xs hover:opacity-90 transition-opacity cursor-pointer"
           >
             Close
           </button>

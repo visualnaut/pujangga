@@ -2,13 +2,77 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-@layer base {
-  :root {
-    --font-serif: 'Newsreader', Georgia, serif;
-    --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
-  }
+@theme {
+  /* Typography */
+  --font-serif: 'Newsreader', Georgia, serif;
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
 
+  /* Paper Palette (Light Mode Backgrounds & Borders) */
+  --color-paper: #FAF8F5;
+  --color-paper-card: #FFFFFF;
+  --color-paper-muted: #F7F4EE;
+  --color-paper-subtle: #EFEAE1;
+  --color-paper-hover: #F2EDE4;
+  --color-paper-active: #F5F2EB;
+  --color-paper-border: #E6E0D4;
+  --color-paper-border-subtle: #EFEAE1;
+  --color-paper-border-light: #F0EBE1;
+  --color-paper-divider: #DCD5C8;
+
+  /* Ink Palette (Light Mode Text) */
+  --color-ink: #2C2825;
+  --color-ink-heading: #1A1715;
+  --color-ink-secondary: #524C46;
+  --color-ink-body: #635E59;
+  --color-ink-muted: #706B65;
+  --color-ink-subtle: #8C827A;
+  --color-ink-faint: #A0988F;
+
+  /* Night Palette (Dark Mode Backgrounds & Surfaces) */
+  --color-night: #121110;
+  --color-night-surface: #141312;
+  --color-night-pane: #151413;
+  --color-night-darker: #161514;
+  --color-night-header: #181615;
+  --color-night-card: #1A1816;
+  --color-night-modal: #1C1A18;
+  --color-night-popover: #1E1C1A;
+  --color-night-input: #201D1B;
+  --color-night-inner: #221F1D;
+  --color-night-subtle: #262320;
+  --color-night-hover: #2A2724;
+  --color-night-active: #252220;
+  --color-night-border: #2C2825;
+  --color-night-border-subtle: #332E2A;
+  --color-night-border-strong: #38332E;
+  --color-night-border-highlight: #4A453F;
+
+  /* Night Text (Dark Mode Text) */
+  --color-night-text: #EDEAE4;
+  --color-night-text-heading: #E8E6E3;
+  --color-night-text-subtle: #C5BFB8;
+  --color-night-text-muted: #A8A29D;
+  --color-night-text-quote: #D6D0C5;
+  --color-night-h1: #FDFCFA;
+  --color-night-h2: #F8F6F0;
+  --color-night-h3: #F4F1EA;
+
+  /* Brand / Accent (Editorial Amber) */
+  --color-accent: #D97706;
+  --color-accent-hover: #B45309;
+  --color-accent-light: #FEF3C7;
+  --color-accent-pin: #F59E0B;
+  --color-accent-bright: #FBBF24;
+
+  /* Diff Syntax & Comparison Colors */
+  --color-diff-added-text: #15803D;
+  --color-diff-added-text-dark: #4ADE80;
+  --color-diff-removed-text: #B91C1C;
+  --color-diff-removed-text-dark: #F87171;
+}
+
+@layer base {
   body {
     font-family: var(--font-sans);
   }
@@ -19,13 +83,13 @@
   font-family: var(--font-serif);
   font-size: 1.25rem;
   line-height: 1.85;
-  color: #2C2825;
+  color: var(--color-ink);
   max-width: 100%;
 }
 
 .dark .editorial-prose,
 :where(.dark, .dark *) .editorial-prose {
-  color: #EDEAE4 !important;
+  color: var(--color-night-text) !important;
 }
 
 .editorial-prose p {
@@ -41,12 +105,12 @@
   margin-top: 2rem;
   margin-bottom: 1.25rem;
   letter-spacing: -0.02em;
-  color: #1A1715;
+  color: var(--color-ink-heading);
 }
 
 .dark .editorial-prose h1,
 :where(.dark, .dark *) .editorial-prose h1 {
-  color: #FDFCFA !important;
+  color: var(--color-night-h1) !important;
 }
 
 .editorial-prose h2 {
@@ -57,12 +121,12 @@
   margin-top: 2rem;
   margin-bottom: 1rem;
   letter-spacing: -0.015em;
-  color: #1A1715;
+  color: var(--color-ink-heading);
 }
 
 .dark .editorial-prose h2,
 :where(.dark, .dark *) .editorial-prose h2 {
-  color: #F8F6F0 !important;
+  color: var(--color-night-h2) !important;
 }
 
 .editorial-prose h3 {
@@ -72,26 +136,26 @@
   line-height: 1.4;
   margin-top: 1.75rem;
   margin-bottom: 0.75rem;
-  color: #1A1715;
+  color: var(--color-ink-heading);
 }
 
 .dark .editorial-prose h3,
 :where(.dark, .dark *) .editorial-prose h3 {
-  color: #F4F1EA !important;
+  color: var(--color-night-h3) !important;
 }
 
 .editorial-prose blockquote {
   font-style: italic;
-  border-left: 3px solid #D6CEBE;
+  border-left: 3px solid var(--color-paper-divider);
   padding-left: 1.25rem;
   margin: 1.75rem 0;
-  color: #635E59;
+  color: var(--color-ink-body);
 }
 
 .dark .editorial-prose blockquote,
 :where(.dark, .dark *) .editorial-prose blockquote {
-  border-left-color: #F59E0B !important;
-  color: #D6D0C5 !important;
+  border-left-color: var(--color-accent-pin) !important;
+  color: var(--color-night-text-quote) !important;
   background-color: rgba(245, 158, 11, 0.05);
   padding: 0.75rem 1.25rem;
   border-radius: 0 0.5rem 0.5rem 0;
@@ -120,52 +184,52 @@
   font-family: var(--font-mono);
   font-size: 0.88em;
   background-color: rgba(0, 0, 0, 0.06);
-  color: #B45309;
+  color: var(--color-accent-hover);
   padding: 0.2rem 0.45rem;
   border-radius: 0.35rem;
 }
 
 .dark .editorial-prose code,
 :where(.dark, .dark *) .editorial-prose code {
-  background-color: #22201D !important;
-  color: #FBBF24 !important;
-  border: 1px solid #3D3730;
+  background-color: var(--color-night-inner) !important;
+  color: var(--color-accent-bright) !important;
+  border: 1px solid var(--color-night-border-strong);
 }
 
 .editorial-prose pre {
-  background-color: #F5F1E9;
-  color: #2C2825;
+  background-color: var(--color-paper-muted);
+  color: var(--color-ink);
   padding: 1rem 1.25rem;
   border-radius: 0.75rem;
   margin: 1.5rem 0;
   overflow-x: auto;
   font-family: var(--font-mono);
   font-size: 0.88rem;
-  border: 1px solid #E6E0D4;
+  border: 1px solid var(--color-paper-border);
 }
 
 .dark .editorial-prose pre,
 :where(.dark, .dark *) .editorial-prose pre {
-  background-color: #171614 !important;
-  color: #EDEAE4 !important;
-  border-color: #38332E !important;
+  background-color: var(--color-night-darker) !important;
+  color: var(--color-night-text) !important;
+  border-color: var(--color-night-border-strong) !important;
 }
 
 .editorial-prose hr {
   border: none;
-  border-top: 1px solid #E6E0D4;
+  border-top: 1px solid var(--color-paper-border);
   margin: 2.5rem 0;
 }
 
 .dark .editorial-prose hr,
 :where(.dark, .dark *) .editorial-prose hr {
-  border-top-color: #332F2B !important;
+  border-top-color: var(--color-night-border-subtle) !important;
 }
 
 /* Comment highlight and pin styles */
 .pujangga-comment-highlight {
   background-color: rgba(245, 158, 11, 0.22);
-  border-bottom: 2px solid #F59E0B;
+  border-bottom: 2px solid var(--color-accent-pin);
   cursor: pointer;
   border-radius: 2px;
   padding: 1px 2px;
@@ -181,8 +245,8 @@
 .dark .pujangga-comment-highlight,
 :where(.dark, .dark *) .pujangga-comment-highlight {
   background-color: rgba(245, 158, 11, 0.3) !important;
-  border-bottom-color: #FBBF24 !important;
-  color: #FFF !important;
+  border-bottom-color: var(--color-accent-bright) !important;
+  color: var(--color-night-text-heading) !important;
 }
 
 .pujangga-comment-pin {
@@ -192,8 +256,8 @@
   width: 18px;
   height: 18px;
   font-size: 11px;
-  background-color: #F59E0B;
-  color: white;
+  background-color: var(--color-accent-pin);
+  color: #FFFFFF;
   border-radius: 9999px;
   margin-left: 3px;
   vertical-align: super;
@@ -205,7 +269,7 @@
 /* Diff highlights */
 .diff-added {
   background-color: rgba(34, 197, 94, 0.2);
-  color: #15803D;
+  color: var(--color-diff-added-text);
   text-decoration: none;
   padding: 0 2px;
   border-radius: 2px;
@@ -214,12 +278,12 @@
 .dark .diff-added,
 :where(.dark, .dark *) .diff-added {
   background-color: rgba(34, 197, 94, 0.25) !important;
-  color: #4ADE80 !important;
+  color: var(--color-diff-added-text-dark) !important;
 }
 
 .diff-removed {
   background-color: rgba(239, 68, 68, 0.2);
-  color: #B91C1C;
+  color: var(--color-diff-removed-text);
   text-decoration: line-through;
   padding: 0 2px;
   border-radius: 2px;
@@ -228,7 +292,7 @@
 .dark .diff-removed,
 :where(.dark, .dark *) .diff-removed {
   background-color: rgba(239, 68, 68, 0.25) !important;
-  color: #F87171 !important;
+  color: var(--color-diff-removed-text-dark) !important;
 }
 
 /* Tiptap editor reset */
