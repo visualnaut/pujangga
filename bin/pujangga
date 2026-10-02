@@ -1,0 +1,17 @@
+#!/usr/bin/env node
+
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const distPath = path.resolve(__dirname, '../dist/cli/index.js');
+const srcPath = path.resolve(__dirname, '../src/cli/index.js');
+
+const entryPath = fs.existsSync(distPath) ? distPath : srcPath;
+const { createCli } = await import(entryPath);
+
+createCli().parseAsync(process.argv).catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

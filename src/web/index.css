@@ -1,0 +1,171 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-serif: 'Newsreader', Georgia, serif;
+    --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  body {
+    font-family: var(--font-sans);
+  }
+}
+
+/* Editorial prose styling for Tiptap */
+.editorial-prose {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  line-height: 1.85;
+  color: inherit;
+  max-width: 100%;
+}
+
+.editorial-prose p {
+  margin-bottom: 1.5rem;
+}
+
+.editorial-prose h1 {
+  font-family: var(--font-serif);
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1.25;
+  margin-top: 2rem;
+  margin-bottom: 1.25rem;
+  letter-spacing: -0.02em;
+}
+
+.editorial-prose h2 {
+  font-family: var(--font-serif);
+  font-size: 1.875rem;
+  font-weight: 600;
+  line-height: 1.3;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  letter-spacing: -0.015em;
+}
+
+.editorial-prose h3 {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.4;
+  margin-top: 1.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.editorial-prose blockquote {
+  font-style: italic;
+  border-left: 3px solid #D6CEBE;
+  padding-left: 1.25rem;
+  margin: 1.75rem 0;
+  color: #635E59;
+}
+.dark .editorial-prose blockquote {
+  border-left-color: #45403B;
+  color: #A8A29D;
+}
+
+.editorial-prose ul {
+  list-style-type: disc;
+  padding-left: 1.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.editorial-prose ol {
+  list-style-type: decimal;
+  padding-left: 1.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.editorial-prose li {
+  margin-bottom: 0.5rem;
+}
+
+.editorial-prose code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background-color: rgba(0, 0, 0, 0.05);
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.25rem;
+}
+.dark .editorial-prose code {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.editorial-prose hr {
+  border: none;
+  border-top: 1px solid #E6E0D4;
+  margin: 2.5rem 0;
+}
+.dark .editorial-prose hr {
+  border-top-color: #2E2B27;
+}
+
+/* Comment highlight and pin styles */
+.pujangga-comment-highlight {
+  background-color: rgba(245, 158, 11, 0.22);
+  border-bottom: 2px solid #F59E0B;
+  cursor: pointer;
+  border-radius: 2px;
+  padding: 1px 2px;
+  transition: background-color 0.15s ease;
+  position: relative;
+}
+
+.pujangga-comment-highlight:hover,
+.pujangga-comment-highlight.is-active {
+  background-color: rgba(245, 158, 11, 0.38);
+}
+
+.dark .pujangga-comment-highlight {
+  background-color: rgba(245, 158, 11, 0.25);
+  border-bottom-color: #FBBF24;
+}
+
+.pujangga-comment-pin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  font-size: 11px;
+  background-color: #F59E0B;
+  color: white;
+  border-radius: 9999px;
+  margin-left: 3px;
+  vertical-align: super;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  user-select: none;
+}
+
+/* Diff highlights */
+.diff-added {
+  background-color: rgba(34, 197, 94, 0.2);
+  color: #15803D;
+  text-decoration: none;
+  padding: 0 2px;
+  border-radius: 2px;
+}
+.dark .diff-added {
+  background-color: rgba(34, 197, 94, 0.25);
+  color: #4ADE80;
+}
+
+.diff-removed {
+  background-color: rgba(239, 68, 68, 0.2);
+  color: #B91C1C;
+  text-decoration: line-through;
+  padding: 0 2px;
+  border-radius: 2px;
+}
+.dark .diff-removed {
+  background-color: rgba(239, 68, 68, 0.25);
+  color: #F87171;
+}
+
+/* Tiptap editor reset */
+.tiptap:focus {
+  outline: none;
+}
