@@ -10,12 +10,21 @@ import { ActionBar } from './components/ActionBar.js';
 import { DesktopSidebar } from './components/DesktopSidebar.js';
 import { DiffViewer } from './components/DiffViewer.js';
 import { CommentHistoryDrawer } from './components/CommentHistoryDrawer.js';
+import { LockedTextDrawer } from './components/LockedTextDrawer.js';
 import { CommentPopover, CommentPopoverData } from './components/CommentPopover.js';
 import { LockPopover, LockPopoverData } from './components/LockPopover.js';
 import { ConfirmFinalizeModal } from './components/ConfirmFinalizeModal.js';
 import { FloatingAlertBanner } from './components/FloatingAlertBanner.js';
 import { SessionDetails, InlineComment, LockedText, ReviewStatus } from '../shared/types.js';
-import { MessageSquarePlus, CheckCircle2, Loader2, Lock } from 'lucide-react';
+import {
+  MessageSquarePlus,
+  CheckCircle2,
+  Loader2,
+  Lock,
+  Bold,
+  Italic,
+  Underline,
+} from 'lucide-react';
 
 export const App: React.FC = () => {
   const [details, setDetails] = useState<SessionDetails | null>(null);
@@ -24,7 +33,9 @@ export const App: React.FC = () => {
   const [showDiff, setShowDiff] = useState(false);
   const [comparisonRound, setComparisonRound] = useState<number>(1);
   const [isCommentHistoryOpen, setIsCommentHistoryOpen] = useState(false);
+  const [isLockedDrawerOpen, setIsLockedDrawerOpen] = useState(false);
   const [isConfirmFinalizeOpen, setIsConfirmFinalizeOpen] = useState(false);
+  const [isZenMode, setIsZenMode] = useState(false);
   const [overallComment, setOverallComment] = useState('');
   const [revisionAlert, setRevisionAlert] = useState<string | null>(null);
   const [isDark, setIsDark] = useState(() => {
@@ -69,6 +80,22 @@ export const App: React.FC = () => {
       localStorage.setItem('pujangga_theme', 'light');
     }
   }, [isDark]);
+
+  // Keyboard shortcut for toggling Zen Mode (Cmd+Shift+F) or Escape to exit
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'f') {
+        e.preventDefault();
+        setIsZenMode((prev) => !prev);
+      } else if (e.key === 'Escape' && isZenMode) {
+        if (!isCommentHistoryOpen && !isLockedDrawerOpen && !isConfirmFinalizeOpen && !popoverData && !lockPopoverData) {
+          setIsZenMode(false);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isZenMode, isCommentHistoryOpen, isLockedDrawerOpen, isConfirmFinalizeOpen, popoverData, lockPopoverData]);
 
   // Fetch session details
   const fetchSession = useCallback(async () => {
@@ -637,8 +664,12 @@ export const App: React.FC = () => {
         hasPreviousRevision={hasMultipleRounds}
         totalCommentsCount={localComments.length}
         onOpenCommentHistory={() => setIsCommentHistoryOpen(true)}
+        totalLockedCount={localLockedTexts.length}
+        onOpenLockedTexts={() => setIsLockedDrawerOpen(true)}
         isDark={isDark}
         onToggleTheme={() => setIsDark((v) => !v)}
+        isZenMode={isZenMode}
+        onToggleZenMode={() => setIsZenMode((v) => !v)}
       />
 
       {/* Top Floating Alert Banner with smooth enter/exit animation & 3s auto exit */}
@@ -648,10 +679,18 @@ export const App: React.FC = () => {
         autoDismissMs={3000}
       />
 
-      {/* Main Container: Flex Row on Desktop (Canvas + Right Sidebar), Stack on Mobile */}
-      <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 py-8 flex flex-col lg:flex-row gap-4 items-start">
+      {/* Main Container: Flex Row on Desktop (Canvas + Right Sidebar), Centered in Zen Mode */}
+      <div
+        className={`mx-auto w-full px-4 sm:px-6 py-8 flex flex-col lg:flex-row items-start transition-all duration-300 ease-in-out ${
+          isZenMode ? 'max-w-4xl justify-center gap-0' : 'max-w-7xl gap-6'
+        }`}
+      >
         {/* Left/Center Editorial Reading & Writing Canvas */}
-        <main className="flex-1 min-w-0 w-full relative">
+        <main
+          className={`flex-1 min-w-0 w-full relative transition-all duration-300 ease-in-out ${
+            isZenMode ? 'max-w-3xl mx-auto' : ''
+          }`}
+        >
           {/* Waiting State Notice on Mobile/Tablet */}
           {details.session.status === 'revising' && (
             <div className="lg:hidden mb-6 p-4 rounded-xl bg-accent-subtle dark:bg-accent-subtle-dark border border-accent-border dark:border-accent-border-dark flex items-center gap-3 animate-pulse">
@@ -684,15 +723,48 @@ export const App: React.FC = () => {
             </div>
           )}
 
-          {/* Selection Tooltip for Adding Notes & Locking Text */}
+          {/* Selection Tooltip for Formatting, Notes & Locking Text */}
           {selectionTooltip && details.session.status === 'active' && (
             <div
-              className="fixed z-60 transform -translate-x-1/2 -translate-y-full mb-2 bg-ink dark:bg-paper text-white dark:text-night p-1 rounded-lg shadow-xl flex items-center gap-1 text-sm font-semibold select-none animate-in fade-in zoom-in-95 border border-black/10 dark:border-white/10"
+              className="fixed z-60 transform -translate-x-1/2 -translate-y-full mb-2 bg-ink dark:bg-paper text-white dark:text-night p-1 rounded-xl shadow-2xl flex items-center gap-0.5 text-sm font-semibold select-none animate-in fade-in zoom-in-95 border border-black/10 dark:border-white/10"
               style={{
                 top: selectionTooltip.position.top - 8,
                 left: selectionTooltip.position.left,
               }}
             >
+              <button
+                type="button"
+                title="Bold (⌘+B)"
+                onClick={() => editor.chain().focus().toggleBold().run()}
+                className={`p-1.5 rounded-lg hover:bg-white/10 dark:hover:bg-black/10 transition-colors cursor-pointer ${
+                  editor.isActive('bold') ? 'bg-white/20 dark:bg-black/20 text-accent-bright dark:text-accent' : ''
+                }`}
+              >
+                <Bold className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                title="Italic (⌘+I)"
+                onClick={() => editor.chain().focus().toggleItalic().run()}
+                className={`p-1.5 rounded-lg hover:bg-white/10 dark:hover:bg-black/10 transition-colors cursor-pointer ${
+                  editor.isActive('italic') ? 'bg-white/20 dark:bg-black/20 text-accent-bright dark:text-accent' : ''
+                }`}
+              >
+                <Italic className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                title="Underline (⌘+U)"
+                onClick={() => editor.chain().focus().toggleUnderline().run()}
+                className={`p-1.5 rounded-lg hover:bg-white/10 dark:hover:bg-black/10 transition-colors cursor-pointer ${
+                  editor.isActive('underline') ? 'bg-white/20 dark:bg-black/20 text-accent-bright dark:text-accent' : ''
+                }`}
+              >
+                <Underline className="w-3.5 h-3.5" />
+              </button>
+
+              <div className="w-[1px] h-4 bg-white/20 dark:bg-black/20 mx-1" />
+
               <button
                 type="button"
                 onClick={handleAddCommentFromSelection}
@@ -701,13 +773,13 @@ export const App: React.FC = () => {
                 <MessageSquarePlus className="w-3.5 h-3.5 text-accent-bright dark:text-accent" />
                 <span>Add Note</span>
               </button>
-              <div className="w-[1px] h-4 bg-white/20 dark:bg-black/20" />
+              <div className="w-[1px] h-4 bg-white/20 dark:bg-black/20 mx-0.5" />
               <button
                 type="button"
                 onClick={handleLockTextFromSelection}
                 className="flex items-center gap-1.5 px-2.5 py-1 rounded-md hover:bg-white/10 dark:hover:bg-black/10 transition-colors cursor-pointer"
               >
-                <Lock className="w-3.5 h-3.5 text-accent-bright dark:text-accent" />
+                <Lock className="w-3.5 h-3.5 text-success dark:text-success-icon-dark" />
                 <span>Lock Text</span>
               </button>
             </div>
@@ -735,19 +807,28 @@ export const App: React.FC = () => {
           )}
         </main>
 
-        {/* Right Sidebar on Desktop Viewport */}
-        <DesktopSidebar
-          status={details.session.status}
-          roundNumber={currentRound}
-          overallComment={overallComment}
-          onOverallCommentChange={handleOverallCommentChange}
-          onSubmitRevision={handleRequestRevision}
-          onApprove={handleRequestApprove}
-          isSubmitting={isSubmitting}
-          totalCommentsCount={localComments.length}
-          lockedTextsCount={localLockedTexts.length}
-          onOpenCommentHistory={() => setIsCommentHistoryOpen(true)}
-        />
+        {/* Right Sidebar on Desktop Viewport with Zen Mode Transition */}
+        <div
+          className={`transition-all duration-300 ease-in-out shrink-0 overflow-hidden ${
+            isZenMode
+              ? 'w-0 opacity-0 pointer-events-none -mr-8 hidden lg:block'
+              : 'hidden lg:block w-84 opacity-100'
+          }`}
+        >
+          <DesktopSidebar
+            status={details.session.status}
+            roundNumber={currentRound}
+            overallComment={overallComment}
+            onOverallCommentChange={handleOverallCommentChange}
+            onSubmitRevision={handleRequestRevision}
+            onApprove={handleRequestApprove}
+            isSubmitting={isSubmitting}
+            totalCommentsCount={localComments.length}
+            totalLockedCount={localLockedTexts.length}
+            onOpenCommentHistory={() => setIsCommentHistoryOpen(true)}
+            onOpenLockedTexts={() => setIsLockedDrawerOpen(true)}
+          />
+        </div>
       </div>
 
       {/* Floating Comment Popover */}
@@ -772,6 +853,14 @@ export const App: React.FC = () => {
         comments={localComments}
         revisions={details.revisions}
         currentRound={currentRound}
+      />
+
+      {/* Locked Text Drawer */}
+      <LockedTextDrawer
+        isOpen={isLockedDrawerOpen}
+        onClose={() => setIsLockedDrawerOpen(false)}
+        lockedTexts={localLockedTexts}
+        onUnlock={handleUnlockText}
       />
 
       {/* Confirm Finalize & Clear History Modal */}

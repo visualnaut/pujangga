@@ -6,6 +6,8 @@ import {
   Moon,
   Loader2,
   CheckCircle2,
+  Maximize2,
+  Minimize2,
 } from 'lucide-react';
 import { SessionStatus } from '../../shared/types.js';
 
@@ -19,8 +21,12 @@ interface NavbarProps {
   hasPreviousRevision: boolean;
   totalCommentsCount: number;
   onOpenCommentHistory: () => void;
+  totalLockedCount?: number;
+  onOpenLockedTexts?: () => void;
   isDark: boolean;
   onToggleTheme: () => void;
+  isZenMode: boolean;
+  onToggleZenMode: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -33,8 +39,12 @@ export const Navbar: React.FC<NavbarProps> = ({
   hasPreviousRevision,
   totalCommentsCount,
   onOpenCommentHistory,
+  totalLockedCount = 0,
+  onOpenLockedTexts,
   isDark,
   onToggleTheme,
+  isZenMode,
+  onToggleZenMode,
 }) => {
   return (
     <header className="sticky top-0 z-40 w-full backdrop-blur-md bg-paper/90 dark:bg-night/90 border-b border-paper-border dark:border-night-border px-6 py-3 transition-colors">
@@ -96,9 +106,42 @@ export const Navbar: React.FC<NavbarProps> = ({
               className="lg:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-paper-card dark:bg-night-modal text-ink-body dark:text-night-text-muted border border-paper-border dark:border-night-border-strong hover:border-accent-pin transition-colors cursor-pointer"
             >
               <History className="w-3.5 h-3.5 text-accent dark:text-accent-pin" />
-              <span>Comment History ({totalCommentsCount})</span>
+              <span>Comments ({totalCommentsCount})</span>
             </button>
           )}
+
+          {totalLockedCount > 0 && onOpenLockedTexts && (
+            <button
+              onClick={onOpenLockedTexts}
+              className="lg:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-paper-card dark:bg-night-modal text-ink-body dark:text-night-text-muted border border-paper-border dark:border-night-border-strong hover:border-success/50 transition-colors cursor-pointer"
+            >
+              <Lock className="w-3.5 h-3.5 text-success dark:text-success-icon-dark" />
+              <span>Locked ({totalLockedCount})</span>
+            </button>
+          )}
+
+          {/* Zen Mode Toggle */}
+          <button
+            onClick={onToggleZenMode}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors cursor-pointer ${
+              isZenMode
+                ? 'bg-accent text-white border-accent shadow-xs'
+                : 'bg-paper-card dark:bg-night-modal text-ink-body dark:text-night-text-muted border-paper-border dark:border-night-border-strong hover:border-accent-pin'
+            }`}
+            title={isZenMode ? 'Exit Zen Mode (Esc)' : 'Zen Mode (distraction-free writing)'}
+          >
+            {isZenMode ? (
+              <>
+                <Minimize2 className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Exit Zen</span>
+              </>
+            ) : (
+              <>
+                <Maximize2 className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Zen Mode</span>
+              </>
+            )}
+          </button>
 
           <button
             onClick={onToggleTheme}

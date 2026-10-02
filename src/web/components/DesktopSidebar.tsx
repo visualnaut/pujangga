@@ -11,8 +11,9 @@ interface DesktopSidebarProps {
   onApprove: () => void;
   isSubmitting: boolean;
   totalCommentsCount: number;
-  lockedTextsCount?: number;
+  totalLockedCount?: number;
   onOpenCommentHistory: () => void;
+  onOpenLockedTexts: () => void;
 }
 
 export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
@@ -24,8 +25,9 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
   onApprove,
   isSubmitting,
   totalCommentsCount,
-  lockedTextsCount = 0,
+  totalLockedCount = 0,
   onOpenCommentHistory,
+  onOpenLockedTexts,
 }) => {
   const isRevising = status === 'revising';
   const isSatisfied = status === 'satisfied';
@@ -38,20 +40,9 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
           <h3 className="text-sm font-bold uppercase tracking-wider text-ink-muted dark:text-night-text-muted">
             Brainstorm Session
           </h3>
-          <div className="flex items-center gap-1.5">
-            {lockedTextsCount > 0 && (
-              <span
-                className="text-xs px-2 py-0.5 rounded-full font-semibold bg-paper-subtle dark:bg-night-subtle text-accent dark:text-accent-pin border border-accent/30 flex items-center gap-1"
-                title={`${lockedTextsCount} locked text segment(s)`}
-              >
-                <Lock className="w-3 h-3" />
-                {lockedTextsCount}
-              </span>
-            )}
-            <span className="text-sm px-2.5 py-0.5 rounded-full font-medium bg-paper-subtle dark:bg-night-subtle text-ink-muted dark:text-night-text-muted">
-              Round {roundNumber}
-            </span>
-          </div>
+          <span className="text-sm px-2.5 py-0.5 rounded-full font-medium bg-paper-subtle dark:bg-night-subtle text-ink-muted dark:text-night-text-muted">
+            Round {roundNumber}
+          </span>
         </div>
 
         {/* State Banners */}
@@ -145,6 +136,20 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
           <div className="flex items-center gap-2">
             <History className="w-4 h-4 text-accent dark:text-accent-pin" />
             <span>Comment History ({totalCommentsCount})</span>
+          </div>
+          <ArrowRight className="w-3.5 h-3.5" />
+        </button>
+      )}
+
+      {/* Locked Text Quick Access */}
+      {totalLockedCount > 0 && (
+        <button
+          onClick={onOpenLockedTexts}
+          className="flex items-center justify-between p-3.5 bg-paper-card dark:bg-night-card rounded-xl border border-paper-border dark:border-night-border-strong hover:border-success/50 text-sm font-semibold text-ink-muted dark:text-night-text-muted shadow-xs transition-colors cursor-pointer"
+        >
+          <div className="flex items-center gap-2">
+            <Lock className="w-4 h-4 text-success dark:text-success-icon-dark" />
+            <span>Locked Text ({totalLockedCount})</span>
           </div>
           <ArrowRight className="w-3.5 h-3.5" />
         </button>

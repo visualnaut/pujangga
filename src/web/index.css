@@ -309,10 +309,10 @@
   user-select: none;
 }
 
-/* Locked text highlight and indicator styles */
+/* Locked text highlight and indicator styles (Green theme) */
 .pujangga-locked-highlight {
-  background-color: color-mix(in srgb, var(--color-accent) 14%, transparent);
-  border-bottom: 2px dashed var(--color-accent);
+  background-color: color-mix(in srgb, var(--color-success) 14%, transparent);
+  border-bottom: 2px dashed var(--color-success);
   cursor: pointer;
   border-radius: 2px;
   padding: 1px 3px;
@@ -322,14 +322,14 @@
 
 .pujangga-locked-highlight:hover,
 .pujangga-locked-highlight.is-active {
-  background-color: color-mix(in srgb, var(--color-accent) 26%, transparent);
+  background-color: color-mix(in srgb, var(--color-success) 26%, transparent);
   border-bottom-style: solid;
 }
 
 .dark .pujangga-locked-highlight,
 :where(.dark, .dark *) .pujangga-locked-highlight {
-  background-color: color-mix(in srgb, var(--color-accent-bright) 18%, transparent) !important;
-  border-bottom-color: var(--color-accent-bright) !important;
+  background-color: color-mix(in srgb, var(--color-success-icon-dark) 20%, transparent) !important;
+  border-bottom-color: var(--color-success-icon-dark) !important;
   color: var(--color-night-text-heading) !important;
 }
 
