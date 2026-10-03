@@ -28,6 +28,7 @@ interface NavbarProps {
   onToggleTheme: () => void;
   isZenMode: boolean;
   isDeepZen?: boolean;
+  hasZenStarted?: boolean;
   onToggleZenMode: () => void;
 }
 
@@ -47,6 +48,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onToggleTheme,
   isZenMode,
   isDeepZen = false,
+  hasZenStarted = false,
   onToggleZenMode,
 }) => {
   return (
@@ -68,7 +70,9 @@ export const Navbar: React.FC<NavbarProps> = ({
             ? isDeepZen
               ? 'opacity-90 zen-veil-deep'
               : 'opacity-50 zen-veil-initial'
-            : 'opacity-0 zen-veil-exit'
+            : hasZenStarted
+            ? 'opacity-0 zen-veil-exit'
+            : 'opacity-0'
         }`}
         aria-hidden="true"
       />

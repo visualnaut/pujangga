@@ -31,6 +31,7 @@ export const App: React.FC = () => {
   const [isConfirmFinalizeOpen, setIsConfirmFinalizeOpen] = useState(false);
   const [isZenMode, setIsZenMode] = useState(false);
   const [isDeepZen, setIsDeepZen] = useState(false);
+  const [hasZenStarted, setHasZenStarted] = useState(false);
   const [overallComment, setOverallComment] = useState('');
   const [snackbarData, setSnackbarData] = useState<SnackbarData | null>(null);
   const [isDark, setIsDark] = useState(() => {
@@ -91,6 +92,7 @@ export const App: React.FC = () => {
   useEffect(() => {
     let timer: any = null;
     if (isZenMode) {
+      setHasZenStarted(true);
       timer = setTimeout(() => {
         setIsDeepZen(true);
       }, 900);
@@ -830,7 +832,9 @@ export const App: React.FC = () => {
             ? isDeepZen
               ? 'opacity-90 zen-veil-deep'
               : 'opacity-50 zen-veil-initial'
-            : 'opacity-0 zen-veil-exit pointer-events-none'
+            : hasZenStarted
+            ? 'opacity-0 zen-veil-exit pointer-events-none'
+            : 'opacity-0 pointer-events-none'
         }`}
         aria-hidden="true"
       />
@@ -852,6 +856,7 @@ export const App: React.FC = () => {
         onToggleTheme={() => setIsDark((v) => !v)}
         isZenMode={isZenMode}
         isDeepZen={isDeepZen}
+        hasZenStarted={hasZenStarted}
         onToggleZenMode={() => setIsZenMode((v) => !v)}
       />
 
@@ -1018,7 +1023,9 @@ export const App: React.FC = () => {
 
       {/* Floating Exit Zen Mode Button on Bottom Center of Editor */}
       <div
-        className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 ease-out ${
+        className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 ${
+          hasZenStarted ? 'transition-all duration-300 ease-out' : ''
+        } ${
           isZenMode
             ? 'opacity-100 translate-y-0 scale-100'
             : 'opacity-0 translate-y-4 scale-95 pointer-events-none'
