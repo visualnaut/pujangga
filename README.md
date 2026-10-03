@@ -28,6 +28,10 @@ AI agents write drafts quickly, but reviewing long-form prose inside terminal ou
 
 **Pujangga** (*Indonesian/Malay: poet, author, man of letters*) bridges the gap between human editorial craftsmanship and autonomous AI generation. When your agent invokes `npx -y pujangga <file>`, Pujangga launches a persistent local review canvas in your browser where you can critique, polish, lock text, and steer the revision loop in real time.
 
+<p align="center">
+  <img src="public/screenshot-review.png" alt="Pujangga Editorial Review Surface" width="100%" />
+</p>
+
 ---
 
 ## ✨ Key Features
@@ -42,16 +46,28 @@ Select text you want preserved and click **Lock**. Locked segments are protected
 Directly polish typos, rewrite sentences, or reformat headings inside the rich-text editor (built on ProseMirror & Tiptap). When you submit your review, your direct edits are automatically merged into the target file on disk.
 
 ### 🧘 Ananta Toer Mode (Deep Focus)
-Press <kbd>Cmd</kbd> + <kbd>Shift</kbd> + <kbd>F</kbd> to enter **Ananta Toer Mode** — a distraction-free writing sanctuary named after Indonesian literary master Pramoedya Ananta Toer. The sidebar collapses, the editor centers, and an ambient background veil smoothly deepens from 50% to 90% opacity over 3 minutes.
+Press <kbd>Cmd</kbd> + <kbd>Shift</kbd> + <kbd>F</kbd> to enter **Ananta Toer Mode** — a distraction-free writing sanctuary named after Indonesian literary master Pramoedya Ananta Toer. The sidebar collapses, the writing canvas centers, and an ambient background veil smoothly deepens from 50% to 90% opacity over 3 minutes.
+
+<p align="center">
+  <img src="public/screenshot-focus.png" alt="Ananta Toer Mode" width="100%" />
+</p>
 
 ### 🔄 Visual Revision Diffing
 Compare consecutive revision rounds with high-contrast, word-level insertions and deletions. Easily verify whether the agent addressed your critique or changed text outside of scope.
+
+<p align="center">
+  <img src="public/screenshot-diff.png" alt="Side-by-Side Revision Diffing" width="100%" />
+</p>
 
 ### 📊 Live Document Telemetry
 Real-time word count and estimated reading duration update continuously in the sidebar as you type and edit.
 
 ### 🌓 Tactile Paper Surface & True Dark Mode
 Crafted with an authentic paper noise texture and warm editorial typography (`ui-serif`, Charter, Georgia). Seamlessly toggle between **Paper** (light) and **Night** (dark) modes without jarring color flashes or contrast regressions.
+
+<p align="center">
+  <img src="public/screenshot-dark.png" alt="Pujangga Night Mode" width="100%" />
+</p>
 
 ### ⚡ Zero-Config Background Daemon
 A lightweight, background daemon (`~/.pujangga/`) manages SQLite state and live WebSocket synchronization across browser refreshes and agent rounds.
