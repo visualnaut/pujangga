@@ -49,7 +49,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   return (
     <header
-      className={`sticky top-0 w-full backdrop-blur-md bg-paper/90 dark:bg-night/90 border-b border-paper-border dark:border-night-border px-6 py-3 transition-colors ${
+      className={`sticky top-0 w-full backdrop-blur-md bg-white dark:bg-night border-b border-paper-border dark:border-night-border px-6 py-3 transition-colors ${
         isZenMode ? 'z-10' : 'z-40'
       }`}
     >

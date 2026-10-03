@@ -810,7 +810,7 @@ export const App: React.FC = () => {
       {/* 50% Black Overlay in Hemingway Mode */}
       <div
         className={`fixed inset-0 bg-black transition-opacity duration-[600ms] ease-in-out z-20 pointer-events-none ${
-          isZenMode ? 'opacity-50' : 'opacity-0'
+          isZenMode ? 'opacity-50 delay-300' : 'opacity-0 delay-0'
         }`}
         aria-hidden="true"
       />
