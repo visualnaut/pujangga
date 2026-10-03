@@ -10,8 +10,6 @@ interface ActionBarProps {
   onSubmitRevision: () => boolean | void;
   onApprove: () => void;
   isSubmitting: boolean;
-  isHemingwayMode?: boolean;
-  isZenMode?: boolean;
 }
 
 export const ActionBar: React.FC<ActionBarProps> = ({
@@ -22,19 +20,12 @@ export const ActionBar: React.FC<ActionBarProps> = ({
   onSubmitRevision,
   onApprove,
   isSubmitting,
-  isHemingwayMode,
-  isZenMode: isZenModeProp,
 }) => {
-  const isZen = isHemingwayMode ?? isZenModeProp ?? false;
   const isRevising = status === 'revising';
   const isSatisfied = status === 'satisfied';
 
   return (
-    <footer
-      className={`fixed bottom-0 left-0 right-0 z-40 lg:hidden backdrop-blur-md bg-paper/95 dark:bg-night/95 border-t border-paper-border dark:border-night-border p-3 sm:p-4 shadow-lg transition-all duration-[600ms] ease-in-out ${
-        isZen ? 'opacity-50' : 'opacity-100'
-      }`}
-    >
+    <footer className="fixed bottom-0 left-0 right-0 z-10 lg:hidden backdrop-blur-md bg-paper/95 dark:bg-night/95 border-t border-paper-border dark:border-night-border p-3 sm:p-4 transition-colors shadow-lg">
       <div className="max-w-4xl mx-auto flex flex-col gap-2.5">
         {/* Overall Directive Input */}
         <div className="relative w-full">

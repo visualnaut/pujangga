@@ -26,10 +26,8 @@ interface NavbarProps {
   onOpenLockedTexts?: () => void;
   isDark: boolean;
   onToggleTheme: () => void;
-  isHemingwayMode?: boolean;
-  isZenMode?: boolean;
-  onToggleHemingwayMode?: () => void;
-  onToggleZenMode?: () => void;
+  isZenMode: boolean;
+  onToggleZenMode: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -46,18 +44,13 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenLockedTexts,
   isDark,
   onToggleTheme,
-  isHemingwayMode,
-  isZenMode: isZenModeProp,
-  onToggleHemingwayMode,
-  onToggleZenMode: onToggleZenModeProp,
+  isZenMode,
+  onToggleZenMode,
 }) => {
-  const isZenMode = isHemingwayMode ?? isZenModeProp ?? false;
-  const onToggleZenMode = onToggleHemingwayMode ?? onToggleZenModeProp ?? (() => {});
-
   return (
     <header
-      className={`sticky top-0 z-40 w-full backdrop-blur-md bg-paper/90 dark:bg-night/90 border-b border-paper-border dark:border-night-border px-6 py-3 transition-all duration-[600ms] ease-in-out ${
-        isZenMode ? 'opacity-50' : 'opacity-100'
+      className={`sticky top-0 w-full backdrop-blur-md bg-paper/90 dark:bg-night/90 border-b border-paper-border dark:border-night-border px-6 py-3 transition-colors ${
+        isZenMode ? 'z-10' : 'z-40'
       }`}
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 px-4 sm:px-6">
