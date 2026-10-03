@@ -18,7 +18,7 @@ import { ConfirmFinalizeModal } from './components/ConfirmFinalizeModal.js';
 import { EditorialBubbleMenu } from './components/EditorialBubbleMenu.js';
 import { Snackbar, SnackbarData } from './components/Snackbar.js';
 import { SessionDetails, InlineComment, LockedText, ReviewStatus } from '../shared/types.js';
-import { CheckCircle2, Loader2 } from 'lucide-react';
+import { CheckCircle2, Loader2, Minimize2 } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [details, setDetails] = useState<SessionDetails | null>(null);
@@ -809,8 +809,8 @@ export const App: React.FC = () => {
     <div className="min-h-screen flex flex-col bg-paper text-ink dark:bg-night dark:text-night-text transition-colors pb-24 lg:pb-12">
       {/* 50% Black Overlay in Hemingway Mode */}
       <div
-        className={`fixed inset-0 bg-black transition-opacity duration-[600ms] ease-in-out z-20 pointer-events-none ${
-          isZenMode ? 'opacity-50 delay-300' : 'opacity-0 delay-0'
+        className={`fixed inset-0 bg-black transition-opacity duration-[600ms] ease-in-out z-20 ${
+          isZenMode ? 'opacity-50 delay-300' : 'opacity-0 delay-0 pointer-events-none'
         }`}
         aria-hidden="true"
       />
@@ -994,6 +994,27 @@ export const App: React.FC = () => {
         onApprove={handleRequestApprove}
         isSubmitting={isSubmitting}
       />
+
+      {/* Floating Exit Zen Mode Button on Bottom Center of Editor */}
+      <div
+        className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-40 transition-all duration-300 ease-out ${
+          isZenMode
+            ? 'opacity-100 translate-y-0 scale-100'
+            : 'opacity-0 translate-y-4 scale-95 pointer-events-none'
+        }`}
+      >
+        <button
+          onClick={() => setIsZenMode(false)}
+          className="flex items-center gap-2 px-4 py-2 rounded-full bg-paper-card/95 dark:bg-night-card/95 text-ink dark:text-night-text border border-paper-border dark:border-night-border-strong shadow-xl hover:shadow-2xl hover:border-accent dark:hover:border-accent-pin hover:text-accent dark:hover:text-accent-pin transition-all duration-150 cursor-pointer select-none backdrop-blur-md text-sm font-semibold group"
+          title="Exit Hemingway Mode (Esc)"
+        >
+          <Minimize2 className="w-3.5 h-3.5 text-accent dark:text-accent-pin transition-transform group-hover:scale-110" />
+          <span>Exit Hemingway Mode</span>
+          <kbd className="hidden sm:inline-block ml-1 px-1.5 py-0.5 text-xs font-mono rounded bg-paper-subtle dark:bg-night-border text-ink-faint">
+            Esc
+          </kbd>
+        </button>
+      </div>
     </div>
   );
 };
