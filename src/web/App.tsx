@@ -3,6 +3,7 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { Markdown } from 'tiptap-markdown';
 import Placeholder from '@tiptap/extension-placeholder';
+import { closeHistory } from '@tiptap/pm/history';
 import { CommentMark } from './extensions/CommentMark.js';
 import { LockMark } from './extensions/LockMark.js';
 import { Navbar } from './components/Navbar.js';
@@ -231,6 +232,8 @@ export const App: React.FC = () => {
 
       const { tr } = state;
       tr.setMeta('allowLockEdit', true);
+      tr.setMeta('addToHistory', false);
+      closeHistory(tr);
       let changed = false;
 
       for (const lock of lockedList) {

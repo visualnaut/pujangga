@@ -1,6 +1,7 @@
 import { Mark, mergeAttributes } from '@tiptap/core';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
-import { ReplaceStep } from '@tiptap/pm/transform';
+import { ReplaceStep, AddMarkStep, RemoveMarkStep, ReplaceAroundStep } from '@tiptap/pm/transform';
+import { closeHistory, isHistoryTransaction } from '@tiptap/pm/history';
 
 export interface CommentMarkOptions {
   HTMLAttributes: Record<string, any>;
@@ -75,18 +76,46 @@ export const CommentMark = Mark.create<CommentMarkOptions>({
     return {
       setComment:
         (commentId: string) =>
-        ({ commands }) => {
-          return commands.setMark(this.name, { commentId });
+        ({ tr, dispatch }) => {
+          const { empty, ranges } = tr.selection;
+          if (empty) return false;
+          const commentMarkType = tr.doc.type.schema.marks.comment;
+          if (!commentMarkType) return false;
+          tr.setMeta('allowCommentEdit', true);
+          tr.setMeta('addToHistory', false);
+          closeHistory(tr);
+          for (const range of ranges) {
+            tr.addMark(range.$from.pos, range.$to.pos, commentMarkType.create({ commentId }));
+          }
+          if (dispatch) {
+            dispatch(tr);
+          }
+          return true;
         },
       unsetComment:
         () =>
-        ({ commands }) => {
-          return commands.unsetMark(this.name);
+        ({ tr, dispatch }) => {
+          const { empty, ranges } = tr.selection;
+          if (empty) return false;
+          const commentMarkType = tr.doc.type.schema.marks.comment;
+          if (!commentMarkType) return false;
+          tr.setMeta('allowCommentEdit', true);
+          tr.setMeta('addToHistory', false);
+          closeHistory(tr);
+          for (const range of ranges) {
+            tr.removeMark(range.$from.pos, range.$to.pos, commentMarkType);
+          }
+          if (dispatch) {
+            dispatch(tr);
+          }
+          return true;
         },
       removeComment:
         (commentId: string) =>
         ({ tr, dispatch }) => {
           tr.setMeta('allowCommentEdit', true);
+          tr.setMeta('addToHistory', false);
+          closeHistory(tr);
           const commentMarkType = tr.doc.type.schema.marks.comment;
           if (commentMarkType) {
             tr.doc.descendants((node, pos) => {
@@ -170,6 +199,24 @@ export const CommentMark = Mark.create<CommentMarkOptions>({
           },
         },
         filterTransaction(tr, state) {
+          // Any transaction that adds or removes comment marks must not be added to history
+          const hasCommentMarkStep = tr.steps.some((step: any) => {
+            const name = step.constructor.name;
+            if (name === 'AddMarkStep' || name === 'RemoveMarkStep') {
+              return step.mark?.type?.name === 'comment';
+            }
+            return false;
+          });
+
+          if (hasCommentMarkStep) {
+            // Block undo/redo history from altering comment marks
+            if (isHistoryTransaction(tr)) {
+              return false;
+            }
+            tr.setMeta('addToHistory', false);
+            closeHistory(tr);
+          }
+
           if (!tr.docChanged) return true;
           // Explicit bypass for programmatic document loads or comment removals
           if (tr.getMeta('allowCommentEdit')) return true;
@@ -191,7 +238,7 @@ export const CommentMark = Mark.create<CommentMarkOptions>({
 
           const lockMarkType = state.schema.marks.lock;
 
-          // Block any ReplaceStep that modifies characters within or across a locked comment range
+          // Block any step that modifies characters or formatting within or across a locked comment range
           for (const step of tr.steps) {
             const stepName = step.constructor.name;
             if (step instanceof ReplaceStep || stepName === 'ReplaceStep') {
@@ -205,6 +252,21 @@ export const CommentMark = Mark.create<CommentMarkOptions>({
                     return false;
                   }
                   notifyCommentViolation('Cannot delete or modify content containing active notes.');
+                  return false;
+                }
+              }
+            } else if (
+              step instanceof AddMarkStep ||
+              stepName === 'AddMarkStep' ||
+              step instanceof RemoveMarkStep ||
+              stepName === 'RemoveMarkStep' ||
+              step instanceof ReplaceAroundStep ||
+              stepName === 'ReplaceAroundStep'
+            ) {
+              const { from, to } = step as any;
+              for (const range of commentRanges) {
+                const overlaps = from < range.to && to > range.from;
+                if (overlaps) {
                   return false;
                 }
               }

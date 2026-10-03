@@ -1,5 +1,6 @@
 import { Schema } from '@tiptap/pm/model';
-import { EditorState } from '@tiptap/pm/state';
+import { EditorState, TextSelection } from '@tiptap/pm/state';
+import { history, undo, redo } from '@tiptap/pm/history';
 import { CommentMark } from '../src/web/extensions/CommentMark.js';
 import { LockMark } from '../src/web/extensions/LockMark.js';
 import { generateAgentReport } from '../src/shared/reporter.js';
@@ -823,6 +824,192 @@ function testSelectAllDeletePreventionForNotedTextWithSnackbar() {
   delete (globalThis as any).CustomEvent;
 }
 
+function testUndoRedoImmunity() {
+  console.log('--- 10. Testing Undo/Redo Immunity for LockMark and CommentMark ---');
+
+  const schema = new Schema({
+    nodes: {
+      doc: { content: 'paragraph+' },
+      paragraph: { content: 'text*' },
+      text: { inline: true },
+    },
+    marks: {
+      lock: { attrs: { lockId: { default: null } } },
+      comment: { attrs: { commentId: { default: null } } },
+    },
+  });
+
+  const lockPlugins = LockMark.config.addProseMirrorPlugins?.call({} as any) || [];
+  const commentPlugins = CommentMark.config.addProseMirrorPlugins?.call({} as any) || [];
+  const plugins = [...lockPlugins, ...commentPlugins, history()];
+
+  let state = EditorState.create({
+    schema,
+    doc: schema.node('doc', null, [
+      schema.node('paragraph', null, [schema.text('Initial document draft.')]),
+    ]),
+    plugins,
+  });
+
+  const applyTr = (tr: any) => {
+    for (const p of plugins) {
+      if (p.spec.filterTransaction && !p.spec.filterTransaction(tr, state)) {
+        return false;
+      }
+    }
+    state = state.apply(tr);
+    return true;
+  };
+
+  // 1. Lock 'document' (positions 9 to 17) via setLock command
+  const lockCmd = (LockMark.config.addCommands?.call({ name: 'lock' } as any) as any).setLock('lock-undo-test');
+  state = state.apply(state.tr.setSelection(TextSelection.create(state.doc, 9, 17)));
+  let lockApplied = false;
+  lockCmd({
+    tr: state.tr,
+    dispatch: (tr: any) => {
+      lockApplied = applyTr(tr);
+    },
+  });
+
+  if (!lockApplied) {
+    throw new Error('Expected setLock to be applied!');
+  }
+  const hasLockBeforeUndo = state.doc.resolve(10).marks().some((m) => m.type === schema.marks.lock);
+  if (!hasLockBeforeUndo) {
+    throw new Error('Expected pos 10 to have lock mark!');
+  }
+
+  // 2. Verify that undo does NOT undo the lock
+  let undoTr1: any = null;
+  const canUndoLock = undo(state, (tr) => { undoTr1 = tr; });
+  if (canUndoLock && undoTr1) {
+    applyTr(undoTr1);
+  }
+  const hasLockAfterUndo = state.doc.resolve(10).marks().some((m) => m.type === schema.marks.lock);
+  if (!hasLockAfterUndo) {
+    throw new Error('Lock mark was removed by undo! Locking must NOT enter the undo stack.');
+  }
+  console.log('✓ Locking text is completely bypassed from the undo/redo stack!');
+
+  // 3. Add comment to 'Initial' (positions 1 to 8) via setComment command
+  const commCmd = (CommentMark.config.addCommands?.call({ name: 'comment' } as any) as any).setComment('comm-undo-test');
+  state = state.apply(state.tr.setSelection(TextSelection.create(state.doc, 1, 8)));
+  let commApplied = false;
+  commCmd({
+    tr: state.tr,
+    dispatch: (tr: any) => {
+      commApplied = applyTr(tr);
+    },
+  });
+
+  if (!commApplied) {
+    throw new Error('Expected setComment to be applied!');
+  }
+  const hasCommBeforeUndo = state.doc.resolve(2).marks().some((m) => m.type === schema.marks.comment);
+  if (!hasCommBeforeUndo) {
+    throw new Error('Expected pos 2 to have comment mark!');
+  }
+
+  // 4. Verify that undo does NOT undo the comment
+  let undoTr2: any = null;
+  const canUndoComm = undo(state, (tr) => { undoTr2 = tr; });
+  if (canUndoComm && undoTr2) {
+    applyTr(undoTr2);
+  }
+  const hasCommAfterUndo = state.doc.resolve(2).marks().some((m) => m.type === schema.marks.comment);
+  if (!hasCommAfterUndo) {
+    throw new Error('Comment mark was removed by undo! Commenting must NOT enter the undo stack.');
+  }
+  console.log('✓ Adding notes to text is completely bypassed from the undo/redo stack!');
+
+  // 5. Type new unlocked text ' Extra.' at end of paragraph
+  const trInsert = state.tr.insertText(' Extra.', state.doc.content.size - 1);
+  const insertApplied = applyTr(trInsert);
+  if (!insertApplied) {
+    throw new Error('Expected text insertion to succeed!');
+  }
+  if (!state.doc.textContent.endsWith(' Extra.')) {
+    throw new Error('Expected text content to end with Extra.!');
+  }
+
+  // 6. Undo should cleanly revert ' Extra.' without modifying lock or comment
+  let undoTr3: any = null;
+  const canUndoInsert = undo(state, (tr) => { undoTr3 = tr; });
+  if (!canUndoInsert || !undoTr3) {
+    throw new Error('Expected undo to be available for regular text insertion!');
+  }
+  const undoInsertApplied = applyTr(undoTr3);
+  if (!undoInsertApplied) {
+    throw new Error('Expected undo of regular text insertion to be allowed!');
+  }
+  if (state.doc.textContent.includes(' Extra.')) {
+    throw new Error('Expected Extra. to be cleanly undone!');
+  }
+  const stillHasLock = state.doc.resolve(10).marks().some((m) => m.type === schema.marks.lock);
+  const stillHasComm = state.doc.resolve(2).marks().some((m) => m.type === schema.marks.comment);
+  if (!stillHasLock || !stillHasComm) {
+    throw new Error('Lock or comment marks were corrupted during text undo!');
+  }
+  console.log('✓ Undoing unlocked text edits preserves locked and noted marks intact!');
+
+  // 7. Verify removing lock does NOT add into undo stack (undo cannot re-lock)
+  const removeLockCmd = (LockMark.config.addCommands?.call({ name: 'lock' } as any) as any).removeLock('lock-undo-test');
+  let lockRemoved = false;
+  removeLockCmd({
+    tr: state.tr,
+    dispatch: (tr: any) => {
+      lockRemoved = applyTr(tr);
+    },
+  });
+  if (!lockRemoved) {
+    throw new Error('Expected removeLock to succeed!');
+  }
+  const lockGone = !state.doc.resolve(10).marks().some((m) => m.type === schema.marks.lock);
+  if (!lockGone) {
+    throw new Error('Expected lock to be removed!');
+  }
+
+  let undoTr4: any = null;
+  const canUndoRemoveLock = undo(state, (tr) => { undoTr4 = tr; });
+  if (canUndoRemoveLock && undoTr4) {
+    applyTr(undoTr4);
+  }
+  const lockStillGone = !state.doc.resolve(10).marks().some((m) => m.type === schema.marks.lock);
+  if (!lockStillGone) {
+    throw new Error('Lock removal was undone by undo! Lock removal must not enter undo stack.');
+  }
+  console.log('✓ Removing lock segments is completely bypassed from the undo/redo stack!');
+
+  // 8. Verify removing comment does NOT add into undo stack (undo cannot re-comment)
+  const removeCommCmd = (CommentMark.config.addCommands?.call({ name: 'comment' } as any) as any).removeComment('comm-undo-test');
+  let commRemoved = false;
+  removeCommCmd({
+    tr: state.tr,
+    dispatch: (tr: any) => {
+      commRemoved = applyTr(tr);
+    },
+  });
+  if (!commRemoved) {
+    throw new Error('Expected removeComment to succeed!');
+  }
+  const commGone = !state.doc.resolve(2).marks().some((m) => m.type === schema.marks.comment);
+  if (!commGone) {
+    throw new Error('Expected comment to be removed!');
+  }
+
+  let undoTr5: any = null;
+  const canUndoRemoveComm = undo(state, (tr) => { undoTr5 = tr; });
+  if (canUndoRemoveComm && undoTr5) {
+    applyTr(undoTr5);
+  }
+  const commStillGone = !state.doc.resolve(2).marks().some((m) => m.type === schema.marks.comment);
+  if (!commStillGone) {
+    throw new Error('Comment removal was undone by undo! Comment removal must not enter undo stack.');
+  }
+  console.log('✓ Removing review notes is completely bypassed from the undo/redo stack!');
+}
+
 function runAll() {
   testCommentLock();
   testLockMarkGuard();
@@ -833,6 +1020,7 @@ function runAll() {
   testLockedTextFormattingImmutability();
   testSelectAllDeletePreventionWithSnackbarNotice();
   testSelectAllDeletePreventionForNotedTextWithSnackbar();
+  testUndoRedoImmunity();
   console.log('\n=== All Text Locking & Anchoring Tests Passed! ===\n');
 }
 

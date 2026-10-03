@@ -85,7 +85,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
             </div>
 
             {/* Locked & Noted Text Buttons & Info */}
-            <div className="pt-2 border-t border-paper-border-light dark:border-night-border grid grid-cols-2 gap-2">
+            <div className="pt-2 border-t border-paper-border-light dark:border-night-border grid grid-cols-1 gap-2">
               <button
                 type="button"
                 onClick={onOpenCommentHistory}

@@ -1,6 +1,7 @@
 import { Mark, mergeAttributes } from '@tiptap/core';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { ReplaceStep, AddMarkStep, RemoveMarkStep, ReplaceAroundStep } from '@tiptap/pm/transform';
+import { closeHistory, isHistoryTransaction } from '@tiptap/pm/history';
 
 export interface LockMarkOptions {
   HTMLAttributes: Record<string, any>;
@@ -75,18 +76,46 @@ export const LockMark = Mark.create<LockMarkOptions>({
     return {
       setLock:
         (lockId: string) =>
-        ({ commands }) => {
-          return commands.setMark(this.name, { lockId });
+        ({ tr, dispatch }) => {
+          const { empty, ranges } = tr.selection;
+          if (empty) return false;
+          const lockMarkType = tr.doc.type.schema.marks.lock;
+          if (!lockMarkType) return false;
+          tr.setMeta('allowLockEdit', true);
+          tr.setMeta('addToHistory', false);
+          closeHistory(tr);
+          for (const range of ranges) {
+            tr.addMark(range.$from.pos, range.$to.pos, lockMarkType.create({ lockId }));
+          }
+          if (dispatch) {
+            dispatch(tr);
+          }
+          return true;
         },
       unsetLock:
         () =>
-        ({ commands }) => {
-          return commands.unsetMark(this.name);
+        ({ tr, dispatch }) => {
+          const { empty, ranges } = tr.selection;
+          if (empty) return false;
+          const lockMarkType = tr.doc.type.schema.marks.lock;
+          if (!lockMarkType) return false;
+          tr.setMeta('allowLockEdit', true);
+          tr.setMeta('addToHistory', false);
+          closeHistory(tr);
+          for (const range of ranges) {
+            tr.removeMark(range.$from.pos, range.$to.pos, lockMarkType);
+          }
+          if (dispatch) {
+            dispatch(tr);
+          }
+          return true;
         },
       removeLock:
         (lockId: string) =>
         ({ tr, dispatch }) => {
           tr.setMeta('allowLockEdit', true);
+          tr.setMeta('addToHistory', false);
+          closeHistory(tr);
           const lockMarkType = tr.doc.type.schema.marks.lock;
           if (lockMarkType) {
             tr.doc.descendants((node, pos) => {
@@ -163,6 +192,24 @@ export const LockMark = Mark.create<LockMarkOptions>({
           },
         },
         filterTransaction(tr, state) {
+          // Any transaction that adds or removes lock marks must not be added to history
+          const hasLockMarkStep = tr.steps.some((step: any) => {
+            const name = step.constructor.name;
+            if (name === 'AddMarkStep' || name === 'RemoveMarkStep') {
+              return step.mark?.type?.name === 'lock';
+            }
+            return false;
+          });
+
+          if (hasLockMarkStep) {
+            // Block undo/redo history from altering lock marks
+            if (isHistoryTransaction(tr)) {
+              return false;
+            }
+            tr.setMeta('addToHistory', false);
+            closeHistory(tr);
+          }
+
           if (!tr.docChanged) return true;
           // Explicit bypass for programmatic document loads or unlock operations
           if (tr.getMeta('allowLockEdit')) return true;
