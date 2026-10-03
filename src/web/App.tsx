@@ -924,6 +924,7 @@ export const App: React.FC = () => {
             totalLockedCount={localLockedTexts.length}
             onOpenCommentHistory={() => setIsCommentHistoryOpen(true)}
             onOpenLockedTexts={() => setIsLockedDrawerOpen(true)}
+            editor={editor}
           />
         </div>
       </div>

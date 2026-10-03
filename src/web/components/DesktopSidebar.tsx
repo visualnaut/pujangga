@@ -1,5 +1,6 @@
 import React from 'react';
-import { SendHorizonal, CheckCircle2, Loader2, BookCheck, History, ArrowRight, Lock } from 'lucide-react';
+import { SendHorizonal, CheckCircle2, Loader2, BookCheck, History, ArrowRight, Lock, FileText, Clock } from 'lucide-react';
+import { useEditorState, type Editor } from '@tiptap/react';
 import { SessionStatus } from '../../shared/types.js';
 
 interface DesktopSidebarProps {
@@ -14,6 +15,7 @@ interface DesktopSidebarProps {
   totalLockedCount?: number;
   onOpenCommentHistory: () => void;
   onOpenLockedTexts: () => void;
+  editor?: Editor | null;
 }
 
 export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
@@ -28,9 +30,26 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
   totalLockedCount = 0,
   onOpenCommentHistory,
   onOpenLockedTexts,
+  editor,
 }) => {
   const isRevising = status === 'revising';
   const isSatisfied = status === 'satisfied';
+
+  const stats = useEditorState({
+    editor: editor ?? null,
+    selector: (ctx) => {
+      if (!ctx.editor || !ctx.editor.state) {
+        return { words: 0, readingDuration: '0 min read' };
+      }
+      const text = ctx.editor.getText();
+      const trimmed = text.trim();
+      const count = trimmed ? trimmed.split(/\s+/).filter(Boolean).length : 0;
+      const minutes = Math.ceil(count / 200);
+      const readingDuration =
+        count === 0 ? '0 min read' : count < 200 ? '< 1 min read' : `~${minutes} min read`;
+      return { words: count, readingDuration };
+    },
+  }) || { words: 0, readingDuration: '0 min read' };
 
   return (
     <aside className="hidden lg:flex flex-col w-84 shrink-0 sticky top-20 gap-4">
@@ -43,6 +62,20 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
           <span className="text-sm px-2.5 py-0.5 rounded-full font-medium bg-paper-subtle dark:bg-night-subtle text-ink-muted dark:text-night-text-muted">
             Round {roundNumber}
           </span>
+        </div>
+
+        {/* Live Content Telemetry */}
+        <div className="mb-4 flex items-center justify-between p-2.5 bg-paper dark:bg-night-pane border border-paper-border dark:border-night-border rounded-xl text-xs">
+          <div className="flex items-center gap-1.5 text-ink dark:text-night-text font-medium">
+            <FileText className="w-4 h-4 text-ink-muted dark:text-night-text-muted" />
+            <span>
+              {stats.words.toLocaleString()} {stats.words === 1 ? 'word' : 'words'}
+            </span>
+          </div>
+          <div className="flex items-center gap-1 text-ink-muted dark:text-night-text-muted">
+            <Clock className="w-4 h-4" />
+            <span>{stats.readingDuration}</span>
+          </div>
         </div>
 
         {/* State Banners */}
