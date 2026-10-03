@@ -26,8 +26,10 @@ interface NavbarProps {
   onOpenLockedTexts?: () => void;
   isDark: boolean;
   onToggleTheme: () => void;
-  isZenMode: boolean;
-  onToggleZenMode: () => void;
+  isHemingwayMode?: boolean;
+  isZenMode?: boolean;
+  onToggleHemingwayMode?: () => void;
+  onToggleZenMode?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -44,11 +46,20 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenLockedTexts,
   isDark,
   onToggleTheme,
-  isZenMode,
-  onToggleZenMode,
+  isHemingwayMode,
+  isZenMode: isZenModeProp,
+  onToggleHemingwayMode,
+  onToggleZenMode: onToggleZenModeProp,
 }) => {
+  const isZenMode = isHemingwayMode ?? isZenModeProp ?? false;
+  const onToggleZenMode = onToggleHemingwayMode ?? onToggleZenModeProp ?? (() => {});
+
   return (
-    <header className="sticky top-0 z-40 w-full backdrop-blur-md bg-paper/90 dark:bg-night/90 border-b border-paper-border dark:border-night-border px-6 py-3 transition-colors">
+    <header
+      className={`sticky top-0 z-40 w-full backdrop-blur-md bg-paper/90 dark:bg-night/90 border-b border-paper-border dark:border-night-border px-6 py-3 transition-all duration-[600ms] ease-in-out ${
+        isZenMode ? 'opacity-50' : 'opacity-100'
+      }`}
+    >
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 px-4 sm:px-6">
         {/* Left: Brand & File Info */}
         <div className="flex items-center gap-4 min-w-0">
@@ -121,7 +132,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           )}
 
-          {/* Zen Mode Toggle */}
+          {/* Hemingway Mode Toggle */}
           <button
             onClick={onToggleZenMode}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors cursor-pointer ${
@@ -129,17 +140,17 @@ export const Navbar: React.FC<NavbarProps> = ({
                 ? 'bg-accent text-white border-accent shadow-xs'
                 : 'bg-paper-card dark:bg-night-modal text-ink-body dark:text-night-text-muted border-paper-border dark:border-night-border-strong hover:border-accent-pin'
             }`}
-            title={isZenMode ? 'Exit Zen Mode (Esc)' : 'Zen Mode (distraction-free writing)'}
+            title={isZenMode ? 'Exit Hemingway Mode (Esc)' : 'Hemingway Mode (distraction-free writing)'}
           >
             {isZenMode ? (
               <>
                 <Minimize2 className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Exit Zen</span>
+                <span className="hidden sm:inline">Exit Hemingway Mode</span>
               </>
             ) : (
               <>
                 <Maximize2 className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Zen Mode</span>
+                <span className="hidden sm:inline">Hemingway Mode</span>
               </>
             )}
           </button>

@@ -29,7 +29,9 @@ export const App: React.FC = () => {
   const [isCommentHistoryOpen, setIsCommentHistoryOpen] = useState(false);
   const [isLockedDrawerOpen, setIsLockedDrawerOpen] = useState(false);
   const [isConfirmFinalizeOpen, setIsConfirmFinalizeOpen] = useState(false);
-  const [isZenMode, setIsZenMode] = useState(false);
+  const [isHemingwayMode, setIsHemingwayMode] = useState(false);
+  const isZenMode = isHemingwayMode;
+  const setIsZenMode = setIsHemingwayMode;
   const [overallComment, setOverallComment] = useState('');
   const [snackbarData, setSnackbarData] = useState<SnackbarData | null>(null);
   const [isDark, setIsDark] = useState(() => {
@@ -70,21 +72,21 @@ export const App: React.FC = () => {
     }
   }, [isDark]);
 
-  // Keyboard shortcut for toggling Zen Mode (Cmd+Shift+F) or Escape to exit
+  // Keyboard shortcut for toggling Hemingway Mode (Cmd+Shift+F) or Escape to exit
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'f') {
         e.preventDefault();
-        setIsZenMode((prev) => !prev);
-      } else if (e.key === 'Escape' && isZenMode) {
+        setIsHemingwayMode((prev) => !prev);
+      } else if (e.key === 'Escape' && isHemingwayMode) {
         if (!isCommentHistoryOpen && !isLockedDrawerOpen && !isConfirmFinalizeOpen && !popoverData && !lockPopoverData) {
-          setIsZenMode(false);
+          setIsHemingwayMode(false);
         }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isZenMode, isCommentHistoryOpen, isLockedDrawerOpen, isConfirmFinalizeOpen, popoverData, lockPopoverData]);
+  }, [isHemingwayMode, isCommentHistoryOpen, isLockedDrawerOpen, isConfirmFinalizeOpen, popoverData, lockPopoverData]);
 
   // Listen for locked text delete / modification violation attempts
   useEffect(() => {
@@ -822,8 +824,10 @@ export const App: React.FC = () => {
         onOpenLockedTexts={() => setIsLockedDrawerOpen(true)}
         isDark={isDark}
         onToggleTheme={() => setIsDark((v) => !v)}
-        isZenMode={isZenMode}
-        onToggleZenMode={() => setIsZenMode((v) => !v)}
+        isHemingwayMode={isHemingwayMode}
+        onToggleHemingwayMode={() => setIsHemingwayMode((v) => !v)}
+        isZenMode={isHemingwayMode}
+        onToggleZenMode={() => setIsHemingwayMode((v) => !v)}
       />
 
       {/* Floating Snackbar for Locked Text Protection & Revision Warnings */}
@@ -833,21 +837,25 @@ export const App: React.FC = () => {
         autoDismissMs={3500}
       />
 
-      {/* Main Container: Flex Row on Desktop (Canvas + Right Sidebar), Centered in Zen Mode */}
+      {/* Main Container: Flex Row on Desktop (Canvas + Right Sidebar), Centered in Hemingway Mode */}
       <div
         className={`mx-auto w-full px-4 sm:px-6 py-8 flex flex-col lg:flex-row items-start transition-all duration-300 ease-in-out ${
-          isZenMode ? 'max-w-4xl justify-center gap-0' : 'max-w-7xl gap-6'
+          isHemingwayMode ? 'max-w-4xl justify-center gap-0' : 'max-w-7xl gap-6'
         }`}
       >
         {/* Left/Center Editorial Reading & Writing Canvas */}
         <main
           className={`flex-1 min-w-0 w-full relative transition-all duration-300 ease-in-out ${
-            isZenMode ? 'max-w-4xl mx-auto' : ''
+            isHemingwayMode ? 'max-w-4xl mx-auto' : ''
           }`}
         >
           {/* Waiting State Notice on Mobile/Tablet */}
           {details.session.status === 'revising' && (
-            <div className="lg:hidden mb-6 p-4 rounded-xl bg-accent-subtle dark:bg-accent-subtle-dark border border-accent-border dark:border-accent-border-dark flex items-center gap-3 animate-pulse">
+            <div
+              className={`lg:hidden mb-6 p-4 rounded-xl bg-accent-subtle dark:bg-accent-subtle-dark border border-accent-border dark:border-accent-border-dark flex items-center gap-3 animate-pulse transition-all duration-[600ms] ease-in-out ${
+                isHemingwayMode ? 'opacity-50' : 'opacity-100'
+              }`}
+            >
               <Loader2 className="w-5 h-5 text-accent dark:text-accent-pin animate-spin shrink-0" />
               <div>
                 <p className="text-sm font-semibold text-accent-text dark:text-accent-text-dark">
@@ -862,7 +870,11 @@ export const App: React.FC = () => {
 
           {/* Satisfied Celebration Notice on Mobile/Tablet */}
           {details.session.status === 'satisfied' && (
-            <div className="lg:hidden mb-6 p-5 rounded-2xl bg-success-subtle dark:bg-success-subtle-dark border border-success-border dark:border-success-border-dark flex items-center gap-4">
+            <div
+              className={`lg:hidden mb-6 p-5 rounded-2xl bg-success-subtle dark:bg-success-subtle-dark border border-success-border dark:border-success-border-dark flex items-center gap-4 transition-all duration-[600ms] ease-in-out ${
+                isHemingwayMode ? 'opacity-50' : 'opacity-100'
+              }`}
+            >
               <div className="w-10 h-10 rounded-full bg-success-subtle dark:bg-success-subtle-dark text-success-icon dark:text-success-icon-dark flex items-center justify-center shrink-0 border border-success-border dark:border-success-border-dark">
                 <CheckCircle2 className="w-6 h-6" />
               </div>
@@ -909,10 +921,10 @@ export const App: React.FC = () => {
           )}
         </main>
 
-        {/* Right Sidebar on Desktop Viewport with Zen Mode Transition */}
+        {/* Right Sidebar on Desktop Viewport with Hemingway Mode Transition */}
         <div
           className={`transition-all duration-300 ease-in-out shrink-0 overflow-hidden ${
-            isZenMode
+            isHemingwayMode
               ? 'w-0 opacity-0 pointer-events-none -mr-8 hidden lg:block'
               : 'hidden lg:block w-84 opacity-100'
           }`}
@@ -985,6 +997,8 @@ export const App: React.FC = () => {
         onSubmitRevision={handleRequestRevision}
         onApprove={handleRequestApprove}
         isSubmitting={isSubmitting}
+        isHemingwayMode={isHemingwayMode}
+        isZenMode={isHemingwayMode}
       />
     </div>
   );
