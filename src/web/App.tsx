@@ -30,6 +30,7 @@ export const App: React.FC = () => {
   const [isLockedDrawerOpen, setIsLockedDrawerOpen] = useState(false);
   const [isConfirmFinalizeOpen, setIsConfirmFinalizeOpen] = useState(false);
   const [isZenMode, setIsZenMode] = useState(false);
+  const [isDeepZen, setIsDeepZen] = useState(false);
   const [overallComment, setOverallComment] = useState('');
   const [snackbarData, setSnackbarData] = useState<SnackbarData | null>(null);
   const [isDark, setIsDark] = useState(() => {
@@ -85,6 +86,21 @@ export const App: React.FC = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isZenMode, isCommentHistoryOpen, isLockedDrawerOpen, isConfirmFinalizeOpen, popoverData, lockPopoverData]);
+
+  // Deepening transition in Hemingway Mode: after 900ms, deepen overlay from 50% to 90% over 3 minutes
+  useEffect(() => {
+    let timer: any = null;
+    if (isZenMode) {
+      timer = setTimeout(() => {
+        setIsDeepZen(true);
+      }, 900);
+    } else {
+      setIsDeepZen(false);
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [isZenMode]);
 
   // Listen for locked text delete / modification violation attempts
   useEffect(() => {
@@ -807,10 +823,14 @@ export const App: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-paper text-ink dark:bg-night dark:text-night-text transition-colors pb-24 lg:pb-12">
-      {/* 50% Black Overlay in Hemingway Mode */}
+      {/* Black Overlay in Hemingway Mode */}
       <div
-        className={`fixed inset-0 bg-black transition-opacity duration-[600ms] ease-in-out z-20 ${
-          isZenMode ? 'opacity-50 delay-300' : 'opacity-0 delay-0 pointer-events-none'
+        className={`fixed inset-0 bg-black z-20 pointer-events-auto ${
+          isZenMode
+            ? isDeepZen
+              ? 'opacity-90 zen-veil-deep'
+              : 'opacity-50 zen-veil-initial'
+            : 'opacity-0 zen-veil-exit pointer-events-none'
         }`}
         aria-hidden="true"
       />
@@ -831,6 +851,7 @@ export const App: React.FC = () => {
         isDark={isDark}
         onToggleTheme={() => setIsDark((v) => !v)}
         isZenMode={isZenMode}
+        isDeepZen={isDeepZen}
         onToggleZenMode={() => setIsZenMode((v) => !v)}
       />
 
@@ -843,8 +864,8 @@ export const App: React.FC = () => {
 
       {/* Main Container: Flex Row on Desktop (Canvas + Right Sidebar), Centered in Hemingway Mode */}
       <div
-        className={`mx-auto w-full px-4 sm:px-6 py-8 flex flex-col lg:flex-row items-start transition-all duration-300 ease-in-out ${
-          isZenMode ? 'max-w-4xl justify-center gap-0 relative z-30' : 'max-w-7xl gap-6'
+        className={`mx-auto w-full px-4 sm:px-6 py-8 flex flex-col lg:flex-row items-start transition-all duration-300 ease-in-out relative z-30 ${
+          isZenMode ? 'max-w-4xl justify-center gap-0' : 'max-w-7xl gap-6'
         }`}
       >
         {/* Left/Center Editorial Reading & Writing Canvas */}
@@ -997,7 +1018,7 @@ export const App: React.FC = () => {
 
       {/* Floating Exit Zen Mode Button on Bottom Center of Editor */}
       <div
-        className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-40 transition-all duration-300 ease-out ${
+        className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 ease-out ${
           isZenMode
             ? 'opacity-100 translate-y-0 scale-100'
             : 'opacity-0 translate-y-4 scale-95 pointer-events-none'

@@ -470,3 +470,17 @@
   mix-blend-mode: screen;
 }
 
+/* Hemingway Mode Veil Transitions */
+.zen-veil-initial {
+  transition: opacity 600ms ease-in-out 300ms;
+}
+
+.zen-veil-deep {
+  transition: opacity 180s linear 0s;
+}
+
+.zen-veil-exit {
+  transition: opacity 600ms ease-in-out 0s;
+}
+
+

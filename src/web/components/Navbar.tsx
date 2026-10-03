@@ -27,6 +27,7 @@ interface NavbarProps {
   isDark: boolean;
   onToggleTheme: () => void;
   isZenMode: boolean;
+  isDeepZen?: boolean;
   onToggleZenMode: () => void;
 }
 
@@ -45,15 +46,28 @@ export const Navbar: React.FC<NavbarProps> = ({
   isDark,
   onToggleTheme,
   isZenMode,
+  isDeepZen = false,
   onToggleZenMode,
 }) => {
   return (
     <header
-      className={`sticky top-0 w-full backdrop-blur-md bg-white dark:bg-night border-b border-paper-border dark:border-night-border px-6 py-3 transition-colors ${
-        isZenMode ? 'z-10' : 'z-40'
+      className={`sticky top-0 z-40 w-full bg-white dark:bg-night border-b border-paper-border dark:border-night-border px-6 py-3 transition-colors relative overflow-hidden ${
+        isZenMode ? 'pointer-events-none select-none' : ''
       }`}
     >
-      <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 px-4 sm:px-6">
+      {/* Internal Dimming Veil in Hemingway Mode */}
+      <div
+        className={`absolute inset-0 bg-black pointer-events-none z-20 ${
+          isZenMode
+            ? isDeepZen
+              ? 'opacity-90 zen-veil-deep'
+              : 'opacity-50 zen-veil-initial'
+            : 'opacity-0 zen-veil-exit'
+        }`}
+        aria-hidden="true"
+      />
+
+      <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 px-4 sm:px-6 relative z-10">
         {/* Left: Brand & File Info */}
         <div className="flex items-center gap-4 min-w-0">
           <div className="flex items-center gap-2">
