@@ -9,6 +9,7 @@
 </p>
 
 <p align="center">
+  <a href="https://www.npmjs.com/package/pujangga"><img src="https://img.shields.io/npm/v/pujangga.svg?color=cb3837" alt="npm version" /></a>
   <a href="#-quick-start"><img src="https://img.shields.io/badge/Zero--Config-Instant%20Run-emerald.svg" alt="Zero-Config" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT" /></a>
   <a href="https://nodejs.org"><img src="https://img.shields.io/badge/Node.js-%E2%89%A520-amber.svg" alt="Node >= 20" /></a>
