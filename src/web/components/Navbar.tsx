@@ -51,10 +51,16 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   return (
     <header
-      className={`sticky top-0 z-40 w-full bg-white dark:bg-night border-b border-paper-border dark:border-night-border px-6 py-3 transition-colors relative overflow-hidden ${
+      className={`sticky top-0 z-40 w-full bg-white dark:bg-night px-6 py-3 transition-colors relative overflow-hidden ${
         isZenMode ? 'pointer-events-none select-none' : ''
       }`}
     >
+      {/* Bottom Border Line (Inside header so it is covered by the veil in Hemingway Mode) */}
+      <div
+        className="absolute bottom-0 left-0 right-0 h-px bg-paper-border dark:bg-night-border pointer-events-none z-0"
+        aria-hidden="true"
+      />
+
       {/* Internal Dimming Veil in Hemingway Mode */}
       <div
         className={`absolute inset-0 bg-black pointer-events-none z-20 ${
