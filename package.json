@@ -1,15 +1,27 @@
 {
   "name": "pujangga",
   "version": "1.0.0",
-  "description": "",
+  "description": "Editorial-grade writing review surface for human-in-the-loop AI generation",
   "main": "dist/cli/index.js",
   "bin": {
     "pujangga": "./bin/pujangga"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/visualnaut/pujangga.git"
+  },
+  "homepage": "https://github.com/visualnaut/pujangga#readme",
+  "bugs": {
+    "url": "https://github.com/visualnaut/pujangga/issues"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
     "build:web": "vite build",
     "build:backend": "tsup",
     "build": "pnpm build:web && pnpm tsup",
+    "prepublishOnly": "pnpm build",
     "dev:web": "vite",
     "dev:daemon": "tsx src/daemon/daemon-entry.ts",
     "pujangga": "node ./bin/pujangga"
