@@ -114,3 +114,4 @@ When you receive `SATISFIED`:
 - `npx -y pujangga <filepath> --no-open`: Review without auto-opening browser
 - `npx -y pujangga status`: Check daemon health and active review sessions
 - `npx -y pujangga stop`: Terminate background daemon
+- `npx -y pujangga reset`: Reset entire database and session history (with confirmation prompt, or `-y` to skip)

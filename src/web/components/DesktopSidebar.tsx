@@ -35,7 +35,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
   return (
     <aside className="hidden lg:flex flex-col w-84 shrink-0 sticky top-20 gap-4">
       {/* Editorial Review & Directives Panel */}
-      <div className="bg-paper-card dark:bg-night-card border border-paper-border dark:border-night-border-strong p-5 shadow-xs transition-colors">
+      <div className="bg-paper-card dark:bg-night-card border border-paper-border dark:border-night-border-strong p-5 shadow-xs transition-colors rounded-lg">
         <div className="flex items-center justify-between pb-3 mb-3 border-b border-paper-border-light dark:border-night-border">
           <h3 className="text-sm font-bold uppercase tracking-wider text-ink-muted dark:text-night-text-muted">
             Brainstorm Session
@@ -131,7 +131,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
       {totalCommentsCount > 0 && (
         <button
           onClick={onOpenCommentHistory}
-          className="flex items-center justify-between p-3.5 bg-paper-card dark:bg-night-card border border-paper-border dark:border-night-border-strong hover:border-accent-pin/50 text-sm font-semibold text-ink-muted dark:text-night-text-muted shadow-xs transition-colors cursor-pointer"
+          className="flex items-center justify-between p-3.5 bg-paper-card dark:bg-night-card border border-paper-border dark:border-night-border-strong hover:border-accent-pin/50 text-sm font-semibold text-ink-muted dark:text-night-text-muted shadow-xs transition-colors cursor-pointer rounded-lg"
         >
           <div className="flex items-center gap-2">
             <History className="w-4 h-4 text-accent dark:text-accent-pin" />
@@ -145,7 +145,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
       {totalLockedCount > 0 && (
         <button
           onClick={onOpenLockedTexts}
-          className="flex items-center justify-between p-3.5 bg-paper-card dark:bg-night-card border border-paper-border dark:border-night-border-strong hover:border-success/50 text-sm font-semibold text-ink-muted dark:text-night-text-muted shadow-xs transition-colors cursor-pointer"
+          className="flex items-center justify-between p-3.5 bg-paper-card dark:bg-night-card border border-paper-border dark:border-night-border-strong hover:border-success/50 text-sm font-semibold text-ink-muted dark:text-night-text-muted shadow-xs transition-colors cursor-pointer rounded-lg"
         >
           <div className="flex items-center gap-2">
             <Lock className="w-4 h-4 text-success dark:text-success-icon-dark" />

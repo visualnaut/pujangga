@@ -27,6 +27,30 @@ export function getDatabasePath(): string {
   return path.join(getPujanggaDir(), 'pujangga.db');
 }
 
+export function resetDatabaseFiles(): { success: boolean; filesRemoved: string[] } {
+  const dbPath = getDatabasePath();
+  const filesRemoved: string[] = [];
+
+  const targets = [
+    dbPath,
+    `${dbPath}-wal`,
+    `${dbPath}-shm`,
+  ];
+
+  for (const f of targets) {
+    if (fs.existsSync(f)) {
+      try {
+        fs.unlinkSync(f);
+        filesRemoved.push(path.basename(f));
+      } catch (err: any) {
+        console.error(`Failed to remove ${f}:`, err?.message || err);
+      }
+    }
+  }
+
+  return { success: true, filesRemoved };
+}
+
 export class DatabaseService {
   private db: any;
 

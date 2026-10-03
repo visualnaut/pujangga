@@ -56,6 +56,7 @@ npx -y pujangga draft.md
 | `pujangga <file> --no-open` | Review session without auto-opening the browser |
 | `pujangga status` | View daemon PID, port, uptime, and active sessions |
 | `pujangga stop` | Gracefully stop the background daemon |
+| `pujangga reset` | Reset the entire database and session history (with confirmation prompt, or `-y` to skip) |
 
 ---
 

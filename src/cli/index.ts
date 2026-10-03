@@ -3,7 +3,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
 import { spawn } from 'node:child_process';
+import readline from 'node:readline/promises';
+import { stdin as input, stdout as output } from 'node:process';
 import { ensureDaemonRunning, getDaemonStatus, stopDaemon } from '../daemon/manager.js';
+import { getDatabasePath, resetDatabaseFiles } from '../daemon/db.js';
 import { RegisterSessionResponse, WaitReviewResponse } from '../shared/types.js';
 
 export function openBrowser(url: string) {
@@ -194,6 +197,62 @@ export function createCli(): Command {
       } else {
         console.log('Pujangga daemon was not running.');
       }
+    });
+
+  // Command: reset
+  program
+    .command('reset')
+    .description('Reset the entire Pujangga database and session history')
+    .option('-y, --yes', 'Skip confirmation prompt and proceed immediately')
+    .action(async (options: { yes?: boolean }) => {
+      const dbPath = getDatabasePath();
+      const status = await getDaemonStatus();
+
+      if (!options.yes) {
+        console.log(`\n========================================`);
+        console.log(`       PUJANGGA DATABASE RESET           `);
+        console.log(`========================================\n`);
+        console.log(`This operation will permanently erase all Pujangga data:`);
+        console.log(`  • Database location: ${dbPath}`);
+        console.log(`  • What will be deleted:`);
+        console.log(`    - All active and historical review sessions`);
+        console.log(`    - All revision drafts and round comparisons`);
+        console.log(`    - All inline comment pins and history`);
+        console.log(`    - All locked text segments and anchor mappings`);
+        if (status.running) {
+          console.log(`  • Daemon status: Currently RUNNING (PID ${status.pid}, Port ${status.port})`);
+          console.log(`    - The daemon will be stopped before wiping database files.`);
+        }
+        console.log(`\n⚠️  WARNING: This action is destructive and CANNOT be undone.\n`);
+
+        const rl = readline.createInterface({ input, output });
+        try {
+          const answer = await rl.question('Are you sure you want to reset the database? [y/N]: ');
+          const confirmed = answer.trim().toLowerCase() === 'y' || answer.trim().toLowerCase() === 'yes';
+          if (!confirmed) {
+            console.log('\nReset cancelled. No data was modified.\n');
+            return;
+          }
+        } finally {
+          rl.close();
+        }
+      }
+
+      console.log('\nProceeding with database reset...');
+
+      if (status.running) {
+        await stopDaemon();
+        console.log('✓ Background daemon stopped.');
+      }
+
+      const result = resetDatabaseFiles();
+      if (result.filesRemoved.length > 0) {
+        console.log(`✓ Removed database file(s): ${result.filesRemoved.join(', ')}`);
+      } else {
+        console.log('✓ Database was already clean or file did not exist.');
+      }
+
+      console.log('✓ Pujangga database reset complete. Fresh database will be created on next review.\n');
     });
 
   return program;
