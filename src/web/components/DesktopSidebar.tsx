@@ -1,5 +1,5 @@
 import React from 'react';
-import { SendHorizonal, CheckCircle2, Loader2, BookCheck, History, ArrowRight, Lock, FileText, Clock } from 'lucide-react';
+import { SendHorizonal, CheckCircle2, Loader2, BookCheck, History, Lock, FileText, Clock } from 'lucide-react';
 import { useEditorState, type Editor } from '@tiptap/react';
 import { SessionStatus } from '../../shared/types.js';
 
@@ -64,17 +64,70 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
           </span>
         </div>
 
-        {/* Live Content Telemetry */}
-        <div className="mb-4 flex items-center justify-between p-2.5 bg-paper dark:bg-night-pane border border-paper-border dark:border-night-border rounded-xl text-xs">
-          <div className="flex items-center gap-1.5 text-ink dark:text-night-text font-medium">
-            <FileText className="w-4 h-4 text-ink-muted dark:text-night-text-muted" />
-            <span>
-              {stats.words.toLocaleString()} {stats.words === 1 ? 'word' : 'words'}
-            </span>
-          </div>
-          <div className="flex items-center gap-1 text-ink-muted dark:text-night-text-muted">
-            <Clock className="w-4 h-4" />
-            <span>{stats.readingDuration}</span>
+        {/* Document Stats & Telemetry */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-ink-muted dark:text-night-text-muted mb-1.5">
+            Document Stats
+          </label>
+          <div className="p-3 bg-paper dark:bg-night-pane border border-paper-border dark:border-night-border rounded-xl space-y-2.5">
+            {/* Live Content Telemetry */}
+            <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center gap-1.5 text-ink dark:text-night-text font-medium">
+                <FileText className="w-4 h-4 text-ink-muted dark:text-night-text-muted" />
+                <span>
+                  {stats.words.toLocaleString()} {stats.words === 1 ? 'word' : 'words'}
+                </span>
+              </div>
+              <div className="flex items-center gap-1 text-ink-muted dark:text-night-text-muted">
+                <Clock className="w-4 h-4" />
+                <span>{stats.readingDuration}</span>
+              </div>
+            </div>
+
+            {/* Locked & Noted Text Buttons & Info */}
+            <div className="pt-2 border-t border-paper-border-light dark:border-night-border grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={onOpenCommentHistory}
+                className="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-paper-card dark:bg-night-card border border-paper-border dark:border-night-border-strong hover:border-accent/50 text-xs font-medium text-ink dark:text-night-text transition-colors cursor-pointer group shadow-2xs"
+                title={`View review notes history (${totalCommentsCount})`}
+              >
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <History className="w-3.5 h-3.5 text-accent dark:text-accent-pin shrink-0" />
+                  <span className="truncate">Notes</span>
+                </div>
+                <span
+                  className={`shrink-0 ml-1 px-1.5 py-0.5 rounded text-[11px] font-bold transition-colors ${
+                    totalCommentsCount > 0
+                      ? 'bg-accent-subtle dark:bg-accent-subtle-dark text-accent-text dark:text-accent-text-dark border border-accent-border dark:border-accent-border-dark'
+                      : 'bg-paper-subtle dark:bg-night-subtle text-ink-faint'
+                  }`}
+                >
+                  {totalCommentsCount}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={onOpenLockedTexts}
+                className="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-paper-card dark:bg-night-card border border-paper-border dark:border-night-border-strong hover:border-success/50 text-xs font-medium text-ink dark:text-night-text transition-colors cursor-pointer group shadow-2xs"
+                title={`View locked text segments (${totalLockedCount})`}
+              >
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <Lock className="w-3.5 h-3.5 text-success dark:text-success-icon-dark shrink-0" />
+                  <span className="truncate">Locked</span>
+                </div>
+                <span
+                  className={`shrink-0 ml-1 px-1.5 py-0.5 rounded text-[11px] font-bold transition-colors ${
+                    totalLockedCount > 0
+                      ? 'bg-success-subtle dark:bg-success-subtle-dark text-success-text dark:text-success-text-dark border border-success-border dark:border-success-border-dark'
+                      : 'bg-paper-subtle dark:bg-night-subtle text-ink-faint'
+                  }`}
+                >
+                  {totalLockedCount}
+                </span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -153,34 +206,6 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
           </button>
         </div>
       </div>
-
-      {/* Comment History Quick Access */}
-      {totalCommentsCount > 0 && (
-        <button
-          onClick={onOpenCommentHistory}
-          className="flex items-center justify-between p-3.5 bg-paper-card dark:bg-night-card border border-paper-border dark:border-night-border-strong hover:border-accent-pin/50 text-sm font-semibold text-ink-muted dark:text-night-text-muted shadow-xs transition-colors cursor-pointer rounded-lg"
-        >
-          <div className="flex items-center gap-2">
-            <History className="w-4 h-4 text-accent dark:text-accent-pin" />
-            <span>Comment History ({totalCommentsCount})</span>
-          </div>
-          <ArrowRight className="w-3.5 h-3.5" />
-        </button>
-      )}
-
-      {/* Locked Text Quick Access */}
-      {totalLockedCount > 0 && (
-        <button
-          onClick={onOpenLockedTexts}
-          className="flex items-center justify-between p-3.5 bg-paper-card dark:bg-night-card border border-paper-border dark:border-night-border-strong hover:border-success/50 text-sm font-semibold text-ink-muted dark:text-night-text-muted shadow-xs transition-colors cursor-pointer rounded-lg"
-        >
-          <div className="flex items-center gap-2">
-            <Lock className="w-4 h-4 text-success dark:text-success-icon-dark" />
-            <span>Locked Text ({totalLockedCount})</span>
-          </div>
-          <ArrowRight className="w-3.5 h-3.5" />
-        </button>
-      )}
     </aside>
   );
 };
