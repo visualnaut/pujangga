@@ -72,7 +72,7 @@ export const App: React.FC = () => {
     }
   }, [isDark]);
 
-  // Keyboard shortcut for toggling Hemingway Mode (Cmd+Shift+F) or Escape to exit
+  // Keyboard shortcut for toggling Ananta Toer Mode (Cmd+Shift+F) or Escape to exit
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'f') {
@@ -88,7 +88,7 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isZenMode, isCommentHistoryOpen, isLockedDrawerOpen, isConfirmFinalizeOpen, popoverData, lockPopoverData]);
 
-  // Deepening transition in Hemingway Mode: after 900ms, deepen overlay from 50% to 90% over 3 minutes
+  // Deepening transition in Ananta Toer Mode: after 900ms, deepen overlay from 50% to 90% over 3 minutes
   useEffect(() => {
     let timer: any = null;
     if (isZenMode) {
@@ -825,7 +825,7 @@ export const App: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-paper text-ink dark:bg-night dark:text-night-text transition-colors pb-24 lg:pb-12">
-      {/* Black Overlay in Hemingway Mode */}
+      {/* Black Overlay in Ananta Toer Mode */}
       <div
         className={`fixed inset-0 bg-black z-20 pointer-events-auto ${
           isZenMode
@@ -867,7 +867,7 @@ export const App: React.FC = () => {
         autoDismissMs={3500}
       />
 
-      {/* Main Container: Flex Row on Desktop (Canvas + Right Sidebar), Centered in Hemingway Mode */}
+      {/* Main Container: Flex Row on Desktop (Canvas + Right Sidebar), Centered in Ananta Toer Mode */}
       <div
         className={`mx-auto w-full px-4 sm:px-6 py-8 flex flex-col lg:flex-row items-start transition-all duration-300 ease-in-out relative z-30 ${
           isZenMode ? 'max-w-4xl justify-center gap-0' : 'max-w-7xl gap-6'
@@ -943,7 +943,7 @@ export const App: React.FC = () => {
           )}
         </main>
 
-        {/* Right Sidebar on Desktop Viewport with Hemingway Mode Transition */}
+        {/* Right Sidebar on Desktop Viewport with Ananta Toer Mode Transition */}
         <div
           className={`transition-all duration-300 ease-in-out shrink-0 overflow-hidden ${
             isZenMode
@@ -1034,10 +1034,10 @@ export const App: React.FC = () => {
         <button
           onClick={() => setIsZenMode(false)}
           className="flex items-center gap-2 px-4 py-2 rounded-full bg-paper-card/95 dark:bg-night-card/95 text-ink dark:text-night-text border border-paper-border dark:border-night-border-strong shadow-xl hover:shadow-2xl hover:border-accent dark:hover:border-accent-pin hover:text-accent dark:hover:text-accent-pin transition-all duration-150 cursor-pointer select-none backdrop-blur-md text-sm font-semibold group"
-          title="Exit Hemingway Mode (Esc)"
+          title="Exit Ananta Toer Mode (Esc)"
         >
           <Minimize2 className="w-3.5 h-3.5 text-accent dark:text-accent-pin transition-transform group-hover:scale-110" />
-          <span>Exit Hemingway Mode</span>
+          <span>Exit Ananta Toer Mode</span>
           <kbd className="hidden sm:inline-block ml-1 px-1.5 py-0.5 text-xs font-mono rounded bg-paper-subtle dark:bg-night-border text-ink-faint">
             Esc
           </kbd>

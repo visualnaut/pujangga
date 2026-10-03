@@ -57,13 +57,13 @@ export const Navbar: React.FC<NavbarProps> = ({
         isZenMode ? 'pointer-events-none select-none' : ''
       }`}
     >
-      {/* Bottom Border Line (Inside header so it is covered by the veil in Hemingway Mode) */}
+      {/* Bottom Border Line (Inside header so it is covered by the veil in Ananta Toer Mode) */}
       <div
         className="absolute bottom-0 left-0 right-0 h-px bg-paper-border dark:bg-night-border pointer-events-none z-0"
         aria-hidden="true"
       />
 
-      {/* Internal Dimming Veil in Hemingway Mode */}
+      {/* Internal Dimming Veil in Ananta Toer Mode */}
       <div
         className={`absolute inset-0 bg-black pointer-events-none z-20 ${
           isZenMode
@@ -149,7 +149,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           )}
 
-          {/* Hemingway Mode Toggle */}
+          {/* Ananta Toer Mode Toggle */}
           <button
             onClick={onToggleZenMode}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors cursor-pointer ${
@@ -157,17 +157,17 @@ export const Navbar: React.FC<NavbarProps> = ({
                 ? 'bg-accent text-white border-accent shadow-xs'
                 : 'bg-paper-card dark:bg-night-modal text-ink-body dark:text-night-text-muted border-paper-border dark:border-night-border-strong hover:border-accent-pin'
             }`}
-            title={isZenMode ? 'Exit Hemingway Mode (Esc)' : 'Hemingway Mode (distraction-free writing)'}
+            title={isZenMode ? 'Exit Ananta Toer Mode (Esc)' : 'Ananta Toer Mode (distraction-free writing)'}
           >
             {isZenMode ? (
               <>
                 <Minimize2 className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Exit Hemingway Mode</span>
+                <span className="hidden sm:inline">Exit Ananta Toer Mode</span>
               </>
             ) : (
               <>
                 <Maximize2 className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Hemingway Mode</span>
+                <span className="hidden sm:inline">Ananta Toer Mode</span>
               </>
             )}
           </button>
