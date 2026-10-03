@@ -94,7 +94,7 @@ export const App: React.FC = () => {
       setSnackbarData({
         title: 'Locked Text Protected',
         message: msg,
-        type: 'lock',
+        type: 'danger',
       });
     };
     window.addEventListener('pujangga:locked-text-delete-attempt', handleLockViolation);
@@ -745,7 +745,11 @@ export const App: React.FC = () => {
       await fetchSession();
       return true;
     } catch (err: any) {
-      alert(`Submission error: ${err.message}`);
+      setSnackbarData({
+        title: 'Submission Error',
+        message: err.message || 'Failed to submit review',
+        type: 'danger',
+      });
       return false;
     } finally {
       setIsSubmitting(false);

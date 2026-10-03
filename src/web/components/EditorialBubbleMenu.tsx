@@ -154,13 +154,13 @@ export const EditorialBubbleMenu: React.FC<EditorialBubbleMenuProps> = ({
   const btnClass = (isActive: boolean = false) =>
     `p-1.5 rounded-md transition-all cursor-pointer flex items-center justify-center ${
       isActive
-        ? 'bg-white/20 dark:bg-accent-subtle-dark text-accent-bright dark:text-accent-pin font-bold shadow-xs ring ring-white/15 dark:ring-accent-border-dark'
-        : 'text-white/80 dark:text-night-text-muted hover:text-white dark:hover:text-night-text hover:bg-white/10 dark:hover:bg-night-hover'
+        ? 'bg-accent-subtle dark:bg-accent-subtle-dark text-accent dark:text-accent-pin font-bold shadow-xs ring-1 ring-accent-border dark:ring-accent-border-dark'
+        : 'text-ink-secondary dark:text-night-text-muted hover:text-ink dark:hover:text-night-text hover:bg-paper-hover dark:hover:bg-night-hover'
     }`;
 
   return (
     <div
-      className="fixed z-60 transform -translate-x-1/2 -translate-y-full mb-2.5 bg-ink/95 dark:bg-night-card text-white dark:text-night-text p-1.5 rounded-xl shadow-2xl flex items-center gap-1 text-sm font-medium select-none border border-black/20 dark:border-night-border-strong backdrop-blur-md max-w-[calc(100vw-32px)] overflow-x-auto scrollbar-none animate-in fade-in zoom-in-95 duration-150"
+      className="fixed z-60 transform -translate-x-1/2 -translate-y-full mb-2.5 bg-paper-card/95 dark:bg-night-card text-ink dark:text-night-text p-1.5 rounded-xl shadow-xl dark:shadow-2xl flex items-center gap-1 text-sm font-medium select-none border border-paper-border dark:border-night-border-strong backdrop-blur-md max-w-[calc(100vw-32px)] overflow-x-auto scrollbar-none animate-in fade-in zoom-in-95 duration-150"
       style={{
         top: Math.max(70, menuState.position.top - 8),
         left: Math.max(220, Math.min(window.innerWidth - 220, menuState.position.left)),
@@ -200,7 +200,7 @@ export const EditorialBubbleMenu: React.FC<EditorialBubbleMenuProps> = ({
         <Heading4 className="w-3.5 h-3.5" />
       </button>
 
-      <div className="w-[1px] h-4 bg-white/20 dark:bg-night-border mx-1 shrink-0" />
+      <div className="w-[1px] h-4 bg-paper-border dark:bg-night-border mx-1 shrink-0" />
 
       {/* Inline Marks: Bold, Italic, Underline, Strike, Code, Link */}
       <button
@@ -252,7 +252,7 @@ export const EditorialBubbleMenu: React.FC<EditorialBubbleMenuProps> = ({
         <LinkIcon className="w-3.5 h-3.5" />
       </button>
 
-      <div className="w-[1px] h-4 bg-white/20 dark:bg-night-border mx-1 shrink-0" />
+      <div className="w-[1px] h-4 bg-paper-border dark:bg-night-border mx-1 shrink-0" />
 
       {/* Block Elements: Bullet List, Ordered List, Blockquote, Code Block */}
       <button
@@ -288,22 +288,22 @@ export const EditorialBubbleMenu: React.FC<EditorialBubbleMenuProps> = ({
         <Code2 className="w-3.5 h-3.5" />
       </button>
 
-      <div className="w-[1px] h-4 bg-white/20 dark:bg-night-border mx-1 shrink-0" />
+      <div className="w-[1px] h-4 bg-paper-border dark:bg-night-border mx-1 shrink-0" />
 
       {/* Actions: Add Note, Lock Text */}
       <button
         type="button"
         onClick={onAddComment}
-        className="flex items-center gap-1 px-2 py-1 rounded-xl text-xs font-semibold hover:bg-white/10 dark:hover:bg-night-hover transition-colors cursor-pointer text-accent-bright dark:text-accent-pin shrink-0"
+        className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold hover:bg-accent-subtle dark:hover:bg-accent-subtle-dark text-accent dark:text-accent-pin transition-colors cursor-pointer shrink-0"
       >
         <MessageSquarePlus className="w-3.5 h-3.5" />
         <span>Add Note</span>
       </button>
-      <div className="w-[1px] h-4 bg-white/20 dark:bg-night-border mx-0.5 shrink-0" />
+      <div className="w-[1px] h-4 bg-paper-border dark:bg-night-border mx-0.5 shrink-0" />
       <button
         type="button"
         onClick={onLockText}
-        className="flex items-center gap-1 px-2 py-1 rounded-xl text-xs font-semibold hover:bg-white/10 dark:hover:bg-night-hover transition-colors cursor-pointer text-success-text-dark dark:text-success-icon-dark shrink-0"
+        className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold hover:bg-success-subtle dark:hover:bg-success-subtle-dark text-success dark:text-success-icon-dark transition-colors cursor-pointer shrink-0"
       >
         <Lock className="w-3.5 h-3.5" />
         <span>Lock Text</span>

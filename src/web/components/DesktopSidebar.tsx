@@ -119,12 +119,6 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
             <span>Finalize Draft</span>
           </button>
         </div>
-
-        <div className="mt-3 pt-3 border-t border-paper-border-light dark:border-night-border text-center">
-          <span className="text-sm text-ink-faint">
-            Shortcut: <kbd className="px-1.5 py-0.5 rounded bg-paper dark:bg-night-input border border-paper-border dark:border-night-border-strong text-sm">⌘ + ↵</kbd> to submit
-          </span>
-        </div>
       </div>
 
       {/* Comment History Quick Access */}
