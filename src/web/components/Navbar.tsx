@@ -9,6 +9,7 @@ import {
   Maximize2,
   Minimize2,
   Lock,
+  Settings,
 } from 'lucide-react';
 import { SessionStatus } from '../../shared/types.js';
 
@@ -30,6 +31,9 @@ interface NavbarProps {
   isDeepZen?: boolean;
   hasZenStarted?: boolean;
   onToggleZenMode: () => void;
+  onOpenSettings?: () => void;
+  isSettingsOpen?: boolean;
+  settingsButtonRef?: React.RefObject<HTMLButtonElement | null>;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -50,6 +54,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   isDeepZen = false,
   hasZenStarted = false,
   onToggleZenMode,
+  onOpenSettings,
+  isSettingsOpen = false,
+  settingsButtonRef,
 }) => {
   return (
     <header
@@ -172,13 +179,21 @@ export const Navbar: React.FC<NavbarProps> = ({
             )}
           </button>
 
-          <button
-            onClick={onToggleTheme}
-            className="p-2 rounded-lg text-ink-muted dark:text-night-text-muted hover:bg-paper-subtle dark:hover:bg-night-subtle transition-colors cursor-pointer"
-            aria-label="Toggle theme"
-          >
-            {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </button>
+          {onOpenSettings && (
+            <button
+              ref={settingsButtonRef}
+              onClick={onOpenSettings}
+              className={`p-2 rounded-lg transition-colors cursor-pointer ${
+                isSettingsOpen
+                  ? 'bg-paper-subtle dark:bg-night-subtle text-accent dark:text-accent-pin'
+                  : 'text-ink-muted dark:text-night-text-muted hover:bg-paper-subtle dark:hover:bg-night-subtle'
+              }`}
+              aria-label="Preferences & Settings"
+              title="Preferences & Settings"
+            >
+              <Settings className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
     </header>
