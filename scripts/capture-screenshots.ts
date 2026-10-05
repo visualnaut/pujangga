@@ -1,7 +1,39 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { chromium } from 'playwright';
+import sharp from 'sharp';
 import { ensureDaemonRunning, stopDaemon } from '../src/daemon/manager.js';
+
+async function optimizePng(filePath: string, maxWidth = 1600): Promise<void> {
+  if (!fs.existsSync(filePath)) return;
+  const original = fs.readFileSync(filePath);
+  const metadata = await sharp(original).metadata();
+
+  let pipeline = sharp(original);
+  if (metadata.width && metadata.width > maxWidth) {
+    pipeline = pipeline.resize({ width: maxWidth });
+  }
+
+  const optimized = await pipeline
+    .png({
+      palette: true,
+      effort: 9,
+      quality: 90,
+    })
+    .toBuffer();
+
+  fs.writeFileSync(filePath, optimized);
+  const ratio = Math.round((optimized.length / original.length) * 100);
+  console.log(
+    `🗜️  Optimized ${path.basename(filePath)}: ${(original.length / 1024).toFixed(0)}KB → ${(optimized.length / 1024).toFixed(0)}KB (${ratio}%)`
+  );
+
+  // Sync to dist/web if directory exists
+  const distPath = path.resolve('dist/web', path.basename(filePath));
+  if (fs.existsSync(path.dirname(distPath))) {
+    fs.copyFileSync(filePath, distPath);
+  }
+}
 
 async function main() {
   console.log('🚀 Starting screenshot capture automation...');
@@ -94,11 +126,32 @@ When these principles converge, the machine ceases to be a noisy replacement and
   await page.screenshot({ path: screenshot1Path });
   console.log(`📸 Saved Review Canvas screenshot to ${screenshot1Path}`);
 
-  // Screenshot 2: Ananta Toer Mode
+  // Screenshot 2: Preferences & Settings Popover
+  console.log('⚙️ Opening Preferences & Settings Popover...');
+  const settingsButton = page.locator('button[aria-label="Preferences & Settings"]').first();
+  if (await settingsButton.isVisible()) {
+    await settingsButton.click();
+    await page.waitForTimeout(600);
+    // Type a sample preview text into the preview input
+    const previewInput = page.locator('input[placeholder*="preview acoustic switch"]').first();
+    if (await previewInput.isVisible()) {
+      await previewInput.fill('Previewing Holy Panda tactile key sounds...');
+      await page.waitForTimeout(400);
+    }
+    const screenshotSettingsPath = path.resolve('public/screenshot-settings.png');
+    await page.screenshot({ path: screenshotSettingsPath });
+    console.log(`📸 Saved Preferences & Settings screenshot to ${screenshotSettingsPath}`);
+
+    // Close settings popover
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(600);
+  }
+
+  // Screenshot 3: Ananta Toer Mode (with floating Audio On & Exit controls)
   console.log('🧘 Activating Ananta Toer Mode...');
   const zenButton = page.locator('button[title*="Ananta Toer Mode"]').first();
   await zenButton.click();
-  await page.waitForTimeout(1200);
+  await page.waitForTimeout(1400);
 
   const screenshot2Path = path.resolve('public/screenshot-focus.png');
   await page.screenshot({ path: screenshot2Path });
@@ -143,7 +196,7 @@ When these principles converge, the machine ceases to be a noisy replacement and
   await page.reload({ waitUntil: 'networkidle' });
   await page.waitForTimeout(1500);
 
-  // Screenshot 3: Revision Diff Viewer
+  // Screenshot 4: Revision Diff Viewer
   console.log('🔍 Opening Revision Diff Viewer...');
   const diffButton = page.locator('button:has-text("Side-by-Side Diff")').first();
   if (await diffButton.isVisible()) {
@@ -157,24 +210,45 @@ When these principles converge, the machine ceases to be a noisy replacement and
     await page.waitForTimeout(600);
   }
 
-  // Screenshot 4: Dark / Night Mode Canvas
+  // Screenshot 5: Dark / Night Mode Canvas
   console.log('🌙 Capturing Dark Mode Canvas...');
-  const themeToggle = page.locator('button[aria-label="Toggle theme"]').first();
-  if (await themeToggle.isVisible()) {
-    await themeToggle.click();
-    await page.waitForTimeout(800);
-    const screenshot4Path = path.resolve('public/screenshot-dark.png');
-    await page.screenshot({ path: screenshot4Path });
-    console.log(`📸 Saved Dark Mode screenshot to ${screenshot4Path}`);
+  if (await settingsButton.isVisible()) {
+    await settingsButton.click();
+    await page.waitForTimeout(600);
+    const nightButton = page.locator('button:has-text("Night (Dark)")').first();
+    if (await nightButton.isVisible()) {
+      await nightButton.click();
+      await page.waitForTimeout(500);
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(800);
+      const screenshot4Path = path.resolve('public/screenshot-dark.png');
+      await page.screenshot({ path: screenshot4Path });
+      console.log(`📸 Saved Dark Mode screenshot to ${screenshot4Path}`);
+    }
   }
 
-  // Cleanup
+  // Cleanup browser and temp files
   await browser.close();
   if (fs.existsSync(tempFilePath)) {
     fs.unlinkSync(tempFilePath);
   }
   await stopDaemon();
-  console.log('✨ All screenshots captured successfully!');
+
+  // Optimize all screenshots with Sharp
+  console.log('🗜️  Optimizing all screenshots for web...');
+  const screenshotsToOptimize = [
+    'public/screenshot-review.png',
+    'public/screenshot-settings.png',
+    'public/screenshot-focus.png',
+    'public/screenshot-diff.png',
+    'public/screenshot-dark.png',
+  ];
+
+  for (const sPath of screenshotsToOptimize) {
+    await optimizePng(path.resolve(sPath), 1600);
+  }
+
+  console.log('✨ All screenshots captured and optimized successfully!');
 }
 
 main().catch((err) => {
