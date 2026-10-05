@@ -24,6 +24,7 @@
     "prepublishOnly": "pnpm build",
     "dev:web": "vite",
     "dev:daemon": "tsx src/daemon/daemon-entry.ts",
+    "screenshots": "tsx scripts/capture-screenshots.ts",
     "pujangga": "node ./bin/pujangga"
   },
   "keywords": [
@@ -71,6 +72,7 @@
     "@types/ws": "^8.18.2",
     "@vitejs/plugin-react": "^6.1.1",
     "playwright": "^1.63.0",
+    "sharp": "^0.35.5",
     "tailwindcss": "^4.3.3",
     "tsup": "^8.5.1",
     "tsx": "^4.23.15",
