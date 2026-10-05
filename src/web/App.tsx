@@ -17,8 +17,10 @@ import { LockPopover, LockPopoverData } from './components/LockPopover.js';
 import { ConfirmFinalizeModal } from './components/ConfirmFinalizeModal.js';
 import { EditorialBubbleMenu } from './components/EditorialBubbleMenu.js';
 import { Snackbar, SnackbarData } from './components/Snackbar.js';
+import { SettingsPopover } from './components/SettingsPopover.js';
+import { audioEngine, SwitchProfileId } from './services/audioEngine.js';
 import { SessionDetails, InlineComment, LockedText, ReviewStatus } from '../shared/types.js';
-import { CheckCircle2, Loader2, Minimize2 } from 'lucide-react';
+import { CheckCircle2, Loader2, Minimize2, Volume2, VolumeX } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [details, setDetails] = useState<SessionDetails | null>(null);
@@ -41,6 +43,12 @@ export const App: React.FC = () => {
     );
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Settings & Ananta Toer Audio state
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const settingsButtonRef = useRef<HTMLButtonElement>(null);
+  const [currentSwitch, setCurrentSwitch] = useState<SwitchProfileId>(() => audioEngine.getSwitch());
+  const [isAudioMuted, setIsAudioMuted] = useState<boolean>(() => audioEngine.getIsMuted());
 
   // Comments state
   const [localComments, setLocalComments] = useState<InlineComment[]>([]);
@@ -72,26 +80,57 @@ export const App: React.FC = () => {
     }
   }, [isDark]);
 
-  // Keyboard shortcut for toggling Ananta Toer Mode (Cmd+Shift+F) or Escape to exit
+  // Preload switch audio samples on switch change or initial mount
+  useEffect(() => {
+    audioEngine.preloadSwitch(currentSwitch);
+  }, [currentSwitch]);
+
+  // Keyboard shortcut for toggling Ananta Toer Mode (Cmd+Shift+F), Mute Audio (Alt+M), or Escape
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'f') {
+      // Toggle Ananta Toer Mode (Cmd/Ctrl + Shift + F)
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && (e.code === 'KeyF' || e.key.toLowerCase() === 'f')) {
         e.preventDefault();
-        setIsZenMode((prev) => !prev);
-      } else if (e.key === 'Escape' && isZenMode) {
-        if (!isCommentHistoryOpen && !isLockedDrawerOpen && !isConfirmFinalizeOpen && !popoverData && !lockPopoverData) {
-          setIsZenMode(false);
+        setIsZenMode((prev) => {
+          if (!prev) setIsSettingsOpen(false);
+          return !prev;
+        });
+      }
+      // Toggle Typing Audio Mute (Alt/Option + M on macOS / Windows / Linux)
+      // On macOS, Option+M emits e.key = 'µ' and e.code = 'KeyM'
+      else if (e.altKey && (e.code === 'KeyM' || e.key.toLowerCase() === 'm' || e.key === 'µ')) {
+        e.preventDefault();
+        e.stopPropagation();
+        const next = audioEngine.toggleMute();
+        setIsAudioMuted(next);
+        setSnackbarData({
+          title: next ? 'Typing Audio Muted' : 'Typing Audio Active',
+          message: next ? 'Muted mechanical key sound (⌥M)' : 'Resumed mechanical key sound (⌥M)',
+          type: 'info',
+        });
+      }
+      // Escape to close open overlays or exit Ananta Toer Mode
+      else if (e.key === 'Escape') {
+        if (isSettingsOpen) {
+          setIsSettingsOpen(false);
+          return;
+        }
+        if (isZenMode) {
+          if (!isCommentHistoryOpen && !isLockedDrawerOpen && !isConfirmFinalizeOpen && !popoverData && !lockPopoverData) {
+            setIsZenMode(false);
+          }
         }
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isZenMode, isCommentHistoryOpen, isLockedDrawerOpen, isConfirmFinalizeOpen, popoverData, lockPopoverData]);
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [isZenMode, isCommentHistoryOpen, isLockedDrawerOpen, isConfirmFinalizeOpen, popoverData, lockPopoverData, isSettingsOpen, currentSwitch]);
 
   // Deepening transition in Ananta Toer Mode: after 900ms, deepen overlay from 50% to 90% over 3 minutes
   useEffect(() => {
     let timer: any = null;
     if (isZenMode) {
+      setIsSettingsOpen(false);
       setHasZenStarted(true);
       timer = setTimeout(() => {
         setIsDeepZen(true);
@@ -858,6 +897,28 @@ export const App: React.FC = () => {
         isDeepZen={isDeepZen}
         hasZenStarted={hasZenStarted}
         onToggleZenMode={() => setIsZenMode((v) => !v)}
+        onOpenSettings={() => setIsSettingsOpen((v) => !v)}
+        isSettingsOpen={isSettingsOpen}
+        settingsButtonRef={settingsButtonRef}
+      />
+
+      {/* Settings Popover */}
+      <SettingsPopover
+        isOpen={isSettingsOpen && !isZenMode}
+        onClose={() => setIsSettingsOpen(false)}
+        isDark={isDark}
+        onToggleTheme={() => setIsDark((v) => !v)}
+        currentSwitch={currentSwitch}
+        onSelectSwitch={(id) => {
+          setCurrentSwitch(id);
+          audioEngine.setSwitch(id);
+        }}
+        isAudioMuted={isAudioMuted}
+        onToggleAudioMute={() => {
+          const next = audioEngine.toggleMute();
+          setIsAudioMuted(next);
+        }}
+        anchorRef={settingsButtonRef}
       />
 
       {/* Floating Snackbar for Locked Text Protection & Revision Warnings */}
@@ -936,7 +997,19 @@ export const App: React.FC = () => {
             />
           ) : (
             <div className="paper-surface relative overflow-hidden bg-paper-card dark:bg-night-card border border-paper-border dark:border-night-border-strong shadow-xl transition-colors p-6 sm:p-10 md:p-14">
-              <div className="relative z-10">
+              <div
+                className="relative z-10"
+                onKeyDown={(e) => {
+                  if (isZenMode && !isAudioMuted && !e.repeat) {
+                    audioEngine.playPress(e.code);
+                  }
+                }}
+                onKeyUp={(e) => {
+                  if (isZenMode && !isAudioMuted) {
+                    audioEngine.playRelease(e.code);
+                  }
+                }}
+              >
                 <EditorContent editor={editor} />
               </div>
             </div>
@@ -1021,9 +1094,9 @@ export const App: React.FC = () => {
         isSubmitting={isSubmitting}
       />
 
-      {/* Floating Exit Zen Mode Button on Bottom Center of Editor */}
+      {/* Floating Ananta Toer Mode Controls on Bottom Center of Editor */}
       <div
-        className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 ${
+        className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 ${
           hasZenStarted ? 'transition-all duration-300 ease-out' : ''
         } ${
           isZenMode
@@ -1031,6 +1104,36 @@ export const App: React.FC = () => {
             : 'opacity-0 translate-y-4 scale-95 pointer-events-none'
         }`}
       >
+        {/* Mute/Unmute Toggle Button */}
+        <button
+          onClick={() => {
+            const next = audioEngine.toggleMute();
+            setIsAudioMuted(next);
+          }}
+          className={`flex items-center gap-2 px-3.5 py-2 rounded-full border shadow-xl transition-all duration-150 cursor-pointer select-none backdrop-blur-md text-sm font-semibold group ${
+            !isAudioMuted
+              ? 'bg-paper-card/95 dark:bg-night-card/95 text-ink dark:text-night-text border-paper-border dark:border-night-border-strong hover:border-accent dark:hover:border-accent-pin hover:text-accent dark:hover:text-accent-pin'
+              : 'bg-paper-subtle/95 dark:bg-night-subtle/95 text-ink-faint dark:text-night-text-faint border-paper-border dark:border-night-border-strong hover:text-ink dark:hover:text-night-text'
+          }`}
+          title={isAudioMuted ? 'Unmute Typing Audio (Alt+M)' : 'Mute Typing Audio (Alt+M)'}
+        >
+          {!isAudioMuted ? (
+            <>
+              <Volume2 className="w-3.5 h-3.5 text-accent dark:text-accent-pin transition-transform group-hover:scale-110" />
+              <span>Audio On</span>
+            </>
+          ) : (
+            <>
+              <VolumeX className="w-3.5 h-3.5 text-ink-faint transition-transform group-hover:scale-110" />
+              <span>Muted</span>
+            </>
+          )}
+          <kbd className="hidden sm:inline-block ml-1 px-1.5 py-0.5 text-xs font-mono rounded bg-paper-subtle dark:bg-night-border text-ink-faint">
+            Alt+M
+          </kbd>
+        </button>
+
+        {/* Exit Ananta Toer Mode Button */}
         <button
           onClick={() => setIsZenMode(false)}
           className="flex items-center gap-2 px-4 py-2 rounded-full bg-paper-card/95 dark:bg-night-card/95 text-ink dark:text-night-text border border-paper-border dark:border-night-border-strong shadow-xl hover:shadow-2xl hover:border-accent dark:hover:border-accent-pin hover:text-accent dark:hover:text-accent-pin transition-all duration-150 cursor-pointer select-none backdrop-blur-md text-sm font-semibold group"
