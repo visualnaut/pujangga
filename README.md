@@ -46,8 +46,8 @@ Select text you want preserved and click **Lock**. Locked segments are protected
 ### ✍️ In-Place Editorial WYSIWYG
 Directly polish typos, rewrite sentences, or reformat headings inside the rich-text editor (built on ProseMirror & Tiptap). When you submit your review, your direct edits are automatically merged into the target file on disk.
 
-### 🧘 Ananta Toer Mode (Deep Focus)
-Press <kbd>Cmd</kbd> + <kbd>Shift</kbd> + <kbd>F</kbd> to enter **Ananta Toer Mode** — a distraction-free writing sanctuary named after Indonesian literary master Pramoedya Ananta Toer. The sidebar collapses, the writing canvas centers, and an ambient background veil smoothly deepens from 50% to 90% opacity over 3 minutes.
+### 🧘 Ananta Toer Mode (Deep Focus & Tactile Audio)
+Press <kbd>Cmd</kbd> + <kbd>Shift</kbd> + <kbd>F</kbd> to enter **Ananta Toer Mode** — a distraction-free writing sanctuary named after Indonesian literary master Pramoedya Ananta Toer. The sidebar collapses, the writing canvas centers, and an ambient background veil smoothly deepens from 50% to 90% opacity over 3 minutes. Authentic physical mechanical key sound (NovelKeys Cream, Holy Panda, IBM Buckling Spring, Kailh Box Navy, or Topre) plays with each keystroke to provide tactile acoustic rhythm. Easily customize switches or preview sounds in the unified Settings box, or hit <kbd>Alt</kbd>+<kbd>M</kbd> to mute anytime.
 
 <p align="center">
   <img src="public/screenshot-focus.png" alt="Ananta Toer Mode" width="100%" />
@@ -162,6 +162,7 @@ sequenceDiagram
 | Shortcut | Action |
 | :--- | :--- |
 | <kbd>Cmd</kbd> / <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>F</kbd> | Toggle Ananta Toer Mode (distraction-free focus) |
+| <kbd>Alt</kbd> / <kbd>Option</kbd> + <kbd>M</kbd> | Toggle Ananta Toer typing audio mute |
 | <kbd>Esc</kbd> | Exit Ananta Toer Mode / Close active drawer or modal |
 | <kbd>Cmd</kbd> / <kbd>Ctrl</kbd> + <kbd>Enter</kbd> | Submit revision request from directive input |
 | <kbd>Cmd</kbd> / <kbd>Ctrl</kbd> + <kbd>Z</kbd> | Undo text edits in the editor |
@@ -174,6 +175,12 @@ sequenceDiagram
 - **Locked Text Protection:** Locked passages cannot be deleted via Backspace, Cut (<kbd>Cmd</kbd>+<kbd>X</kbd>), or Select-All (<kbd>Cmd</kbd>+<kbd>A</kbd> + Delete). A warning banner alerts you to unlock the segment first.
 - **Undo/Redo History Immunity:** Metadata actions (locking text or adding review notes) do not pollute the text undo/redo stack. Pressing <kbd>Cmd</kbd>+<kbd>Z</kbd> only reverts writing edits, leaving lock marks and comment pins intact.
 - **Empty Revision Guard:** Prevents accidental revision submissions when no inline notes, locked text directives, or overall comments have been provided.
+
+---
+
+## 🙏 Acknowledgements
+
+- **[kbsim (Mechanical Keyboard Simulator)](https://github.com/tplai/kbsim)** by [Thomas Lai (@tplai)](https://github.com/tplai): Authentic mechanical keyswitch acoustic recordings and key sound mapping reference, licensed under the MIT License.
 
 ---
 
