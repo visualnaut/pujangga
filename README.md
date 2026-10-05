@@ -47,10 +47,21 @@ Select text you want preserved and click **Lock**. Locked segments are protected
 Directly polish typos, rewrite sentences, or reformat headings inside the rich-text editor (built on ProseMirror & Tiptap). When you submit your review, your direct edits are automatically merged into the target file on disk.
 
 ### 🧘 Ananta Toer Mode (Deep Focus & Tactile Audio)
-Press <kbd>Cmd</kbd> + <kbd>Shift</kbd> + <kbd>F</kbd> to enter **Ananta Toer Mode** — a distraction-free writing sanctuary named after Indonesian literary master Pramoedya Ananta Toer. The sidebar collapses, the writing canvas centers, and an ambient background veil smoothly deepens from 50% to 90% opacity over 3 minutes. Authentic physical mechanical key sound (NovelKeys Cream, Holy Panda, IBM Buckling Spring, Kailh Box Navy, or Topre) plays with each keystroke to provide tactile acoustic rhythm. Easily customize switches or preview sounds in the unified Settings box, or hit <kbd>Alt</kbd>+<kbd>M</kbd> to mute anytime.
+Press <kbd>Cmd</kbd> + <kbd>Shift</kbd> + <kbd>F</kbd> to enter **Ananta Toer Mode** — a distraction-free writing sanctuary named after Indonesian literary master Pramoedya Ananta Toer. The sidebar collapses, the writing canvas centers, and an ambient background veil smoothly deepens from 50% to 90% opacity over 3 minutes. Authentic physical mechanical key sound (NovelKeys Cream, Holy Panda, IBM Buckling Spring, Kailh Box Navy, or Topre) plays with each keystroke to provide tactile acoustic rhythm. A floating control bar at the bottom provides an instant **Audio On / Muted** toggle (<kbd>Alt</kbd> / <kbd>Option</kbd> + <kbd>M</kbd>) right beside **Exit Ananta Toer Mode** (<kbd>Esc</kbd>).
 
 <p align="center">
-  <img src="public/screenshot-focus.png" alt="Ananta Toer Mode" width="100%" />
+  <img src="public/screenshot-focus.png" alt="Ananta Toer Mode with Tactile Audio Controls" width="100%" />
+</p>
+
+### ⚙️ Preferences & Acoustic Settings
+Customize your review canvas and typing acoustics via the unified Settings panel in the Navbar:
+- **Curated Switch Profiles:** Audition and select between 5 distinct physical switch acoustics: NovelKeys Cream (Linear), Holy Panda (Tactile), IBM Buckling Spring (Vintage Clicky), Kailh Box Navy (Clickbar), or Topre (Capacitive).
+- **Interactive Live Sound Preview:** Type directly inside the test input box to audition mechanical switches before entering focus mode.
+- **Unified Appearance Controls:** Seamlessly switch between **Paper** (light) and **Night** (dark) palettes without leaving your review flow.
+- **Instant Mute Controls:** Toggle typing audio globally or on the fly with <kbd>Alt</kbd> / <kbd>Option</kbd> + <kbd>M</kbd>.
+
+<p align="center">
+  <img src="public/screenshot-settings.png" alt="Pujangga Preferences & Acoustic Settings" width="100%" />
 </p>
 
 ### 🔄 Visual Revision Diffing
