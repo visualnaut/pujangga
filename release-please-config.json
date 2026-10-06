@@ -6,7 +6,8 @@
       "package-name": "pujangga",
       "changelog-path": "CHANGELOG.md",
       "bump-minor-pre-major": false,
-      "bump-patch-for-minor-pre-major": false
+      "bump-patch-for-minor-pre-major": false,
+      "include-component-in-tag": false
     }
   }
 }
