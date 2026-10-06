@@ -4,6 +4,12 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      force_publish:
+        description: 'Publish current package version to npm'
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -21,19 +27,19 @@ jobs:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
-      # The following steps only run when a release PR has been merged into main
+      # The following steps run when a release PR has been merged OR manually dispatched
       - name: Checkout repository
-        if: ${{ steps.release.outputs.release_created }}
+        if: ${{ steps.release.outputs.release_created || inputs.force_publish }}
         uses: actions/checkout@v4
 
       - name: Install pnpm
-        if: ${{ steps.release.outputs.release_created }}
+        if: ${{ steps.release.outputs.release_created || inputs.force_publish }}
         uses: pnpm/action-setup@v4
         with:
           version: 10
 
       - name: Setup Node.js
-        if: ${{ steps.release.outputs.release_created }}
+        if: ${{ steps.release.outputs.release_created || inputs.force_publish }}
         uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -41,14 +47,18 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
-        if: ${{ steps.release.outputs.release_created }}
+        if: ${{ steps.release.outputs.release_created || inputs.force_publish }}
         run: pnpm install --frozen-lockfile
 
       - name: Build
-        if: ${{ steps.release.outputs.release_created }}
+        if: ${{ steps.release.outputs.release_created || inputs.force_publish }}
         run: pnpm build
+
+      - name: Upgrade npm to latest for Trusted Publishing OIDC
+        if: ${{ steps.release.outputs.release_created || inputs.force_publish }}
+        run: npm install -g npm@latest
 
       # Publishes to NPM via Trusted Publishing (OIDC + Provenance)
       - name: Publish to NPM
-        if: ${{ steps.release.outputs.release_created }}
-        run: pnpm publish --provenance --access public --no-git-checks
+        if: ${{ steps.release.outputs.release_created || inputs.force_publish }}
+        run: npm publish --provenance --access public
