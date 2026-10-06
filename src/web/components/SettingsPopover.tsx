@@ -41,6 +41,18 @@ export const SettingsPopover: React.FC<SettingsPopoverProps> = ({
   const popoverRef = useRef<HTMLDivElement>(null);
   const [previewText, setPreviewText] = useState('');
 
+  // Clear preview text when settings is closed
+  useEffect(() => {
+    if (!isOpen) {
+      setPreviewText('');
+    }
+  }, [isOpen]);
+
+  const handleClose = () => {
+    setPreviewText('');
+    onClose();
+  };
+
   // Close on outside click
   useEffect(() => {
     if (!isOpen) return;
@@ -52,7 +64,7 @@ export const SettingsPopover: React.FC<SettingsPopoverProps> = ({
         anchorRef.current &&
         !anchorRef.current.contains(target)
       ) {
-        onClose();
+        handleClose();
       }
     };
     const timer = setTimeout(() => {
@@ -69,7 +81,7 @@ export const SettingsPopover: React.FC<SettingsPopoverProps> = ({
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onClose();
+        handleClose();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -101,7 +113,7 @@ export const SettingsPopover: React.FC<SettingsPopoverProps> = ({
           </h2>
         </div>
         <button
-          onClick={onClose}
+          onClick={handleClose}
           className="p-1.5 rounded-lg text-ink-muted dark:text-night-text-muted hover:bg-paper-subtle dark:hover:bg-night-subtle transition-colors cursor-pointer"
           title="Close Settings (Esc)"
         >
