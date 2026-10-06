@@ -24,6 +24,7 @@
     "prepublishOnly": "pnpm build",
     "dev:web": "vite",
     "dev:daemon": "tsx src/daemon/daemon-entry.ts",
+    "test": "tsx tests/audio-engine-test.ts",
     "pujangga": "node ./bin/pujangga"
   },
   "keywords": [
