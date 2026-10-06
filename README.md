@@ -43,6 +43,10 @@ Highlight any phrase, clause, or paragraph to attach an inline critique pin (`�
 ### 🔒 Contextual Text Locking
 Select text you want preserved and click **Lock**. Locked segments are protected against deletion in the editor and transmitted to the agent as strict immutable directives, preventing agents from altering approved passages across subsequent revision rounds.
 
+<p align="center">
+  <img src="public/screenshot-pins-and-locks.png" alt="Inline Comment Pins & Contextual Text Locking" width="100%" />
+</p>
+
 ### ✍️ In-Place Editorial WYSIWYG
 Directly polish typos, rewrite sentences, or reformat headings inside the rich-text editor (built on ProseMirror & Tiptap). When you submit your review, your direct edits are automatically merged into the target file on disk.
 
