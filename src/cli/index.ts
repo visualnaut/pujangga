@@ -139,7 +139,7 @@ export function createCli(): Command {
   program
     .name('pujangga')
     .description('Editorial writing review surface for AI agents and human editors')
-    .version('1.0.0')
+    .version('1.0.1')
     .argument('[file]', 'Draft markdown file to review')
     .option('--no-open', 'Do not automatically open the browser')
     .action(async (file?: string, options?: { open?: boolean }) => {

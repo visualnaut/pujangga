@@ -264,7 +264,7 @@ async function handleReview(file, options) {
 }
 function createCli() {
   const program = new Command();
-  program.name("pujangga").description("Editorial writing review surface for AI agents and human editors").version("1.0.0").argument("[file]", "Draft markdown file to review").option("--no-open", "Do not automatically open the browser").action(async (file, options) => {
+  program.name("pujangga").description("Editorial writing review surface for AI agents and human editors").version("1.0.1").argument("[file]", "Draft markdown file to review").option("--no-open", "Do not automatically open the browser").action(async (file, options) => {
     if (file) {
       await handleReview(file, options || {});
     } else {

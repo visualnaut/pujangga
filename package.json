@@ -1,6 +1,6 @@
 {
   "name": "pujangga",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Editorial-grade writing review surface for human-in-the-loop AI generation",
   "main": "dist/cli/index.js",
   "bin": {
