@@ -403,6 +403,89 @@ export const App: React.FC = () => {
     []
   );
 
+  // Helper to re-apply comment marks across the document for known comments
+  const applyCommentsToEditor = useCallback(
+    (currentEditor: any, commentsList: InlineComment[]) => {
+      if (!currentEditor || !commentsList || commentsList.length === 0) return;
+      const { state, view } = currentEditor;
+      if (!state || !view) return;
+
+      const commentMarkType = state.schema.marks.comment;
+      if (!commentMarkType) return;
+
+      const { tr } = state;
+      tr.setMeta('allowCommentEdit', true);
+      tr.setMeta('addToHistory', false);
+      closeHistory(tr);
+      let changed = false;
+
+      for (const comment of commentsList) {
+        if (comment.status === 'resolved') continue;
+        const targetText = comment.anchorText.trim();
+        if (!targetText) continue;
+
+        let alreadyMarked = false;
+        tr.doc.descendants((node: any) => {
+          if (node.isText && node.marks) {
+            if (node.marks.some((m: any) => m.type === commentMarkType && m.attrs.commentId === comment.id)) {
+              alreadyMarked = true;
+            }
+          }
+        });
+        if (alreadyMarked) continue;
+
+        tr.doc.descendants((node: any, pos: number) => {
+          if (alreadyMarked) return;
+          if (node.isBlock && node.textContent.includes(targetText)) {
+            const blockText = node.textContent;
+            let searchIndex = 0;
+
+            while (searchIndex < blockText.length) {
+              const matchIdx = blockText.indexOf(targetText, searchIndex);
+              if (matchIdx === -1) break;
+
+              let currentOffset = 0;
+              let fromPos: number | null = null;
+              let toPos: number | null = null;
+
+              node.descendants((child: any, childPos: number) => {
+                if (!child.isText || !child.text) return;
+                const childStart = currentOffset;
+                const childEnd = currentOffset + child.text.length;
+
+                if (fromPos === null && matchIdx >= childStart && matchIdx < childEnd) {
+                  fromPos = pos + 1 + childPos + (matchIdx - childStart);
+                }
+                if (
+                  toPos === null &&
+                  matchIdx + targetText.length <= childEnd &&
+                  matchIdx + targetText.length > childStart
+                ) {
+                  toPos = pos + 1 + childPos + (matchIdx + targetText.length - childStart);
+                }
+                currentOffset += child.text.length;
+              });
+
+              if (fromPos !== null && toPos !== null) {
+                tr.addMark(fromPos, toPos, commentMarkType.create({ commentId: comment.id }));
+                changed = true;
+                alreadyMarked = true;
+                break;
+              }
+
+              searchIndex = matchIdx + targetText.length;
+            }
+          }
+        });
+      }
+
+      if (changed) {
+        view.dispatch(tr);
+      }
+    },
+    []
+  );
+
   // Sync content into editor on first load or when revision id changes
   const prevRevIdRef = useRef<string | null>(null);
   useEffect(() => {
@@ -415,9 +498,14 @@ export const App: React.FC = () => {
             applyLocksToEditor(editor, localLockedTexts);
           }, 20);
         }
+        if (localComments.length > 0) {
+          setTimeout(() => {
+            applyCommentsToEditor(editor, localComments);
+          }, 30);
+        }
       }
     }
-  }, [editor, details?.currentRevision, localLockedTexts, applyLocksToEditor]);
+  }, [editor, details?.currentRevision, localLockedTexts, localComments, applyLocksToEditor, applyCommentsToEditor]);
 
   // Keep locks applied when localLockedTexts changes
   useEffect(() => {
@@ -425,6 +513,13 @@ export const App: React.FC = () => {
       applyLocksToEditor(editor, localLockedTexts);
     }
   }, [editor, localLockedTexts, applyLocksToEditor]);
+
+  // Keep comments applied when localComments changes
+  useEffect(() => {
+    if (editor && localComments.length > 0) {
+      applyCommentsToEditor(editor, localComments);
+    }
+  }, [editor, localComments, applyCommentsToEditor]);
 
   // Handle clicking on comment or lock highlights in the editor (both in standard and diff views)
   useEffect(() => {

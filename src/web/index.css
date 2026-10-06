@@ -348,6 +348,16 @@
   color: var(--color-night-text-heading) !important;
 }
 
+.pujangga-comment-highlight::after {
+  content: ' 📌';
+  font-size: 0.72em;
+  vertical-align: 0.15em;
+  opacity: 0.9;
+  display: inline-block;
+  user-select: none;
+  pointer-events: none;
+}
+
 .pujangga-comment-pin {
   display: inline-flex;
   align-items: center;
